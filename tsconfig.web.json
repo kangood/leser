@@ -7,13 +7,13 @@
   ],
   "compilerOptions": {
     // 语言和环境
-    "target": "esnext",
+    "target": "ES2019",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     // 项目
     "composite": true,
     // 模块
-    "module": "esnext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "baseUrl": ".",

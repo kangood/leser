@@ -1,5 +1,4 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
   "include": [
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
@@ -7,13 +6,31 @@
     "src/preload/*.d.ts"
   ],
   "compilerOptions": {
+    // 语言和环境
+    "target": "esnext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    // 项目
     "composite": true,
-    "jsx": "react-jsx",
+    // 模块
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@renderer/*": [
         "src/renderer/src/*"
       ]
-    }
+    },
+    // 互操作约束
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    // 类型检验
+    "strict": true,
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
   }
 }

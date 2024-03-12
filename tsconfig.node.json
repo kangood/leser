@@ -1,8 +1,25 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*"],
   "compilerOptions": {
+    // 语言和环境
+    "target": "esnext",
+    "jsx": "preserve",
+    // 项目
     "composite": true,
-    "types": ["electron-vite/node"]
+    // 模块
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "types": ["electron-vite/node", "node"],
+    // 互操作约束
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    // 类型检查
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
   }
 }

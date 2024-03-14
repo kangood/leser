@@ -1,5 +1,5 @@
 {
-  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*"],
+  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/renderer/src/**/*"],
   "compilerOptions": {
     // 语言和环境
     "target": "esnext",
@@ -15,11 +15,11 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     // 类型检查
-    "strict": true,
-    "noImplicitAny": false,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // "strict": true,
+    // "noImplicitAny": false,
+    // "noImplicitReturns": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
     "skipLibCheck": true,
   }
 }

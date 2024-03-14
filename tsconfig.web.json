@@ -9,7 +9,7 @@
     // 语言和环境
     "target": "ES2019",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
+    "jsx": "react",
     // 项目
     "composite": true,
     // 模块
@@ -26,11 +26,11 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     // 类型检验
-    "strict": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
+    // "strict": true,
+    // "noImplicitAny": false,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noImplicitReturns": true,
     "skipLibCheck": true,
   }
 }

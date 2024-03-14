@@ -1,74 +1,144 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { app, ipcMain, Menu, nativeTheme } from "electron"
+import { ThemeSettings, SchemaTypes } from "../renderer/src/schema-types"
+import { store } from "./settings"
+import performUpdate from "./update-scripts"
+import { WindowManager } from "./window"
 
-function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+/**
+ * app 模块，它控制应用程序的事件生命周期
+ * WindowManager 里引入的 BrowserWindow 模块，它创建和管理应用程序 窗口
+ */
+
+if (!process.mas) {
+    const locked = app.requestSingleInstanceLock()
+    if (!locked) {
+        app.quit()
     }
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
-
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-  }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+if (!app.isPackaged) app.setAppUserModelId(process.execPath)
+else if (process.platform === "win32")
+    // 为 Windows 设置 appUserModelId
+    app.setAppUserModelId("me.hyliu.fluentreader")
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+let restarting = false
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+function init() {
+    performUpdate(store)
+    nativeTheme.themeSource = store.get("theme", ThemeSettings.Default)
+}
 
-  createWindow()
+init()
 
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+if (process.platform === "darwin") {
+    const template = [
+        {
+            label: "Application",
+            submenu: [
+                {
+                    label: "Hide",
+                    accelerator: "Command+H",
+                    click: () => {
+                        app.hide()
+                    },
+                },
+                {
+                    label: "Quit",
+                    accelerator: "Command+Q",
+                    click: () => {
+                        if (winManager.hasWindow) winManager.mainWindow.close()
+                    },
+                },
+            ],
+        },
+        {
+            label: "Edit",
+            submenu: [
+                {
+                    label: "Undo",
+                    accelerator: "CmdOrCtrl+Z",
+                    selector: "undo:",
+                },
+                {
+                    label: "Redo",
+                    accelerator: "Shift+CmdOrCtrl+Z",
+                    selector: "redo:",
+                },
+                { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+                {
+                    label: "Copy",
+                    accelerator: "CmdOrCtrl+C",
+                    selector: "copy:",
+                },
+                {
+                    label: "Paste",
+                    accelerator: "CmdOrCtrl+V",
+                    selector: "paste:",
+                },
+                {
+                    label: "Select All",
+                    accelerator: "CmdOrCtrl+A",
+                    selector: "selectAll:",
+                },
+            ],
+        },
+        {
+            label: "Window",
+            submenu: [
+                {
+                    label: "Close",
+                    accelerator: "Command+W",
+                    click: () => {
+                        if (winManager.hasWindow) winManager.mainWindow.close()
+                    },
+                },
+                {
+                    label: "Minimize",
+                    accelerator: "Command+M",
+                    click: () => {
+                        if (winManager.hasWindow())
+                            winManager.mainWindow.minimize()
+                    },
+                },
+                { label: "Zoom", click: () => winManager.zoom() },
+            ],
+        },
+    ]
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+} else {
+    Menu.setApplicationMenu(null)
+}
+
+const winManager = new WindowManager()
+
+app.on("window-all-closed", () => {
+    if (winManager.hasWindow()) {
+        winManager.mainWindow.webContents.session.clearStorageData({
+            storages: ["cookies", "localstorage"],
+        })
+    }
+    winManager.mainWindow = null
+    if (restarting) {
+        restarting = false
+        winManager.createWindow()
+    } else {
+        app.quit()
+    }
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+ipcMain.handle("import-all-settings", (_, configs: SchemaTypes) => {
+    restarting = true
+    store.clear()
+    for (let [key, value] of Object.entries(configs)) {
+        // @ts-ignore
+        store.set(key, value)
+    }
+    performUpdate(store)
+    nativeTheme.themeSource = store.get("theme", ThemeSettings.Default)
+    setTimeout(
+        () => {
+            winManager.mainWindow.close()
+        },
+        process.platform === "darwin" ? 1000 : 0,
+    ) // Why ???
 })
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.

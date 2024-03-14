@@ -1,11 +1,40 @@
-import './assets/main.css'
+import * as React from "react"
+import ReactDOM from 'react-dom/client';
+import { Provider } from "react-redux"
+import { createStore, applyMiddleware } from "redux"
+import thunkMiddleware from "redux-thunk"
+import { initializeIcons } from "@fluentui/react/lib/Icons"
+import { rootReducer, RootState } from "./scripts/reducer"
+import Root from "./components/root"
+import { AppDispatch } from "./scripts/utils"
+import { applyThemeSettings } from "./scripts/settings"
+import { initApp, openTextMenu } from "./scripts/models/app"
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
+window.settings.setProxy()
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+applyThemeSettings()
+initializeIcons("icons/")
+
+const store = createStore(
+    rootReducer,
+    applyMiddleware<AppDispatch, RootState>(thunkMiddleware)
+)
+
+store.dispatch(initApp())
+
+window.utils.addMainContextListener((pos, text) => {
+    store.dispatch(openTextMenu(pos, text))
+})
+
+window.fontList = [""]
+window.utils.initFontList().then(fonts => {
+    window.fontList.push(...fonts)
+})
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+
+root.render(
+    <Provider store={store}>
+        <Root />
+    </Provider>,
 )

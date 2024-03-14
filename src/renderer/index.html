@@ -1,17 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Electron</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
-    />
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src-elem 'self'; img-src *; style-src 'self' 'unsafe-inline'; font-src 'self' https://static2.sharepointonline.com; connect-src https: http:">
+    <title>Fluent Reader</title>
+    <link rel="stylesheet" href="./src/styles/index.css">
   </head>
-
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root" style="height: 100%;"></div>
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>

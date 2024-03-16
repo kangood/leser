@@ -252,7 +252,7 @@ body.darwin .list-main .article-search {
     margin-left: 0;
 }
 
-@media (min-width: 1440px) {
+@media (min-width: 1200px) {
     #root > nav.menu-on {
         padding-left: 296px;
     }

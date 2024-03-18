@@ -1,4 +1,3 @@
-import * as React from "react"
 import intl from "react-intl-universal"
 import { Icon } from "@fluentui/react/lib/Icon"
 import { Nav, INavLink, INavLinkGroup } from "@fluentui/react"
@@ -6,6 +5,8 @@ import { SourceGroup } from "../schema-types"
 import { SourceState, RSSSource } from "../scripts/models/source"
 import { ALL } from "../scripts/models/feed"
 import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
+import { useEffect, useState } from "react"
+import React from "react"
 
 export type MenuProps = {
     status: boolean
@@ -28,53 +29,62 @@ export type MenuProps = {
     toggleSearch: () => void
 }
 
-export class Menu extends React.Component<MenuProps> {
+export const Menu: React.FC<MenuProps> = ({
+    status,
+    display,
+    selected,
+    sources,
+    groups,
+    searchOn,
+    itemOn,
+    toggleMenu,
+    allArticles,
+    selectSourceGroup,
+    selectSource,
+    groupContextMenu,
+    updateGroupExpansion,
+    toggleSearch,
+}) => {
 
-    state = {
-        menuHidden: window.innerWidth < 1200, // 初始化时设置菜单状态
-    };
+    const [menuHidden, setMenuHidden] = useState<boolean>(
+        window.innerWidth < 1200 // 初始化时设置菜单状态
+    )
     // 宽度在 1200 以上 和 1200 以下，各自调用一次 toggleMenu
-    handleResize = () => {
-        const shouldHideMenu = window.innerWidth < 1200;
-        if (shouldHideMenu !== this.state.menuHidden) {
-            this.setState({ menuHidden: shouldHideMenu });
-            if (shouldHideMenu) {
-                this.props.toggleMenu();
-            } else {
-                this.props.toggleMenu();
-            }
+    const handleResize = () => {
+        const shouldHideMenu = window.innerWidth < 1200
+        if (shouldHideMenu !== menuHidden) {
+            setMenuHidden(shouldHideMenu)
+            toggleMenu()
         }
-    };
-    // 添加监听和移除
-    componentDidMount() {
-        window.addEventListener('resize', this.handleResize);
+    }
+    useEffect(() => {
         // 当组件首次加载时，立即检查窗口的宽度，并根据需要设置菜单的显示状态
-        // ...
-    }
-    componentWillUnmount() {
-        window.removeEventListener('resize', this.handleResize);
-    }
+        window.addEventListener("resize", handleResize)
+        return () => {
+            window.removeEventListener("resize", handleResize)
+        }
+    }, [menuHidden])
 
-    countOverflow = (count: number) => (count >= 1000 ? " 999+" : ` ${count}`)
+    const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
-    getLinkGroups = (): INavLinkGroup[] => [
+    const getLinkGroups = (): INavLinkGroup[] => [
         {
             links: [
                 {
                     name: intl.get("search"),
                     ariaLabel:
-                        intl.get("search") + (this.props.searchOn ? " ✓" : " "),
+                        intl.get("search") + (searchOn ? " ✓" : " "),
                     key: "search",
                     icon: "Search",
-                    onClick: this.props.toggleSearch,
+                    onClick: toggleSearch,
                     url: null,
                 },
                 {
                     name: intl.get("allArticles"),
                     ariaLabel:
                         intl.get("allArticles") +
-                        this.countOverflow(
-                            Object.values(this.props.sources)
+                        countOverflow(
+                            Object.values(sources)
                                 .filter(s => !s.hidden)
                                 .map(s => s.unreadCount)
                                 .reduce((a, b) => a + b, 0)
@@ -82,23 +92,23 @@ export class Menu extends React.Component<MenuProps> {
                     key: ALL,
                     icon: "TextDocument",
                     onClick: () =>
-                        this.props.allArticles(this.props.selected !== ALL),
+                        allArticles(selected !== ALL),
                     url: null,
                 },
             ],
         },
         {
             name: intl.get("menu.subscriptions"),
-            links: this.props.groups
+            links: groups
                 .filter(g => g.sids.length > 0)
                 .map(g => {
                     if (g.isMultiple) {
-                        let sources = g.sids.map(sid => this.props.sources[sid])
+                        let sources = g.sids.map(sid => sources[sid])
                         return {
                             name: g.name,
                             ariaLabel:
                                 g.name +
-                                this.countOverflow(
+                                countOverflow(
                                     sources
                                         .map(s => s.unreadCount)
                                         .reduce((a, b) => a + b, 0)
@@ -107,26 +117,26 @@ export class Menu extends React.Component<MenuProps> {
                             url: null,
                             isExpanded: g.expanded,
                             onClick: () =>
-                                this.props.selectSourceGroup(g, "g-" + g.index),
-                            links: sources.map(this.getSource),
+                                selectSourceGroup(g, "g-" + g.index),
+                            links: sources.map(getSource),
                         }
                     } else {
-                        return this.getSource(this.props.sources[g.sids[0]])
+                        return getSource(sources[g.sids[0]])
                     }
                 }),
         },
     ]
 
-    getSource = (s: RSSSource): INavLink => ({
+    const getSource = (s: RSSSource): INavLink => ({
         name: s.name,
-        ariaLabel: s.name + this.countOverflow(s.unreadCount),
+        ariaLabel: s.name + countOverflow(s.unreadCount),
         key: "s-" + s.sid,
-        onClick: () => this.props.selectSource(s),
-        iconProps: s.iconurl ? this.getIconStyle(s.iconurl) : null,
+        onClick: () => selectSource(s),
+        iconProps: s.iconurl ? getIconStyle(s.iconurl) : null,
         url: null,
     })
 
-    getIconStyle = (url: string) => ({
+    const getIconStyle = (url: string) => ({
         style: { width: 16 },
         imageProps: {
             style: { width: "100%" },
@@ -134,27 +144,27 @@ export class Menu extends React.Component<MenuProps> {
         },
     })
 
-    onContext = (item: INavLink, event: React.MouseEvent) => {
+    const onContext = (item: INavLink, event: React.MouseEvent) => {
         let sids: number[]
         let [type, index] = item.key.split("-")
         if (type === "s") {
             sids = [parseInt(index)]
         } else if (type === "g") {
-            sids = this.props.groups[parseInt(index)].sids
+            sids = groups[parseInt(index)].sids
         } else {
             return
         }
-        this.props.groupContextMenu(sids, event)
+        groupContextMenu(sids, event)
     }
 
-    _onRenderLink = (link: INavLink): JSX.Element => {
+    const _onRenderLink = (link: INavLink): JSX.Element => {
         let count = link.ariaLabel.split(" ").pop()
         return (
             <Stack
                 className="link-stack"
                 horizontal
                 grow
-                onContextMenu={event => this.onContext(link, event)}>
+                onContextMenu={event => onContext(link, event)}>
                 <div className="link-text">{link.name}</div>
                 {count && count !== "0" && (
                     <div className="unread-count">{count}</div>
@@ -163,7 +173,7 @@ export class Menu extends React.Component<MenuProps> {
         )
     }
 
-    _onRenderGroupHeader = (group: INavLinkGroup): JSX.Element => {
+    const _onRenderGroupHeader = (group: INavLinkGroup): JSX.Element => {
         return (
             <p className={"subs-header " + AnimationClassNames.slideDownIn10}>
                 {group.name}
@@ -171,60 +181,54 @@ export class Menu extends React.Component<MenuProps> {
         )
     }
 
-    render() {
-        return (
-            this.props.status && (
+    return (
+        status && (
+            <div
+                className={"menu-container" + (display ? " show" : "")}
+                onClick={toggleMenu}>
                 <div
-                    className={
-                        "menu-container" + (this.props.display ? " show" : "")
-                    }
-                    onClick={this.props.toggleMenu}>
-                    <div
-                        className={
-                            "menu" + (this.props.itemOn ? " item-on" : "")
-                        }
-                        onClick={e => e.stopPropagation()}>
-                        <div className="btn-group">
-                            <a
-                                className="btn hide-wide"
-                                title={intl.get("menu.close")}
-                                onClick={this.props.toggleMenu}>
-                                <Icon iconName="Back" />
-                            </a>
-                            <a
-                                className="btn inline-block-wide"
-                                title={intl.get("menu.close")}
-                                onClick={this.props.toggleMenu}>
-                                <Icon
-                                    iconName={
-                                        window.utils.platform === "darwin"
-                                            ? "SidePanel"
-                                            : "GlobalNavButton"
-                                    }
-                                />
-                            </a>
-                        </div>
-                        <FocusZone
-                            as="div"
-                            disabled={!this.props.display}
-                            className="nav-wrapper">
-                            <Nav
-                                onRenderGroupHeader={this._onRenderGroupHeader}
-                                onRenderLink={this._onRenderLink}
-                                groups={this.getLinkGroups()}
-                                selectedKey={this.props.selected}
-                                onLinkExpandClick={(event, item) =>
-                                    this.props.updateGroupExpansion(
-                                        event,
-                                        item.key,
-                                        this.props.selected
-                                    )
+                    className={"menu" + (itemOn ? " item-on" : "")}
+                    onClick={e => e.stopPropagation()}>
+                    <div className="btn-group">
+                        <a
+                            className="btn hide-wide"
+                            title={intl.get("menu.close")}
+                            onClick={toggleMenu}>
+                            <Icon iconName="Back" />
+                        </a>
+                        <a
+                            className="btn inline-block-wide"
+                            title={intl.get("menu.close")}
+                            onClick={toggleMenu}>
+                            <Icon
+                                iconName={
+                                    window.utils.platform === "darwin"
+                                        ? "SidePanel"
+                                        : "GlobalNavButton"
                                 }
                             />
-                        </FocusZone>
+                        </a>
                     </div>
+                    <FocusZone
+                        as="div"
+                        disabled={!display}
+                        className="nav-wrapper">
+                        <Nav
+                            onRenderGroupHeader={_onRenderGroupHeader}
+                            onRenderLink={_onRenderLink}
+                            groups={getLinkGroups()}
+                            selectedKey={selected}
+                            onLinkExpandClick={(event, item) =>
+                                updateGroupExpansion(
+                                    event,
+                                    item.key,
+                                    selected
+                                )
+                            }
+                        />
+                    </FocusZone>
                 </div>
-            )
+            </div>
         )
-    }
+    )
 }

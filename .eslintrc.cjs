@@ -60,11 +60,13 @@ module.exports = {
         "class-methods-use-this": "off", // 关闭强制类方法使用 this 的规则
         "no-plusplus": 0, // 关闭禁用一元操作符 ++ 和 --
         "no-underscore-dangle": "off", // 允许指定的标识符具有悬空下划线
+        "default-case": "off", // 关闭检查 switch 语句应该包含一个 default 默认
 
         "jsx-a11y/click-events-have-key-events": "off", // 关闭强制可点击元素有键盘事件的规则
         "jsx-a11y/interactive-supports-focus": "off", // 关闭强制具有交互处理程序的元素具有焦点的规则
         "jsx-a11y/no-noninteractive-element-interactions": "off", // 关闭不允许在非交互元素上使用交互事件的规则
         "jsx-a11y/no-static-element-interactions": "off", // 关闭不允许在静态元素上使用交互事件的规则
+        "jsx-a11y/anchor-is-valid": "off", // 关闭检测 <a> 元素是否符合可访问性规范
 
         "react/react-in-jsx-scope": "off", // 关闭强制在 JSX 中使用 React 的规则
         "react/button-has-type": "off", // 关闭强制 button 元素的 type 属性必须被明确的规则
@@ -167,4 +169,4 @@ module.exports = {
             },
         ],
     },
-}
+};

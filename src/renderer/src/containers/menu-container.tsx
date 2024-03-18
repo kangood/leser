@@ -1,25 +1,21 @@
-import { connect } from "react-redux"
-import { createSelector } from "reselect"
-import { RootState } from "../scripts/reducer"
-import { Menu } from "../components/menu"
-import { toggleMenu, openGroupMenu } from "../scripts/models/app"
-import { toggleGroupExpansion } from "../scripts/models/group"
-import { SourceGroup } from "../schema-types"
-import {
-    selectAllArticles,
-    selectSources,
-    toggleSearch,
-} from "../scripts/models/page"
-import { ViewType } from "../schema-types"
-import { initFeeds } from "../scripts/models/feed"
-import { RSSSource } from "../scripts/models/source"
+import { connect } from "react-redux";
+import { createSelector } from "reselect";
 
-const getApp = (state: RootState) => state.app
-const getSources = (state: RootState) => state.sources
-const getGroups = (state: RootState) => state.groups
-const getSearchOn = (state: RootState) => state.page.searchOn
+import Menu from "../components/menu";
+import { SourceGroup, ViewType } from "../schema-types";
+import { toggleMenu, openGroupMenu } from "../scripts/models/app";
+import { initFeeds } from "../scripts/models/feed";
+import { toggleGroupExpansion } from "../scripts/models/group";
+import { selectAllArticles, selectSources, toggleSearch } from "../scripts/models/page";
+import { RSSSource } from "../scripts/models/source";
+import { RootState } from "../scripts/reducer";
+
+const getApp = (state: RootState) => state.app;
+const getSources = (state: RootState) => state.sources;
+const getGroups = (state: RootState) => state.groups;
+const getSearchOn = (state: RootState) => state.page.searchOn;
 const getItemOn = (state: RootState) =>
-    state.page.itemId !== null && state.page.viewType !== ViewType.List
+    state.page.itemId !== null && state.page.viewType !== ViewType.List;
 
 const mapStateToProps = createSelector(
     [getApp, getSources, getGroups, getSearchOn, getItemOn],
@@ -27,41 +23,37 @@ const mapStateToProps = createSelector(
         status: app.sourceInit && !app.settings.display,
         display: app.menu,
         selected: app.menuKey,
-        sources: sources,
+        sources,
         groups: groups.map((g, i) => ({ ...g, index: i })),
-        searchOn: searchOn,
-        itemOn: itemOn,
-    })
-)
+        searchOn,
+        itemOn,
+    }),
+);
 
 const mapDispatchToProps = dispatch => ({
     toggleMenu: () => dispatch(toggleMenu()),
     allArticles: (init = false) => {
-        dispatch(selectAllArticles(init)), dispatch(initFeeds())
+        dispatch(selectAllArticles(init), dispatch(initFeeds()));
     },
     selectSourceGroup: (group: SourceGroup, menuKey: string) => {
-        dispatch(selectSources(group.sids, menuKey, group.name))
-        dispatch(initFeeds())
+        dispatch(selectSources(group.sids, menuKey, group.name));
+        dispatch(initFeeds());
     },
     selectSource: (source: RSSSource) => {
-        dispatch(selectSources([source.sid], "s-" + source.sid, source.name))
-        dispatch(initFeeds())
+        dispatch(selectSources([source.sid], `s-${source.sid}`, source.name));
+        dispatch(initFeeds());
     },
     groupContextMenu: (sids: number[], event: React.MouseEvent) => {
-        dispatch(openGroupMenu(sids, event))
+        dispatch(openGroupMenu(sids, event));
     },
-    updateGroupExpansion: (
-        event: React.MouseEvent<HTMLElement>,
-        key: string,
-        selected: string
-    ) => {
+    updateGroupExpansion: (event: React.MouseEvent<HTMLElement>, key: string, selected: string) => {
         if ((event.target as HTMLElement).tagName === "I" || key === selected) {
-            let [type, index] = key.split("-")
-            if (type === "g") dispatch(toggleGroupExpansion(parseInt(index)))
+            const [type, index] = key.split("-");
+            if (type === "g") dispatch(toggleGroupExpansion(parseInt(index, 10)));
         }
     },
     toggleSearch: () => dispatch(toggleSearch()),
-})
+});
 
-const MenuContainer = connect(mapStateToProps, mapDispatchToProps)(Menu)
-export default MenuContainer
+const MenuContainer = connect(mapStateToProps, mapDispatchToProps)(Menu);
+export default MenuContainer;

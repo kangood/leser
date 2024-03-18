@@ -1,5 +1,6 @@
 tabWidth: 4
-semi: false
+semi: true
 jsxBracketSameLine: true
-arrowParens: 'avoid'
-quoteProps: 'consistent'
+arrowParens: "avoid"
+quoteProps: "consistent"
+printWidth: 100

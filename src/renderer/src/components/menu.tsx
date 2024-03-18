@@ -1,35 +1,41 @@
-import intl from "react-intl-universal"
-import { Icon } from "@fluentui/react/lib/Icon"
-import { Nav, INavLink, INavLinkGroup } from "@fluentui/react"
-import { SourceGroup } from "../schema-types"
-import { SourceState, RSSSource } from "../scripts/models/source"
-import { ALL } from "../scripts/models/feed"
-import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
-import { useEffect, useState } from "react"
-import React from "react"
+import {
+    Nav,
+    INavLink,
+    INavLinkGroup,
+    AnimationClassNames,
+    Stack,
+    FocusZone,
+} from "@fluentui/react";
+import { Icon } from "@fluentui/react/lib/Icon";
+import { useEffect, useState } from "react";
+import intl from "react-intl-universal";
+
+import { SourceGroup } from "../schema-types";
+import { ALL } from "../scripts/models/feed";
+import { SourceState, RSSSource } from "../scripts/models/source";
 
 export type MenuProps = {
-    status: boolean
-    display: boolean
-    selected: string
-    sources: SourceState
-    groups: SourceGroup[]
-    searchOn: boolean
-    itemOn: boolean
-    toggleMenu: () => void
-    allArticles: (init?: boolean) => void
-    selectSourceGroup: (group: SourceGroup, menuKey: string) => void
-    selectSource: (source: RSSSource) => void
-    groupContextMenu: (sids: number[], event: React.MouseEvent) => void
+    status: boolean;
+    display: boolean;
+    selected: string;
+    sources: SourceState;
+    groups: SourceGroup[];
+    searchOn: boolean;
+    itemOn: boolean;
+    toggleMenu: () => void;
+    allArticles: (init?: boolean) => void;
+    selectSourceGroup: (group: SourceGroup, menuKey: string) => void;
+    selectSource: (source: RSSSource) => void;
+    groupContextMenu: (sids: number[], event: React.MouseEvent) => void;
     updateGroupExpansion: (
         event: React.MouseEvent<HTMLElement>,
         key: string,
-        selected: string
-    ) => void
-    toggleSearch: () => void
-}
+        selected: string,
+    ) => void;
+    toggleSearch: () => void;
+};
 
-export const Menu: React.FC<MenuProps> = ({
+const Menu: React.FC<MenuProps> = ({
     status,
     display,
     selected,
@@ -45,35 +51,33 @@ export const Menu: React.FC<MenuProps> = ({
     updateGroupExpansion,
     toggleSearch,
 }) => {
-
     const [menuHidden, setMenuHidden] = useState<boolean>(
-        window.innerWidth < 1200 // 初始化时设置菜单状态
-    )
+        window.innerWidth < 1200, // 初始化时设置菜单状态
+    );
     // 宽度在 1200 以上 和 1200 以下，各自调用一次 toggleMenu
     const handleResize = () => {
-        const shouldHideMenu = window.innerWidth < 1200
+        const shouldHideMenu = window.innerWidth < 1200;
         if (shouldHideMenu !== menuHidden) {
-            setMenuHidden(shouldHideMenu)
-            toggleMenu()
+            setMenuHidden(shouldHideMenu);
+            toggleMenu();
         }
-    }
+    };
     useEffect(() => {
         // 当组件首次加载时，立即检查窗口的宽度，并根据需要设置菜单的显示状态
-        window.addEventListener("resize", handleResize)
+        window.addEventListener("resize", handleResize);
         return () => {
-            window.removeEventListener("resize", handleResize)
-        }
-    }, [menuHidden])
+            window.removeEventListener("resize", handleResize);
+        };
+    }, [menuHidden]);
 
-    const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
+    const countOverflow = (count: number) => (count >= 1000 ? " 999+" : ` ${count}`);
 
     const getLinkGroups = (): INavLinkGroup[] => [
         {
             links: [
                 {
                     name: intl.get("search"),
-                    ariaLabel:
-                        intl.get("search") + (searchOn ? " ✓" : " "),
+                    ariaLabel: intl.get("search") + (searchOn ? " ✓" : " "),
                     key: "search",
                     icon: "Search",
                     onClick: toggleSearch,
@@ -87,12 +91,11 @@ export const Menu: React.FC<MenuProps> = ({
                             Object.values(sources)
                                 .filter(s => !s.hidden)
                                 .map(s => s.unreadCount)
-                                .reduce((a, b) => a + b, 0)
+                                .reduce((a, b) => a + b, 0),
                         ),
                     key: ALL,
                     icon: "TextDocument",
-                    onClick: () =>
-                        allArticles(selected !== ALL),
+                    onClick: () => allArticles(selected !== ALL),
                     url: null,
                 },
             ],
@@ -103,38 +106,34 @@ export const Menu: React.FC<MenuProps> = ({
                 .filter(g => g.sids.length > 0)
                 .map(g => {
                     if (g.isMultiple) {
-                        let sources = g.sids.map(sid => sources[sid])
+                        const sources = g.sids.map(sid => sources[sid]);
                         return {
                             name: g.name,
                             ariaLabel:
                                 g.name +
                                 countOverflow(
-                                    sources
-                                        .map(s => s.unreadCount)
-                                        .reduce((a, b) => a + b, 0)
+                                    sources.map(s => s.unreadCount).reduce((a, b) => a + b, 0),
                                 ),
-                            key: "g-" + g.index,
+                            key: `g-${g.index}`,
                             url: null,
                             isExpanded: g.expanded,
-                            onClick: () =>
-                                selectSourceGroup(g, "g-" + g.index),
+                            onClick: () => selectSourceGroup(g, `g-${g.index}`),
                             links: sources.map(getSource),
-                        }
-                    } else {
-                        return getSource(sources[g.sids[0]])
+                        };
                     }
+                    return getSource(sources[g.sids[0]]);
                 }),
         },
-    ]
+    ];
 
     const getSource = (s: RSSSource): INavLink => ({
         name: s.name,
         ariaLabel: s.name + countOverflow(s.unreadCount),
-        key: "s-" + s.sid,
+        key: `s-${s.sid}`,
         onClick: () => selectSource(s),
         iconProps: s.iconurl ? getIconStyle(s.iconurl) : null,
         url: null,
-    })
+    });
 
     const getIconStyle = (url: string) => ({
         style: { width: 16 },
@@ -142,23 +141,23 @@ export const Menu: React.FC<MenuProps> = ({
             style: { width: "100%" },
             src: url,
         },
-    })
+    });
 
     const onContext = (item: INavLink, event: React.MouseEvent) => {
-        let sids: number[]
-        let [type, index] = item.key.split("-")
+        let sids: number[];
+        const [type, index] = item.key.split("-");
         if (type === "s") {
-            sids = [parseInt(index)]
+            sids = [parseInt(index, 10)];
         } else if (type === "g") {
-            sids = groups[parseInt(index)].sids
+            sids = groups[parseInt(index, 10)].sids;
         } else {
-            return
+            return;
         }
-        groupContextMenu(sids, event)
-    }
+        groupContextMenu(sids, event);
+    };
 
     const _onRenderLink = (link: INavLink): JSX.Element => {
-        let count = link.ariaLabel.split(" ").pop()
+        const count = link.ariaLabel.split(" ").pop();
         return (
             <Stack
                 className="link-stack"
@@ -166,28 +165,20 @@ export const Menu: React.FC<MenuProps> = ({
                 grow
                 onContextMenu={event => onContext(link, event)}>
                 <div className="link-text">{link.name}</div>
-                {count && count !== "0" && (
-                    <div className="unread-count">{count}</div>
-                )}
+                {count && count !== "0" && <div className="unread-count">{count}</div>}
             </Stack>
-        )
-    }
+        );
+    };
 
     const _onRenderGroupHeader = (group: INavLinkGroup): JSX.Element => {
-        return (
-            <p className={"subs-header " + AnimationClassNames.slideDownIn10}>
-                {group.name}
-            </p>
-        )
-    }
+        return <p className={`subs-header ${AnimationClassNames.slideDownIn10}`}>{group.name}</p>;
+    };
 
     return (
         status && (
-            <div
-                className={"menu-container" + (display ? " show" : "")}
-                onClick={toggleMenu}>
+            <div className={`menu-container${display ? " show" : ""}`} onClick={toggleMenu}>
                 <div
-                    className={"menu" + (itemOn ? " item-on" : "")}
+                    className={`menu${itemOn ? " item-on" : ""}`}
                     onClick={e => e.stopPropagation()}>
                     <div className="btn-group">
                         <a
@@ -209,26 +200,21 @@ export const Menu: React.FC<MenuProps> = ({
                             />
                         </a>
                     </div>
-                    <FocusZone
-                        as="div"
-                        disabled={!display}
-                        className="nav-wrapper">
+                    <FocusZone as="div" disabled={!display} className="nav-wrapper">
                         <Nav
                             onRenderGroupHeader={_onRenderGroupHeader}
                             onRenderLink={_onRenderLink}
                             groups={getLinkGroups()}
                             selectedKey={selected}
                             onLinkExpandClick={(event, item) =>
-                                updateGroupExpansion(
-                                    event,
-                                    item.key,
-                                    selected
-                                )
+                                updateGroupExpansion(event, item.key, selected)
                             }
                         />
                     </FocusZone>
                 </div>
             </div>
         )
-    )
-}
+    );
+};
+
+export default Menu;

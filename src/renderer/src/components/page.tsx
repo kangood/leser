@@ -1,4 +1,5 @@
 import { Icon, FocusTrapZone } from "@fluentui/react";
+import React from "react";
 
 import ArticleContainer from "../containers/article-container";
 import { FeedContainer } from "../containers/feed-container";

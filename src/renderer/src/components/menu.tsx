@@ -7,7 +7,7 @@ import {
     FocusZone,
 } from "@fluentui/react";
 import { Icon } from "@fluentui/react/lib/Icon";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import intl from "react-intl-universal";
 
 import { SourceGroup } from "../schema-types";

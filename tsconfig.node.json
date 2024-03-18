@@ -1,5 +1,5 @@
 {
-  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/renderer/src/**/*"],
+  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/renderer/src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     // 语言和环境
     "target": "esnext",

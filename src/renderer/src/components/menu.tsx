@@ -29,6 +29,32 @@ export type MenuProps = {
 }
 
 export class Menu extends React.Component<MenuProps> {
+
+    state = {
+        menuHidden: window.innerWidth < 1200, // 初始化时设置菜单状态
+    };
+    // 宽度在 1200 以上 和 1200 以下，各自调用一次 toggleMenu
+    handleResize = () => {
+        const shouldHideMenu = window.innerWidth < 1200;
+        if (shouldHideMenu !== this.state.menuHidden) {
+            this.setState({ menuHidden: shouldHideMenu });
+            if (shouldHideMenu) {
+                this.props.toggleMenu();
+            } else {
+                this.props.toggleMenu();
+            }
+        }
+    };
+    // 添加监听和移除
+    componentDidMount() {
+        window.addEventListener('resize', this.handleResize);
+        // 当组件首次加载时，立即检查窗口的宽度，并根据需要设置菜单的显示状态
+        // ...
+    }
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.handleResize);
+    }
+
     countOverflow = (count: number) => (count >= 1000 ? " 999+" : ` ${count}`)
 
     getLinkGroups = (): INavLinkGroup[] => [

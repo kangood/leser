@@ -7,6 +7,7 @@ import { ALL } from "../scripts/models/feed"
 import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
 import { useEffect, useState } from "react"
 import React from "react"
+import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 
 export type MenuProps = {
     status: boolean
@@ -16,7 +17,6 @@ export type MenuProps = {
     groups: SourceGroup[]
     searchOn: boolean
     itemOn: boolean
-    toggleMenu: () => void
     allArticles: (init?: boolean) => void
     selectSourceGroup: (group: SourceGroup, menuKey: string) => void
     selectSource: (source: RSSSource) => void
@@ -37,7 +37,6 @@ export const Menu: React.FC<MenuProps> = ({
     groups,
     searchOn,
     itemOn,
-    toggleMenu,
     allArticles,
     selectSourceGroup,
     selectSource,
@@ -46,24 +45,33 @@ export const Menu: React.FC<MenuProps> = ({
     toggleSearch,
 }) => {
 
-    const [menuHidden, setMenuHidden] = useState<boolean>(
-        window.innerWidth < 1200 // 初始化时设置菜单状态
+    const toggleMenuDisplay = useToggleMenuStore(state => state.display);
+    const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+
+    const [menuDisplay, setMenuDisplay] = useState<boolean>(
+        window.innerWidth > 1200 // 初始化时设置菜单状态
     )
     // 宽度在 1200 以上 和 1200 以下，各自调用一次 toggleMenu
     const handleResize = () => {
-        const shouldHideMenu = window.innerWidth < 1200
-        if (shouldHideMenu !== menuHidden) {
-            setMenuHidden(shouldHideMenu)
-            toggleMenu()
+        const shouldDisplayMenu = window.innerWidth > 1200
+        // 两个状态不一样才执行开关，不然会一直进入判断
+        if (shouldDisplayMenu !== menuDisplay) {
+            setMenuDisplay(shouldDisplayMenu)
+            toggleMenu(shouldDisplayMenu)
+            window.settings.setDefaultMenu(shouldDisplayMenu)
         }
     }
     useEffect(() => {
-        // 当组件首次加载时，立即检查窗口的宽度，并根据需要设置菜单的显示状态
         window.addEventListener("resize", handleResize)
+        // 当组件首次加载时，就不走 handleResize 的判断了，立即检查窗口的宽度，并设置状态
+        if (menuDisplay) {
+            toggleMenu(true);
+            window.settings.setDefaultMenu(toggleMenuDisplay)
+        }
         return () => {
             window.removeEventListener("resize", handleResize)
         }
-    }, [menuHidden])
+    }, [menuDisplay])
 
     const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
@@ -184,8 +192,8 @@ export const Menu: React.FC<MenuProps> = ({
     return (
         status && (
             <div
-                className={"menu-container" + (display ? " show" : "")}
-                onClick={toggleMenu}>
+                className={"menu-container" + (toggleMenuDisplay ? " show" : "")}
+                onClick={() => toggleMenu()}>
                 <div
                     className={"menu" + (itemOn ? " item-on" : "")}
                     onClick={e => e.stopPropagation()}>
@@ -193,13 +201,13 @@ export const Menu: React.FC<MenuProps> = ({
                         <a
                             className="btn hide-wide"
                             title={intl.get("menu.close")}
-                            onClick={toggleMenu}>
+                            onClick={() => toggleMenu()}>
                             <Icon iconName="Back" />
                         </a>
                         <a
                             className="btn inline-block-wide"
                             title={intl.get("menu.close")}
-                            onClick={toggleMenu}>
+                            onClick={() => toggleMenu()}>
                             <Icon
                                 iconName={
                                     window.utils.platform === "darwin"

@@ -49,11 +49,11 @@ export const Menu: React.FC<MenuProps> = ({
     const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
 
     const [menuDisplay, setMenuDisplay] = useState<boolean>(
-        window.innerWidth > 1200 // 初始化时设置菜单状态
+        window.innerWidth >= 1200 // 初始化时设置菜单状态
     )
-    // 宽度在 1200 以上 和 1200 以下，各自调用一次 toggleMenu
+    // 宽度在经过 1200 断点时，调用一次 toggleMenu
     const handleResize = () => {
-        const shouldDisplayMenu = window.innerWidth > 1200
+        const shouldDisplayMenu = window.innerWidth >= 1200
         // 两个状态不一样才执行开关，不然会一直进入判断
         if (shouldDisplayMenu !== menuDisplay) {
             setMenuDisplay(shouldDisplayMenu)

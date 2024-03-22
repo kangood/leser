@@ -150,6 +150,21 @@
         backdrop-filter: var(--blur);
     }
 }
+.list-main:not(.menu-on) .feed-top .backward {
+    width: 20px;
+}
+.feed-top {
+    display: flex;
+    margin-top: 9px;
+}
+.feed-top .backward {
+    width: 0px;
+    height: 20px;
+    margin: 0px 20px 5px 75px;
+}
+.feed-top > span {
+    font-size: small;
+}
 .list-feed-container::after {
     content: "";
     display: block;
@@ -162,7 +177,6 @@
     box-shadow: inset 5px 0 25px #0004;
 }
 .list-feed {
-    margin-top: var(--navHeight);
     height: calc(100% - var(--navHeight));
     overflow: hidden scroll;
     position: relative;

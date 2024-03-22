@@ -5,6 +5,7 @@ import ArticleContainer from "../containers/article-container"
 import { ViewType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
+import intl from "react-intl-universal"
 
 type PageProps = {
     contextOn: boolean
@@ -29,7 +30,8 @@ const Page: React.FC<PageProps> = ({
 }) => {
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
-
+    const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+    
     const offsetItemHandler = (event: React.MouseEvent, offset: number) => {
         event.stopPropagation()
         offsetItem(offset)
@@ -98,6 +100,15 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="list-feed-container">
+                            <div className="feed-top">
+                                {/* 这里是一个返回按钮，点击则打开菜单栏 */}
+                                <img
+                                    src="icons/backward.svg"
+                                    onClick={() => toggleMenu(true)}
+                                    className="backward"
+                                />
+                                <span className="title">这里是标题</span>
+                            </div>
                             {feeds.map(fid => (
                                 <FeedContainer
                                     viewType={viewType}

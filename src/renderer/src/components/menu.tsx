@@ -199,22 +199,11 @@ export const Menu: React.FC<MenuProps> = ({
                     onClick={e => e.stopPropagation()}>
                     <div className="btn-group">
                         <a
-                            className="btn hide-wide"
-                            title={intl.get("menu.close")}
-                            onClick={() => toggleMenu()}>
-                            <Icon iconName="Back" />
-                        </a>
-                        <a
-                            className="btn inline-block-wide"
-                            title={intl.get("menu.close")}
-                            onClick={() => toggleMenu()}>
-                            <Icon
-                                iconName={
-                                    window.utils.platform === "darwin"
-                                        ? "SidePanel"
-                                        : "GlobalNavButton"
-                                }
-                            />
+                            // className={"btn" + fetching()}
+                            className={"btn"}
+                            // onClick={fetchWrapper}
+                            title={intl.get("nav.refresh")}>
+                            <Icon iconName="Refresh" />
                         </a>
                     </div>
                     <FocusZone

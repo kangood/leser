@@ -141,29 +141,13 @@ const Nav: React.FC<NavProps> = ({
 
     return (
         <nav className={getClassNames()}>
-            <div className="btn-group">
-                {/* 导航栏最左边的 a 标签，内嵌一个图标，点击出现菜单栏 */}
-                <a
-                    className="btn hide-wide"
-                    title={intl.get("nav.menu")}
-                    onClick={() => toggleMenu()}>
-                    <Icon
-                        iconName={
-                            window.utils.platform === "darwin"
-                                ? "SidePanel"
-                                : "GlobalNavButton"
-                        }
-                    />
-                </a>
-            </div>
-            <span className="title">{state.title}</span>
             <div className="btn-group" style={{ float: "right" }}>
-                <a
+                {/* <a
                     className={"btn" + fetching()}
                     onClick={fetchWrapper}
                     title={intl.get("nav.refresh")}>
                     <Icon iconName="Refresh" />
-                </a>
+                </a> */}
                 <a
                     className="btn"
                     id="mark-all-toggle"

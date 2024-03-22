@@ -252,76 +252,94 @@ body.darwin .list-main .article-search {
     margin-left: 0;
 }
 
+/* 主内容区和列表主内容区样式，所有断点有效 */
+.main.menu-on,
+.list-main.menu-on {
+    margin-left: 280px; /* 左边距 */
+}
+
+/* 设置媒体查询，当视口宽度大于等于 1200px 时生效 */
 @media (min-width: 1200px) {
+    /* 导航栏展开时的样式 */
     #root > nav.menu-on {
-        padding-left: 296px;
+        padding-left: 296px; /* 左边距 */
     }
+    /* 导航栏标题样式 */
     #root > nav.menu-on span.title,
     body.darwin #root > nav.menu-on span.title {
-        max-width: 300px;
+        max-width: 300px; /* 最大宽度 */
     }
+    /* 按钮组样式 */
     nav.menu-on .btn-group .btn {
-        display: inline-block;
+        display: inline-block; /* 内联块级元素显示 */
     }
+    /* item显示时的按钮组样式 */
     nav.item-on .btn-group .btn.system {
-        color: var(--whiteConstant);
+        color: var(--whiteConstant); /* 颜色 */
     }
+    /* 菜单容器样式 */
     .menu-container {
-        width: 280px;
-        background: none;
-        backdrop-filter: none;
+        width: 280px; /* 宽度 */
+        background: none; /* 背景 */
+        backdrop-filter: none; /* 背景滤镜 */
     }
+    /* 菜单样式 */
     .menu-container .menu {
-        background-color: var(--neutralLight);
-        box-shadow: none;
+        background-color: var(--neutralLight); /* 背景颜色 */
+        box-shadow: none; /* 阴影 */
     }
+    /* 菜单展开时的样式 */
     .menu-container.show .menu {
-        clip-path: inset(0);
+        clip-path: inset(0); /* 剪切路径 */
     }
+    /* macOS 主题下的菜单样式 */
     body.darwin .menu-container .menu {
-        background: none;
+        background: none; /* 背景 */
     }
+    /* macOS 主题下展开的菜单样式 */
     body.darwin .menu-container .menu.item-on {
-        background-color: var(--neutralLight);
+        background-color: var(--neutralLight); /* 背景颜色 */
     }
+    /* 菜单伪元素样式 */
     .menu-container .menu::after {
-        content: "";
-        display: block;
-        pointer-events: none;
-        position: absolute;
-        top: -10%;
-        right: 0;
-        width: 120%;
-        height: 120%;
-        box-shadow: inset 5px 0 25px #0004;
+        content: ""; /* 内容为空 */
+        display: block; /* 块级元素显示 */
+        pointer-events: none; /* 鼠标事件 */
+        position: absolute; /* 绝对定位 */
+        top: -10%; /* 顶部偏移 */
+        right: 0; /* 右侧偏移 */
+        width: 120%; /* 宽度 */
+        height: 120%; /* 高度 */
+        box-shadow: inset 5px 0 25px #0004; /* 内部阴影 */
     }
-    .main.menu-on,
-    .list-main.menu-on {
-        margin-left: 280px;
-    }
+    /* 搜索栏样式 */
     .menu-on .article-search {
-        left: 280px;
-        max-width: calc(100% - 728px);
+        left: 280px; /* 左侧偏移 */
+        max-width: calc(100% - 728px); /* 最大宽度 */
     }
+    /* macOS 主题下的搜索栏样式 */
     body.darwin .menu-on .article-search {
-        left: 280px;
-        max-width: calc(100% - 556px);
+        left: 280px; /* 左侧偏移 */
+        max-width: calc(100% - 556px); /* 最大宽度 */
     }
+    /* 列表主内容区的搜索栏样式 */
     .list-main.menu-on .article-search {
-        left: 0;
-        width: 330px;
+        left: 0; /* 左侧偏移 */
+        width: 330px; /* 宽度 */
     }
+    /* macOS 主题下的列表主内容区搜索栏样式 */
     body.darwin .list-main.menu-on .article-search {
-        left: 0;
-        top: 4px;
+        left: 0; /* 左侧偏移 */
+        top: 4px; /* 顶部偏移 */
     }
-
+    /* 隐藏按钮样式 */
     nav.hide-btns .btn-group .btn,
     nav.menu-on .btn-group .btn.hide-wide,
     .menu .btn-group .btn.hide-wide {
-        display: none;
+        display: none; /* 隐藏 */
     }
+    /* 内联块级元素样式 */
     .btn-group .btn.inline-block-wide {
-        display: inline-block;
+        display: inline-block; /* 内联块级元素显示 */
     }
 }

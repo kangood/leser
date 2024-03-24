@@ -124,8 +124,7 @@ export const Menu: React.FC<MenuProps> = ({
                             key: "g-" + g.index,
                             url: null,
                             isExpanded: g.expanded,
-                            onClick: () =>
-                                selectSourceGroup(g, "g-" + g.index),
+                            onClick: () => selectSourceGroup(g, "g-" + g.index),
                             links: sources.map(getSource),
                         }
                     } else {
@@ -139,7 +138,13 @@ export const Menu: React.FC<MenuProps> = ({
         name: s.name,
         ariaLabel: s.name + countOverflow(s.unreadCount),
         key: "s-" + s.sid,
-        onClick: () => selectSource(s),
+        onClick: () => {
+            selectSource(s)
+            // 在菜单需要隐藏时关闭
+            if (!menuDisplay) {
+                toggleMenu(false)
+            }
+        },
         iconProps: s.iconurl ? getIconStyle(s.iconurl) : null,
         url: null,
     })
@@ -211,8 +216,11 @@ export const Menu: React.FC<MenuProps> = ({
                         disabled={!display}
                         className="nav-wrapper">
                         <Nav
+                            // 订阅源头部样式
                             onRenderGroupHeader={_onRenderGroupHeader}
+                            // 链接样式 + 订阅源的文章数量
                             onRenderLink={_onRenderLink}
+                            // 行 item 数据组
                             groups={getLinkGroups()}
                             selectedKey={selected}
                             onLinkExpandClick={(event, item) =>

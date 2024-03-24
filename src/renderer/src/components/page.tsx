@@ -7,6 +7,7 @@ import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 import intl from "react-intl-universal"
 import { FilterType } from "../scripts/models/feed"
+import { AppState } from "../scripts/models/app"
 
 type PageProps = {
     contextOn: boolean
@@ -15,6 +16,7 @@ type PageProps = {
     itemId: number
     itemFromFeed: boolean
     viewType: ViewType // 视图类型
+    state: AppState
     dismissItem: () => void
     offsetItem: (offset: number) => void
     switchFilter: (filter: FilterType) => void
@@ -27,6 +29,7 @@ const Page: React.FC<PageProps> = ({
     itemId,
     itemFromFeed,
     viewType,
+    state,
     dismissItem,
     offsetItem,
     switchFilter
@@ -110,7 +113,7 @@ const Page: React.FC<PageProps> = ({
                                     onClick={() => toggleMenu(true)}
                                     className="backward"
                                 />
-                                <span className="title">这里是标题</span>
+                                <span className="title">{state.title}</span>
                             </div>
                             {feeds.map(fid => (
                                 <FeedContainer

@@ -38,7 +38,6 @@ export type ContextMenuProps = ContextReduxProps & {
     toggleHidden: (item: RSSItem) => void
     switchView: (viewType: ViewType) => void
     setViewConfigs: (configs: ViewConfigs) => void
-    switchFilter: (filter: FilterType) => void
     toggleFilter: (filter: FilterType) => void
     markAllRead: (sids?: number[], date?: Date, before?: boolean) => void
     fetchItems: (sids: number[]) => void
@@ -417,64 +416,65 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
                             ],
                         },
                     },
-                    {
-                        key: "section_2",
-                        itemType: ContextualMenuItemType.Section,
-                        sectionProps: {
-                            title: intl.get("context.filter"),
-                            bottomDivider: true,
-                            items: [
-                                {
-                                    key: "allArticles",
-                                    text: intl.get("allArticles"),
-                                    iconProps: { iconName: "ClearFilter" },
-                                    canCheck: true,
-                                    checked:
-                                        (this.props.filter &
-                                            ~FilterType.Toggles) ==
-                                        FilterType.Default,
-                                    onClick: () =>
-                                        this.props.switchFilter(
-                                            FilterType.Default
-                                        ),
-                                },
-                                {
-                                    key: "unreadOnly",
-                                    text: intl.get("context.unreadOnly"),
-                                    iconProps: {
-                                        iconName: "RadioBtnOn",
-                                        style: {
-                                            fontSize: 14,
-                                            textAlign: "center",
-                                        },
-                                    },
-                                    canCheck: true,
-                                    checked:
-                                        (this.props.filter &
-                                            ~FilterType.Toggles) ==
-                                        FilterType.UnreadOnly,
-                                    onClick: () =>
-                                        this.props.switchFilter(
-                                            FilterType.UnreadOnly
-                                        ),
-                                },
-                                {
-                                    key: "starredOnly",
-                                    text: intl.get("context.starredOnly"),
-                                    iconProps: { iconName: "FavoriteStarFill" },
-                                    canCheck: true,
-                                    checked:
-                                        (this.props.filter &
-                                            ~FilterType.Toggles) ==
-                                        FilterType.StarredOnly,
-                                    onClick: () =>
-                                        this.props.switchFilter(
-                                            FilterType.StarredOnly
-                                        ),
-                                },
-                            ],
-                        },
-                    },
+                    // 移动至 feed 页面
+                    // {
+                    //     key: "section_2",
+                    //     itemType: ContextualMenuItemType.Section,
+                    //     sectionProps: {
+                    //         title: intl.get("context.filter"),
+                    //         bottomDivider: true,
+                    //         items: [
+                    //             {
+                    //                 key: "allArticles",
+                    //                 text: intl.get("allArticles"),
+                    //                 iconProps: { iconName: "ClearFilter" },
+                    //                 canCheck: true,
+                    //                 checked:
+                    //                     (this.props.filter &
+                    //                         ~FilterType.Toggles) ==
+                    //                     FilterType.Default,
+                    //                 onClick: () =>
+                    //                     this.props.switchFilter(
+                    //                         FilterType.Default
+                    //                     ),
+                    //             },
+                    //             {
+                    //                 key: "unreadOnly",
+                    //                 text: intl.get("context.unreadOnly"),
+                    //                 iconProps: {
+                    //                     iconName: "RadioBtnOn",
+                    //                     style: {
+                    //                         fontSize: 14,
+                    //                         textAlign: "center",
+                    //                     },
+                    //                 },
+                    //                 canCheck: true,
+                    //                 checked:
+                    //                     (this.props.filter &
+                    //                         ~FilterType.Toggles) ==
+                    //                     FilterType.UnreadOnly,
+                    //                 onClick: () =>
+                    //                     this.props.switchFilter(
+                    //                         FilterType.UnreadOnly
+                    //                     ),
+                    //             },
+                    //             {
+                    //                 key: "starredOnly",
+                    //                 text: intl.get("context.starredOnly"),
+                    //                 iconProps: { iconName: "FavoriteStarFill" },
+                    //                 canCheck: true,
+                    //                 checked:
+                    //                     (this.props.filter &
+                    //                         ~FilterType.Toggles) ==
+                    //                     FilterType.StarredOnly,
+                    //                 onClick: () =>
+                    //                     this.props.switchFilter(
+                    //                         FilterType.StarredOnly
+                    //                     ),
+                    //             },
+                    //         ],
+                    //     },
+                    // },
                     {
                         key: "section_3",
                         itemType: ContextualMenuItemType.Section,

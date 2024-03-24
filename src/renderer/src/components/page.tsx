@@ -6,6 +6,7 @@ import { ViewType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 import intl from "react-intl-universal"
+import { FilterType } from "../scripts/models/feed"
 
 type PageProps = {
     contextOn: boolean
@@ -16,6 +17,7 @@ type PageProps = {
     viewType: ViewType // 视图类型
     dismissItem: () => void
     offsetItem: (offset: number) => void
+    switchFilter: (filter: FilterType) => void
 }
 
 const Page: React.FC<PageProps> = ({
@@ -26,7 +28,8 @@ const Page: React.FC<PageProps> = ({
     itemFromFeed,
     viewType,
     dismissItem,
-    offsetItem
+    offsetItem,
+    switchFilter
 }) => {
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
@@ -116,6 +119,26 @@ const Page: React.FC<PageProps> = ({
                                     key={fid}
                                 />
                             ))}
+                            <div className="feed-bottom">
+                                <a
+                                    // className="starred"
+                                    onClick={ () => switchFilter(FilterType.StarredOnly)}
+                                    title={intl.get("context.starredOnly")}>
+                                    <Icon iconName="FavoriteStarFill" />
+                                </a>
+                                <a
+                                    // className="unread"
+                                    onClick={ () => switchFilter(FilterType.UnreadOnly)}
+                                    title={intl.get("context.unreadOnly")}>
+                                    <Icon iconName="RadioBtnOn" />
+                                </a>
+                                <a
+                                    // className="all"
+                                    onClick={() => switchFilter(FilterType.Default)}
+                                    title={intl.get("allArticles")}>
+                                    <Icon iconName="ClearFilter" />
+                                </a>
+                            </div>
                         </div>
                         {itemId ? (
                             <div className="side-article-wrapper">

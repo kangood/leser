@@ -19,7 +19,6 @@ import {
 import {
     showItem,
     switchView,
-    switchFilter,
     toggleFilter,
     setViewConfigs,
 } from "../scripts/models/page"
@@ -99,7 +98,6 @@ const mapDispatchToProps = dispatch => {
         },
         setViewConfigs: (configs: ViewConfigs) =>
             dispatch(setViewConfigs(configs)),
-        switchFilter: (filter: FilterType) => dispatch(switchFilter(filter)),
         toggleFilter: (filter: FilterType) => dispatch(toggleFilter(filter)),
         markAllRead: (sids?: number[], date?: Date, before?: boolean) => {
             dispatch(markAllRead(sids, date, before))

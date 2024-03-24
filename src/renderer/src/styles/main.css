@@ -49,7 +49,7 @@
     top: 0;
     width: 280px;
     height: 100%;
-    background-color: var(--neutralLighterAltOpacity);
+    background-color: none; /* 背景颜色 */
     backdrop-filter: var(--blur);
     box-shadow: 5px 0 25px #0004;
     transition: clip-path var(--transition-timing) 0.367s,
@@ -282,11 +282,6 @@ body.darwin .list-main .article-search {
         width: 280px; /* 宽度 */
         background: none; /* 背景 */
         backdrop-filter: none; /* 背景滤镜 */
-    }
-    /* 菜单样式 */
-    .menu-container .menu {
-        background-color: var(--neutralLight); /* 背景颜色 */
-        box-shadow: none; /* 阴影 */
     }
     /* 菜单展开时的样式 */
     .menu-container.show .menu {

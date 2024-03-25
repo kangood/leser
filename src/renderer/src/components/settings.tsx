@@ -70,7 +70,7 @@ class Settings extends React.Component<SettingsProps> {
                             />
                         </FocusTrapZone>
                     )}
-                    <Pivot>
+                    <Pivot style={{ height: '100%' }}>
                         <PivotItem
                             headerText={intl.get("settings.sources")}
                             itemIcon="Source">

@@ -7,5 +7,5 @@ type ToggleMenuStore = {
 
 export const useToggleMenuStore = create<ToggleMenuStore>(set => ({
     display: false,
-    toggleMenu: value => set(state => ({ display: value ? value : !state.display })),
+    toggleMenu: value => set(state => ({ display: value !== undefined ? value : !state.display })),
 }))

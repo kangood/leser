@@ -13,6 +13,7 @@ import {
 import { ViewType } from "../schema-types"
 import { initFeeds } from "../scripts/models/feed"
 import { RSSSource } from "../scripts/models/source"
+import { fetchItems } from "../scripts/models/item"
 
 const getApp = (state: RootState) => state.app
 const getSources = (state: RootState) => state.sources
@@ -24,6 +25,7 @@ const getItemOn = (state: RootState) =>
 const mapStateToProps = createSelector(
     [getApp, getSources, getGroups, getSearchOn, getItemOn],
     (app, sources, groups, searchOn, itemOn) => ({
+        state: app,
         status: app.sourceInit && !app.settings.display,
         display: app.menu,
         selected: app.menuKey,
@@ -61,6 +63,7 @@ const mapDispatchToProps = dispatch => ({
         }
     },
     toggleSearch: () => dispatch(toggleSearch()),
+    fetch: () => dispatch(fetchItems()),
 })
 
 const MenuContainer = connect(mapStateToProps, mapDispatchToProps)(Menu)

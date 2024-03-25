@@ -142,12 +142,6 @@ const Nav: React.FC<NavProps> = ({
     return (
         <nav className={getClassNames()}>
             <div className="btn-group" style={{ float: "right" }}>
-                {/* <a
-                    className={"btn" + fetching()}
-                    onClick={fetchWrapper}
-                    title={intl.get("nav.refresh")}>
-                    <Icon iconName="Refresh" />
-                </a> */}
                 <a
                     className="btn"
                     id="mark-all-toggle"

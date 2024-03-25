@@ -8,8 +8,10 @@ import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
 import { useEffect, useState } from "react"
 import React from "react"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
+import { AppState } from "../scripts/models/app"
 
 export type MenuProps = {
+    state: AppState
     status: boolean
     display: boolean
     selected: string
@@ -27,9 +29,11 @@ export type MenuProps = {
         selected: string
     ) => void
     toggleSearch: () => void
+    fetch: () => void
 }
 
 export const Menu: React.FC<MenuProps> = ({
+    state,
     status,
     display,
     selected,
@@ -43,6 +47,7 @@ export const Menu: React.FC<MenuProps> = ({
     groupContextMenu,
     updateGroupExpansion,
     toggleSearch,
+    fetch,
 }) => {
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
@@ -72,6 +77,18 @@ export const Menu: React.FC<MenuProps> = ({
             window.removeEventListener("resize", handleResize)
         }
     }, [menuDisplay])
+    
+    // 刷新前的状态检查
+    const canFetch = () =>
+        state.sourceInit &&
+        state.feedInit &&
+        !state.syncing &&
+        !state.fetchingItems
+    const fetching = () => (!canFetch() ? " fetching" : "")
+    // 刷新包装器
+    const fetchWrapper = () => {
+        if (canFetch()) fetch()
+    }
 
     const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
@@ -204,11 +221,11 @@ export const Menu: React.FC<MenuProps> = ({
                     onClick={e => e.stopPropagation()}>
                     <div className="btn-group">
                         <a
-                            // className={"btn" + fetching()}
-                            className={"btn"}
-                            // onClick={fetchWrapper}
-                            title={intl.get("nav.refresh")}>
-                            <Icon iconName="Refresh" />
+                            className={"btn" + fetching()}
+                            onClick={fetchWrapper}
+                            title={intl.get("nav.refresh")}
+                        >
+                            <Icon iconName="Refresh"/>
                         </a>
                     </div>
                     <FocusZone

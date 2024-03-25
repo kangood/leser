@@ -1,11 +1,11 @@
 import * as React from "react"
-import { Card } from "./card"
+import { CardProps, bindCardEventsToProps } from "./card"
 import CardInfo from "./info"
 import Highlights from "./highlights"
 import { ViewConfigs } from "../../schema-types"
 import { SourceTextDirection } from "../../scripts/models/source"
 
-const className = (props: Card.Props) => {
+const className = (props: CardProps) => {
     let cn = ["card", "list-card"]
     if (props.item.hidden) cn.push("hidden")
     if (props.selected) cn.push("selected")
@@ -15,10 +15,10 @@ const className = (props: Card.Props) => {
     return cn.join(" ")
 }
 
-const ListCard: React.FunctionComponent<Card.Props> = props => (
+const ListCard: React.FunctionComponent<CardProps> = props => (
     <div
         className={className(props)}
-        {...Card.bindEventsToProps(props)}
+        {...bindCardEventsToProps(props)}
         data-iid={props.item._id}
         data-is-focusable>
         {props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover ? (

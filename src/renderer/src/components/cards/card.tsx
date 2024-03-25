@@ -4,38 +4,54 @@ import { RSSItem } from "../../scripts/models/item"
 import { platformCtrl } from "../../scripts/utils"
 import { FeedFilter } from "../../scripts/models/feed"
 import { ViewConfigs } from "../../schema-types"
+import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 
-export namespace Card {
-    export type Props = {
-        feedId: string
-        item: RSSItem
-        source: RSSSource
-        filter: FeedFilter
-        selected?: boolean
-        viewConfigs?: ViewConfigs
-        shortcuts: (item: RSSItem, e: KeyboardEvent) => void
-        markRead: (item: RSSItem) => void
-        contextMenu: (feedId: string, item: RSSItem, e) => void
-        showItem: (fid: string, item: RSSItem) => void
-    }
+export type CardProps = {
+    feedId: string
+    item: RSSItem
+    source: RSSSource
+    filter: FeedFilter
+    selected?: boolean
+    viewConfigs?: ViewConfigs
+    shortcuts: (item: RSSItem, e: KeyboardEvent) => void
+    markRead: (item: RSSItem) => void
+    contextMenu: (feedId: string, item: RSSItem, e) => void
+    showItem: (fid: string, item: RSSItem) => void
+    onClick?: (props: CardProps, e: React.MouseEvent) => void
+    onMouseUp?: (props: CardProps, e: React.MouseEvent) => void
+    onKeyDown?: (props: CardProps, e: React.KeyboardEvent) => void
+}
 
-    const openInBrowser = (props: Props, e: React.MouseEvent) => {
+export const Card: React.FC<CardProps> = (props) => {
+    return (
+        <div
+            onClick={(e) => props.onClick(props, e)}
+            onMouseUp={(e) => props.onMouseUp(props, e)}
+            onKeyDown={(e) => props.onKeyDown(props, e)}
+        >
+        </div>
+    );
+}
+
+export const bindCardEventsToProps = (props: CardProps) => {
+    
+    const toggleMenu = useToggleMenuStore.getState().toggleMenu;
+
+    const openInBrowser = (e: React.MouseEvent) => {
         props.markRead(props.item)
         window.utils.openExternal(props.item.link, platformCtrl(e))
     }
 
-    export const bindEventsToProps = (props: Props) => ({
-        onClick: (e: React.MouseEvent) => onClick(props, e),
-        onMouseUp: (e: React.MouseEvent) => onMouseUp(props, e),
-        onKeyDown: (e: React.KeyboardEvent) => onKeyDown(props, e),
-    })
-
-    const onClick = (props: Props, e: React.MouseEvent) => {
+    const onClick = (e: React.MouseEvent) => {
+        // 如果窗口宽度小于断点，则关闭菜单栏
+        if (window.innerWidth < 1200) {
+            toggleMenu(false);
+        }
         e.preventDefault()
         e.stopPropagation()
         switch (props.source.openTarget) {
             case SourceOpenTarget.External: {
-                openInBrowser(props, e)
+                openInBrowser(e)
                 break
             }
             default: {
@@ -46,19 +62,25 @@ export namespace Card {
         }
     }
 
-    const onMouseUp = (props: Props, e: React.MouseEvent) => {
+    const onMouseUp = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         switch (e.button) {
             case 1:
-                openInBrowser(props, e)
+                openInBrowser(e)
                 break
             case 2:
                 props.contextMenu(props.feedId, props.item, e)
         }
     }
 
-    const onKeyDown = (props: Props, e: React.KeyboardEvent) => {
+    const onKeyDown = (e: React.KeyboardEvent) => {
         props.shortcuts(props.item, e.nativeEvent)
+    }
+
+    return {
+        onClick,
+        onMouseUp,
+        onKeyDown
     }
 }

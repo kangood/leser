@@ -1,10 +1,10 @@
 import * as React from "react"
-import { Card } from "./card"
+import { Card, CardProps, bindCardEventsToProps } from "./card"
 import CardInfo from "./info"
 import Highlights from "./highlights"
 import { SourceTextDirection } from "../../scripts/models/source"
 
-const className = (props: Card.Props) => {
+const className = (props: CardProps) => {
     let cn = ["card", "magazine-card"]
     if (props.item.hasRead) cn.push("read")
     if (props.item.hidden) cn.push("hidden")
@@ -12,10 +12,10 @@ const className = (props: Card.Props) => {
     return cn.join(" ")
 }
 
-const MagazineCard: React.FunctionComponent<Card.Props> = props => (
+const MagazineCard: React.FunctionComponent<CardProps> = props => (
     <div
         className={className(props)}
-        {...Card.bindEventsToProps(props)}
+        {...bindCardEventsToProps(props)}
         data-iid={props.item._id}
         data-is-focusable>
         {props.item.thumb ? (

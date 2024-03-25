@@ -93,6 +93,7 @@ export const Menu: React.FC<MenuProps> = ({
     const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
     const getLinkGroups = (): INavLinkGroup[] => [
+        // 订阅源上面的渲染
         {
             links: [
                 {
@@ -116,12 +117,18 @@ export const Menu: React.FC<MenuProps> = ({
                         ),
                     key: ALL,
                     icon: "TextDocument",
-                    onClick: () =>
-                        allArticles(selected !== ALL),
+                    onClick: () => {
+                        // 在菜单需要隐藏时关闭
+                        if (!menuDisplay) {
+                            toggleMenu(false)
+                        }
+                        allArticles(selected !== ALL)
+                    },
                     url: null,
                 },
             ],
         },
+        // 订阅源及下面的渲染
         {
             name: intl.get("menu.subscriptions"),
             links: groups

@@ -114,7 +114,6 @@ const Nav: React.FC<NavProps> = ({
         state.feedInit &&
         !state.syncing &&
         !state.fetchingItems
-    const fetching = () => (!canFetch() ? " fetching" : "")
     const getClassNames = () => {
         const classNames = new Array<string>()
         if (state.settings.display) classNames.push("hide-btns")

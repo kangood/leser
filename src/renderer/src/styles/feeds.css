@@ -155,15 +155,16 @@
 }
 .feed-top {
     display: flex;
-    margin: 10px;
+    align-items: center;
+    height: var(--navHeight);
 }
 .feed-top .backward {
     width: 0px;
-    margin: 0px 10px 5px 65px;
+    margin-left: 70px;
+    margin-right: 5px;
 }
 .feed-top .search {
-    width: 20px;
-    width: 20px;
+    width: 18px;
     position: absolute;
     right: 70px;
 }
@@ -171,7 +172,7 @@
     font-size: small;
 }
 .feed-bottom {
-    padding-top: 1px;
+    padding-top: 4px;
     border-top: 1px solid var(--neutralQuaternaryAlt);
     display: flex;
     justify-content: center;

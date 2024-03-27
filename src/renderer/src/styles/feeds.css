@@ -155,18 +155,23 @@
 }
 .feed-top {
     display: flex;
-    margin-top: 9px;
+    margin: 10px;
 }
 .feed-top .backward {
     width: 0px;
-    height: 20px;
-    margin: 0px 20px 5px 75px;
+    margin: 0px 10px 5px 65px;
+}
+.feed-top .search {
+    width: 20px;
+    width: 20px;
+    position: absolute;
+    right: 70px;
 }
 .feed-top > span {
     font-size: small;
 }
 .feed-bottom {
-    padding-top: 4px;
+    padding-top: 1px;
     border-top: 1px solid var(--neutralQuaternaryAlt);
     display: flex;
     justify-content: center;

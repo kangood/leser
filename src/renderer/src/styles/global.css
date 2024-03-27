@@ -17,8 +17,8 @@
     --white: #fff;
     --whiteConstant: #fff;
     --primary: #0078d4;
-    --navHeight: 32px;
-    --feedBottomHeight: 32px;
+    --navHeight: 38px;
+    --feedBottomHeight: 38px;
     --transition-timing: cubic-bezier(0.1, 0.9, 0.2, 1);
     --blur: saturate(150%) blur(20px);
 }
@@ -43,9 +43,9 @@
         --whiteConstant: #f8f8f8;
     }
 }
-body.darwin {
+/* body.darwin {
     --navHeight: 38px;
-}
+} */
 
 html,
 body {

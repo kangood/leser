@@ -28,7 +28,6 @@ export type MenuProps = {
         key: string,
         selected: string
     ) => void
-    toggleSearch: () => void
     fetch: () => void
 }
 
@@ -46,7 +45,6 @@ export const Menu: React.FC<MenuProps> = ({
     selectSource,
     groupContextMenu,
     updateGroupExpansion,
-    toggleSearch,
     fetch,
 }) => {
 
@@ -96,15 +94,15 @@ export const Menu: React.FC<MenuProps> = ({
         // 订阅源上面的渲染
         {
             links: [
-                {
-                    name: intl.get("search"),
-                    ariaLabel:
-                        intl.get("search") + (searchOn ? " ✓" : " "),
-                    key: "search",
-                    icon: "Search",
-                    onClick: toggleSearch,
-                    url: null,
-                },
+                // {
+                //     name: intl.get("search"),
+                //     ariaLabel:
+                //         intl.get("search") + (searchOn ? " ✓" : " "),
+                //     key: "search",
+                //     icon: "Search",
+                //     onClick: toggleSearch,
+                //     url: null,
+                // },
                 {
                     name: intl.get("allArticles"),
                     ariaLabel:

@@ -62,7 +62,6 @@ const mapDispatchToProps = dispatch => ({
             if (type === "g") dispatch(toggleGroupExpansion(parseInt(index)))
         }
     },
-    toggleSearch: () => dispatch(toggleSearch()),
     fetch: () => dispatch(fetchItems()),
 })
 

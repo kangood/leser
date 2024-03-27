@@ -20,6 +20,7 @@ type PageProps = {
     dismissItem: () => void
     offsetItem: (offset: number) => void
     switchFilter: (filter: FilterType) => void
+    toggleSearch: () => void
 }
 
 const Page: React.FC<PageProps> = ({
@@ -32,7 +33,8 @@ const Page: React.FC<PageProps> = ({
     state,
     dismissItem,
     offsetItem,
-    switchFilter
+    switchFilter,
+    toggleSearch,
 }) => {
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
@@ -114,6 +116,11 @@ const Page: React.FC<PageProps> = ({
                                     className="backward"
                                 />
                                 <span className="title">{state.title}</span>
+                                <img
+                                    src="icons/search.svg"
+                                    onClick={toggleSearch}
+                                    className="search"
+                                />
                             </div>
                             {feeds.map(fid => (
                                 <FeedContainer

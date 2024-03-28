@@ -19,7 +19,7 @@
     z-index: 5;
     left: 0;
     top: 0;
-    width: 280px;
+    width: var(--menuWidth);
     height: 100%;
 }
 .article-container {
@@ -47,7 +47,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 280px;
+    width: var(--menuWidth);
     height: 100%;
     background-color: none; /* 背景颜色 */
     backdrop-filter: var(--blur);
@@ -255,7 +255,7 @@ body.darwin .list-main .article-search {
 /* 主内容区和列表主内容区样式，所有断点有效 */
 .main.menu-on,
 .list-main.menu-on {
-    margin-left: 280px; /* 左边距 */
+    margin-left: var(--menuWidth); /* 左边距 */
 }
 
 /* 设置媒体查询，当视口宽度大于等于 1200px 时生效 */
@@ -279,7 +279,7 @@ body.darwin .list-main .article-search {
     }
     /* 菜单容器样式 */
     .menu-container {
-        width: 280px; /* 宽度 */
+        width: var(--menuWidth); /* 宽度 */
         background: none; /* 背景 */
         backdrop-filter: none; /* 背景滤镜 */
     }
@@ -309,12 +309,12 @@ body.darwin .list-main .article-search {
     }
     /* 搜索栏样式 */
     .menu-on .article-search {
-        left: 280px; /* 左侧偏移 */
+        left: var(--menuWidth); /* 左侧偏移 */
         max-width: calc(100% - 728px); /* 最大宽度 */
     }
     /* macOS 主题下的搜索栏样式 */
     body.darwin .menu-on .article-search {
-        left: 280px; /* 左侧偏移 */
+        left: var(--menuWidth); /* 左侧偏移 */
         max-width: calc(100% - 556px); /* 最大宽度 */
     }
     /* 列表主内容区的搜索栏样式 */

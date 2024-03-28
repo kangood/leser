@@ -150,22 +150,27 @@ const Page: React.FC<PageProps> = ({
                                 </a>
                             </div>
                         </div>
-                        {itemId ? (
-                            <div className="side-article-wrapper">
-                                <ArticleContainer itemId={itemId} />
+                        <div className="side-wrapper">
+                            <div className="side-top">
+                                
                             </div>
-                        ) : (
-                            <div className="side-logo-wrapper">
-                                <img
-                                    className="light"
-                                    src="icons/logo-outline.svg"
-                                />
-                                <img
-                                    className="dark"
-                                    src="icons/logo-outline-dark.svg"
-                                />
-                            </div>
-                        )}
+                            {itemId ? (
+                                <div className="side-article-wrapper">
+                                    <ArticleContainer itemId={itemId} />
+                                </div>
+                            ) : (
+                                <div className="side-logo-wrapper">
+                                    <img
+                                        className="light"
+                                        src="icons/logo-outline.svg"
+                                    />
+                                    <img
+                                        className="dark"
+                                        src="icons/logo-outline-dark.svg"
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </>

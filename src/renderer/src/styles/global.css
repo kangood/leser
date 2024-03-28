@@ -21,6 +21,8 @@
     --feedBottomHeight: 38px;
     --transition-timing: cubic-bezier(0.1, 0.9, 0.2, 1);
     --blur: saturate(150%) blur(20px);
+    --menuWidth: 280px;
+    --feedWidth: 350px;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -194,7 +196,7 @@ nav .progress {
     letter-spacing: 2px;
     margin: 0 4px;
     display: inline-block;
-    max-width: 280px;
+    max-width: var(--menuWidth);
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;

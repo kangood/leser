@@ -8,6 +8,7 @@ import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 import intl from "react-intl-universal"
 import { FilterType } from "../scripts/models/feed"
 import { AppState } from "../scripts/models/app"
+import { SideTop } from "./side-top"
 
 type PageProps = {
     contextOn: boolean
@@ -21,6 +22,10 @@ type PageProps = {
     offsetItem: (offset: number) => void
     switchFilter: (filter: FilterType) => void
     toggleSearch: () => void
+    markAllRead: () => void
+    logs: () => void
+    views: () => void
+    settings: () => void
 }
 
 const Page: React.FC<PageProps> = ({
@@ -35,10 +40,15 @@ const Page: React.FC<PageProps> = ({
     offsetItem,
     switchFilter,
     toggleSearch,
+    markAllRead,
+    logs,
+    views,
+    settings,
 }) => {
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
     const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+    const [maximized, setMaximized] = React.useState<boolean>(window.utils.isMaximized());
     
     const offsetItemHandler = (event: React.MouseEvent, offset: number) => {
         event.stopPropagation()
@@ -46,6 +56,25 @@ const Page: React.FC<PageProps> = ({
     }
     const prevItem = (event: React.MouseEvent) => offsetItemHandler(event, -1)
     const nextItem = (event: React.MouseEvent) => offsetItemHandler(event, 1)
+
+    const viewsWrapper = () => {
+        if (state.contextMenu.event !== "#view-toggle") {
+            views()
+        }
+    }
+
+    const minimize = () => {
+        window.utils.minimizeWindow()
+    }
+
+    const maximize = () => {
+        window.utils.maximizeWindow()
+        setMaximized(!maximized)
+    }
+
+    const close = () => {
+        window.utils.closeWindow()
+    }
 
     return (
         viewType !== ViewType.List ? (
@@ -151,9 +180,17 @@ const Page: React.FC<PageProps> = ({
                             </div>
                         </div>
                         <div className="side-wrapper">
-                            <div className="side-top">
-                                
-                            </div>
+                            <SideTop
+                                markAllRead={markAllRead}
+                                logs={logs}
+                                viewsWrapper={viewsWrapper}
+                                settings={settings}
+                                minimize={minimize}
+                                maximize={maximize}
+                                maximized={maximized}
+                                close={close}
+                                state={state}
+                            />
                             {itemId ? (
                                 <div className="side-article-wrapper">
                                     <ArticleContainer itemId={itemId} />

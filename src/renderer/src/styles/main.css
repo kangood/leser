@@ -260,15 +260,6 @@ body.darwin .list-main .article-search {
 
 /* 设置媒体查询，当视口宽度大于等于 1200px 时生效 */
 @media (min-width: 1200px) {
-    /* 导航栏展开时的样式 */
-    #root > nav.menu-on {
-        padding-left: 296px; /* 左边距 */
-    }
-    /* 导航栏标题样式 */
-    #root > nav.menu-on span.title,
-    body.darwin #root > nav.menu-on span.title {
-        max-width: 300px; /* 最大宽度 */
-    }
     /* 按钮组样式 */
     nav.menu-on .btn-group .btn {
         display: inline-block; /* 内联块级元素显示 */

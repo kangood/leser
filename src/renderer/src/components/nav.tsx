@@ -139,8 +139,8 @@ const Nav: React.FC<NavProps> = ({
     }
 
     return (
-        <nav className={getClassNames()}>
-            <div className="btn-group" style={{ float: "right" }}>
+        <div className={getClassNames()}>
+            {/* <div className="btn-group" style={{ float: "right" }}>
                 <a
                     className="btn"
                     id="mark-all-toggle"
@@ -216,14 +216,14 @@ const Nav: React.FC<NavProps> = ({
                     onClick={close}>
                     <Icon iconName="Cancel" />
                 </a>
-            </div>
+            </div> */}
             {!canFetch() && (
                 <ProgressIndicator
                     className="progress"
                     percentComplete={getProgress()}
                 />
             )}
-        </nav>
+        </div>
     )
 }
 

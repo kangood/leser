@@ -4,7 +4,7 @@ import { RootState } from "../scripts/reducer"
 import Page from "../components/page"
 import { AppDispatch } from "../scripts/utils"
 import { dismissItem, showOffsetItem, switchFilter, toggleSearch } from "../scripts/models/page"
-import { ContextMenuType } from "../scripts/models/app"
+import { ContextMenuType, openMarkAllMenu, openViewMenu, toggleLogMenu, toggleSettings } from "../scripts/models/app"
 import { FilterType } from "../scripts/models/feed"
 
 const getState = (state: RootState) => state.app
@@ -33,6 +33,10 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
     offsetItem: (offset: number) => dispatch(showOffsetItem(offset)),
     switchFilter: (filter: FilterType) => dispatch(switchFilter(filter)),
     toggleSearch: () => dispatch(toggleSearch()),
+    logs: () => dispatch(toggleLogMenu()),
+    views: () => dispatch(openViewMenu()),
+    settings: () => dispatch(toggleSettings()),
+    markAllRead: () => dispatch(openMarkAllMenu()),
 })
 
 const PageContainer = connect(mapStateToProps, mapDispatchToProps)(Page)

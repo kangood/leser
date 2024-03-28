@@ -138,7 +138,6 @@
     flex-wrap: wrap;
     height: 100%;
     position: relative;
-    margin-top: calc(-1 * var(--navHeight));
     overflow: hidden;
     background: var(--white);
 }

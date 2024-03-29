@@ -36,9 +36,11 @@
 }
 .menu-container {
     pointer-events: none;
+    display: none;
 }
 .menu-container.show {
     pointer-events: unset;
+    display: block;
 }
 .article-container {
     z-index: 6;
@@ -260,14 +262,6 @@ body.darwin .list-main .article-search {
 
 /* 设置媒体查询，当视口宽度大于等于 1200px 时生效 */
 @media (min-width: 1200px) {
-    /* 按钮组样式 */
-    nav.menu-on .btn-group .btn {
-        display: inline-block; /* 内联块级元素显示 */
-    }
-    /* item显示时的按钮组样式 */
-    nav.item-on .btn-group .btn.system {
-        color: var(--whiteConstant); /* 颜色 */
-    }
     /* 菜单容器样式 */
     .menu-container {
         width: var(--menuWidth); /* 宽度 */
@@ -317,12 +311,6 @@ body.darwin .list-main .article-search {
     body.darwin .list-main.menu-on .article-search {
         left: 0; /* 左侧偏移 */
         top: 4px; /* 顶部偏移 */
-    }
-    /* 隐藏按钮样式 */
-    nav.hide-btns .btn-group .btn,
-    nav.menu-on .btn-group .btn.hide-wide,
-    .menu .btn-group .btn.hide-wide {
-        display: none; /* 隐藏 */
     }
     /* 内联块级元素样式 */
     .btn-group .btn.inline-block-wide {

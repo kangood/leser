@@ -194,14 +194,22 @@
     font-size: small;
 }
 .feed-bottom {
-    padding-top: 4px;
-    border-top: 1px solid var(--neutralQuaternaryAlt);
     display: flex;
     justify-content: center;
+    padding-top: 6px;
+    border-top: 1px solid var(--neutralQuaternaryAlt);
 }
-.feed-bottom > a {
-    width: 15px;
-    margin: 5px 40px;
+.feed-bottom .btn {
+    width: 32px;
+    height: 25px;
+    margin: 0px 40px;
+    color: var(--black);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+.feed-bottom .btn:hover {
+    background-color: #d4d7d9;
 }
 .list-feed-container::after {
     content: "";

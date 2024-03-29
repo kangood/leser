@@ -163,19 +163,19 @@ const Page: React.FC<PageProps> = ({
                             ))}
                             <div className="feed-bottom">
                                 <a
-                                    // className="starred"
+                                    className="btn"
                                     onClick={ () => switchFilter(FilterType.StarredOnly)}
                                     title={intl.get("context.starredOnly")}>
                                     <Icon iconName="FavoriteStarFill" />
                                 </a>
                                 <a
-                                    // className="unread"
+                                    className="btn"
                                     onClick={ () => switchFilter(FilterType.UnreadOnly)}
                                     title={intl.get("context.unreadOnly")}>
                                     <Icon iconName="RadioBtnOn" />
                                 </a>
                                 <a
-                                    // className="all"
+                                    className="btn"
                                     onClick={() => switchFilter(FilterType.Default)}
                                     title={intl.get("allArticles")}>
                                     <Icon iconName="ClearFilter" />

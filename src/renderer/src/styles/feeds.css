@@ -156,22 +156,39 @@
     }
 }
 .list-main:not(.menu-on) .feed-top .backward {
-    width: 20px;
+    width: 21px;
 }
 .feed-top {
     display: flex;
     align-items: center;
     height: var(--navHeight);
 }
-.feed-top .backward {
-    width: 0px;
+.feed-top .back-outside {
     margin-left: 70px;
     margin-right: 5px;
+    height: var(--navHeight);
+    display: flex;
+    justify-content: center;
 }
-.feed-top .search {
-    width: 18px;
+.back-outside .backward {
+    width: 0px;
+}
+.back-outside .backward:hover {
+    filter: brightness(90%);
+}
+.feed-top .search-outside {
+    height: 25px;
+    width: 32px;
+    display: flex;
+    justify-content: center;
     position: absolute;
     right: 10px;
+}
+.feed-top .search-outside:hover {
+    background-color: #d4d7d9;
+}
+.search-outside .search {
+    width: 18px;
 }
 .feed-top > span {
     font-size: small;

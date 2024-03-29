@@ -138,18 +138,21 @@ const Page: React.FC<PageProps> = ({
                         <ArticleSearch />
                         <div className="list-feed-container">
                             <div className="feed-top dragging">
-                                {/* 这里是一个返回按钮，点击则打开菜单栏 */}
-                                <img
-                                    src="icons/backward.svg"
-                                    onClick={() => toggleMenu(true)}
-                                    className="backward undragging"
-                                />
+                                <a className="back-outside">
+                                    <img
+                                        src="icons/backward.svg"
+                                        onClick={() => toggleMenu(true)}
+                                        className="backward undragging"
+                                    />
+                                </a>
                                 <span className="title">{state.title}</span>
-                                <img
-                                    src="icons/search.svg"
-                                    onClick={toggleSearch}
-                                    className="search undragging"
-                                />
+                                <a className="search-outside">
+                                    <img
+                                        src="icons/search.svg"
+                                        onClick={toggleSearch}
+                                        className="search undragging"
+                                    />
+                                </a>
                             </div>
                             {feeds.map(fid => (
                                 <FeedContainer

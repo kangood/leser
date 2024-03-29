@@ -224,9 +224,9 @@ export const Menu: React.FC<MenuProps> = ({
                 <div
                     className={"menu" + (itemOn ? " item-on" : "")}
                     onClick={e => e.stopPropagation()}>
-                    <div className="btn-group">
+                    <div className="btn-group dragging">
                         <a
-                            className={"btn" + fetching()}
+                            className={"btn" + fetching() + " undragging"}
                             onClick={fetchWrapper}
                             title={intl.get("nav.refresh")}
                         >

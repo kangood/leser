@@ -14,8 +14,8 @@ export const SideTop = ({
   state,
 }) => {
     return (
-        <div className="side-top">
-            <div className="btn-group" style={{ float: "right" }}>
+        <div className="side-top dragging">
+            <div className="btn-group undragging" style={{ float: "right" }}>
                 <a
                     className="btn"
                     id="mark-all-toggle"

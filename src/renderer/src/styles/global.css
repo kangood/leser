@@ -250,3 +250,9 @@ body.darwin .btn-group .seperator {
 body.darwin .btn-group .btn.system {
     display: none;
 }
+.dragging {
+    -webkit-app-region: drag;
+}
+.undragging {
+    -webkit-app-region: none;
+}

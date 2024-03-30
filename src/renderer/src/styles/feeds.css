@@ -175,6 +175,9 @@
 .list-main:not(.menu-on) .feed-top .backward {
     width: 21px;
 }
+body.win32 .list-main:not(.menu-on) .feed-top .back-outside {
+    margin-left: 10px;
+}
 .feed-top {
     display: flex;
     align-items: center;

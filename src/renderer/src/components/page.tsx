@@ -9,6 +9,7 @@ import { FilterType } from "../scripts/models/feed"
 import { AppState } from "../scripts/models/app"
 import { SideTopRight } from "./side-top-right"
 import { ContentFilter } from "./utils/content-filter"
+import { FeedTop } from "./feeds/feed-top"
 
 type PageProps = {
     contextOn: boolean
@@ -88,6 +89,7 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="wide-side-wrapper">
+                            <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             <ContentFilter switchFilter={switchFilter} />
                             <SideTopRight
                                 markAllRead={markAllRead}
@@ -151,23 +153,7 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="list-feed-container">
-                            <div className="feed-top dragging">
-                                <a className="back-outside">
-                                    <img
-                                        src="icons/backward.svg"
-                                        onClick={() => toggleMenu(true)}
-                                        className="backward undragging"
-                                    />
-                                </a>
-                                <span className="title">{state.title}</span>
-                                <a className="search-outside">
-                                    <img
-                                        src="icons/search.svg"
-                                        onClick={toggleSearch}
-                                        className="search undragging"
-                                    />
-                                </a>
-                            </div>
+                            <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             {feeds.map(fid => (
                                 <FeedContainer
                                     viewType={viewType}

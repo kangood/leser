@@ -86,9 +86,9 @@
 .side-wrapper .side-top-right {
     height: var(--navHeight);
 }
-.wide-side-wrapper .side-top-right {
-    width: calc(100% - var(--feedWidth) * 2);
-    height: var(--navHeight);
+.side-top-right .btn-group {
+    position: absolute;
+    right: 0;
 }
 .wide-side-wrapper {
     display: flex;
@@ -214,11 +214,19 @@
 .content-filter .btn {
     width: 32px;
     height: 25px;
-    margin: 0px 40px;
+    margin: 0px 15px;
     color: var(--black);
     justify-content: center;
     align-items: center;
     display: flex;
+    font-size: 14px;
+}
+.content-filter span {
+    font-size: 11px;
+    margin-left: 5px;
+}
+.content-filter .selected {
+    width: 60px;
 }
 .content-filter .btn:hover {
     background-color: #d4d7d9;

@@ -15,7 +15,7 @@ export const SideTopRight = ({
 }) => {
     return (
         <div className="side-top-right dragging">
-            <div className="btn-group undragging" style={{ float: "right" }}>
+            <div className="btn-group undragging">
                 <a
                     className="btn"
                     id="mark-all-toggle"

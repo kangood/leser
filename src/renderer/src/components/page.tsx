@@ -5,10 +5,10 @@ import ArticleContainer from "../containers/article-container"
 import { ViewType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
-import intl from "react-intl-universal"
 import { FilterType } from "../scripts/models/feed"
 import { AppState } from "../scripts/models/app"
-import { SideTop } from "./side-top"
+import { SideTopRight } from "./side-top-right"
+import { ContentFilter } from "./utils/content-filter"
 
 type PageProps = {
     contextOn: boolean
@@ -88,7 +88,8 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="wide-side-wrapper">
-                            <SideTop
+                            <ContentFilter switchFilter={switchFilter} />
+                            <SideTopRight
                                 markAllRead={markAllRead}
                                 logs={logs}
                                 viewsWrapper={viewsWrapper}
@@ -174,29 +175,10 @@ const Page: React.FC<PageProps> = ({
                                     key={fid}
                                 />
                             ))}
-                            <div className="feed-bottom">
-                                <a
-                                    className="btn"
-                                    onClick={ () => switchFilter(FilterType.StarredOnly)}
-                                    title={intl.get("context.starredOnly")}>
-                                    <Icon iconName="FavoriteStarFill" />
-                                </a>
-                                <a
-                                    className="btn"
-                                    onClick={ () => switchFilter(FilterType.UnreadOnly)}
-                                    title={intl.get("context.unreadOnly")}>
-                                    <Icon iconName="RadioBtnOn" />
-                                </a>
-                                <a
-                                    className="btn"
-                                    onClick={() => switchFilter(FilterType.Default)}
-                                    title={intl.get("allArticles")}>
-                                    <Icon iconName="ClearFilter" />
-                                </a>
-                            </div>
+                            <ContentFilter switchFilter={switchFilter}/>
                         </div>
                         <div className="side-wrapper">
-                            <SideTop
+                            <SideTopRight
                                 markAllRead={markAllRead}
                                 logs={logs}
                                 viewsWrapper={viewsWrapper}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon } from '@fluentui/react';
 import intl from 'react-intl-universal';
 
-export const SideTop = ({
+export const SideTopRight = ({
   markAllRead,
   logs,
   viewsWrapper,
@@ -14,7 +14,7 @@ export const SideTop = ({
   state,
 }) => {
     return (
-        <div className="side-top dragging">
+        <div className="side-top-right dragging">
             <div className="btn-group undragging" style={{ float: "right" }}>
                 <a
                     className="btn"

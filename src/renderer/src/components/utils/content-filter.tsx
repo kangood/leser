@@ -17,6 +17,7 @@ export const ContentFilter = ({ switchFilter }) => {
 
     return (
         <div className="content-filter">
+            <span className="seperator"></span>
             <a
                 className={`btn ${isActiveFilter(FilterType.StarredOnly) && 'selected'}`}
                 onClick={() => handleClick(FilterType.StarredOnly)}

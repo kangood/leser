@@ -93,6 +93,14 @@
 .wide-side-wrapper {
     display: flex;
 }
+.wide-side-wrapper .feed-top {
+    width: auto;
+    margin-right: 20px;
+}
+.wide-side-wrapper .feed-top .search-outside {
+    position: relative;
+    right: -10px;
+}
 .side-article-wrapper,
 .side-logo-wrapper {
     flex-grow: 1;
@@ -230,6 +238,22 @@
 }
 .content-filter .btn:hover {
     background-color: #d4d7d9;
+}
+.wide-side-wrapper .content-filter {
+    width: 250px;
+    padding-top: 4px;
+    border-top: 0;
+}
+.wide-side-wrapper .content-filter .seperator {
+    display: inline-block;
+    width: var(--navHeight);
+    font-size: 12px;
+    color: #c8c6c4;
+    text-align: center;
+    vertical-align: middle;
+}
+.wide-side-wrapper .content-filter .seperator::before {
+    content: "|";
 }
 .list-feed-container::after {
     content: "";

@@ -82,8 +82,14 @@
     display: flex;
     flex-direction: column;
 }
+.wide-side-wrapper .side-top ,
 .side-wrapper .side-top {
     height: var(--navHeight);
+}
+.wide-side-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 .side-article-wrapper,
 .side-logo-wrapper {
@@ -239,7 +245,6 @@
     padding-top: 28px;
     height: calc(100% - 60px);
     overflow: hidden scroll;
-    margin-top: var(--navHeight);
 }
 .magazine-feed .ms-List-page {
     display: flex;
@@ -254,7 +259,6 @@
     padding: 12px;
     height: calc(100% - 32px);
     overflow: hidden scroll;
-    margin-top: var(--navHeight);
     width: 100%;
     box-sizing: border-box;
 }

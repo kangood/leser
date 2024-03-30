@@ -203,7 +203,6 @@ img.favicon.dropdown {
 }
 
 .main {
-    margin-top: calc(-1 * var(--navHeight));
     height: 100%;
     overflow: hidden;
     background-color: var(--neutralLighterAlt);

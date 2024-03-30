@@ -87,6 +87,19 @@ const Page: React.FC<PageProps> = ({
                             "main" + (toggleMenuDisplay ? " menu-on" : "")
                         }>
                         <ArticleSearch />
+                        <div className="wide-side-wrapper">
+                            <SideTop
+                                markAllRead={markAllRead}
+                                logs={logs}
+                                viewsWrapper={viewsWrapper}
+                                settings={settings}
+                                minimize={minimize}
+                                maximize={maximize}
+                                maximized={maximized}
+                                close={close}
+                                state={state}
+                            />
+                        </div>
                         {feeds.map(fid => (
                             <FeedContainer
                                 viewType={viewType}

@@ -223,9 +223,8 @@ img.favicon.dropdown {
     z-index: 4;
     position: absolute;
     top: 0;
-    left: 36px;
-    width: 100%;
-    max-width: calc(100% - 484px);
+    left: var(--menuWidth);
+    width: 450px;
     margin: 4px 16px;
     border: none;
     -webkit-app-region: none;
@@ -233,19 +232,17 @@ img.favicon.dropdown {
     box-shadow: 0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132),
         0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108);
 }
-body.darwin.not-fullscreen .article-search {
-    left: 108px;
-    max-width: calc(100% - 384px);
+.main:not(.menu-on) .article-search {
+    left: -5px;
+}
+body.darwin .main:not(.menu-on) .article-search {
+    left: 55px;
 }
 .list-main .article-search {
-    max-width: 294px;
-    margin: 4px 10px;
-}
-body.darwin .list-main .article-search {
-    max-width: 314px;
+    max-width: 310px;
     left: 0;
     top: var(--navHeight);
-    margin: 0 10px;
+    margin: 0 20px;
 }
 .main,
 .list-main {
@@ -290,26 +287,6 @@ body.darwin .list-main .article-search {
         width: 120%; /* 宽度 */
         height: 120%; /* 高度 */
         box-shadow: inset 5px 0 25px #0004; /* 内部阴影 */
-    }
-    /* 搜索栏样式 */
-    .menu-on .article-search {
-        left: var(--menuWidth); /* 左侧偏移 */
-        max-width: calc(100% - 728px); /* 最大宽度 */
-    }
-    /* macOS 主题下的搜索栏样式 */
-    body.darwin .menu-on .article-search {
-        left: var(--menuWidth); /* 左侧偏移 */
-        max-width: calc(100% - 556px); /* 最大宽度 */
-    }
-    /* 列表主内容区的搜索栏样式 */
-    .list-main.menu-on .article-search {
-        left: 0; /* 左侧偏移 */
-        width: 330px; /* 宽度 */
-    }
-    /* macOS 主题下的列表主内容区搜索栏样式 */
-    body.darwin .list-main.menu-on .article-search {
-        left: 0; /* 左侧偏移 */
-        top: 4px; /* 顶部偏移 */
     }
     /* 内联块级元素样式 */
     .btn-group .btn.inline-block-wide {

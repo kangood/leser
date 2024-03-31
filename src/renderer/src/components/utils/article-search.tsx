@@ -17,7 +17,7 @@ const ArticleSearch: React.FC<SearchProps> = ({ searchOn, initQuery, dispatch })
     const debouncedSearch = useRef(new Async().debounce((q: string) => {
         const regex = validateRegex(q);
         if (regex !== null) dispatch(performSearch(q));
-    }, 750)); // 存储防抖函数以避免频繁触发搜索
+    }, 200)); // 存储防抖函数以避免频繁触发搜索
 
     const inputRef = useRef<ISearchBox>(null); // 获取搜索框 DOM 元素
 
@@ -55,6 +55,7 @@ const ArticleSearch: React.FC<SearchProps> = ({ searchOn, initQuery, dispatch })
             value={query}
             onChange={onSearchChange}
             onBlur={onBlurHandle}
+            onClear={() => dispatch(toggleSearch())}
         />
     ) : null;
 };

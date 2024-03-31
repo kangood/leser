@@ -1,64 +1,69 @@
-import * as React from "react"
-import intl from "react-intl-universal"
-import { connect } from "react-redux"
-import { RootState } from "../../scripts/reducer"
-import { SearchBox, ISearchBox, Async } from "@fluentui/react"
-import { AppDispatch, validateRegex } from "../../scripts/utils"
-import { performSearch } from "../../scripts/models/page"
+import React, { useRef, useState, useEffect } from "react";
+import intl from "react-intl-universal";
+import { connect } from "react-redux";
+import { RootState } from "../../scripts/reducer";
+import { SearchBox, ISearchBox, Async } from "@fluentui/react";
+import { AppDispatch, validateRegex } from "../../scripts/utils";
+import { performSearch, toggleSearch } from "../../scripts/models/page";
 
 type SearchProps = {
-    searchOn: boolean
-    initQuery: string
-    dispatch: AppDispatch
-}
+    searchOn: boolean; // 搜索开关状态
+    initQuery: string; // 初始搜索查询
+    dispatch: AppDispatch; // Redux 分发函数
+};
 
-type SearchState = {
-    query: string
-}
+const ArticleSearch: React.FC<SearchProps> = ({ searchOn, initQuery, dispatch }) => {
+    const [query, setQuery] = useState<string>(initQuery); // 使用状态来存储搜索查询
+    const debouncedSearch = useRef(new Async().debounce((q: string) => {
+        const regex = validateRegex(q);
+        if (regex !== null) dispatch(performSearch(q));
+    }, 750)); // 存储防抖函数以避免频繁触发搜索
 
-class ArticleSearch extends React.Component<SearchProps, SearchState> {
-    debouncedSearch: (query: string) => void
-    inputRef: React.RefObject<ISearchBox>
+    const inputRef = useRef<ISearchBox>(null); // 获取搜索框 DOM 元素
 
-    constructor(props: SearchProps) {
-        super(props)
-        this.debouncedSearch = new Async().debounce((query: string) => {
-            let regex = validateRegex(query)
-            if (regex !== null) props.dispatch(performSearch(query))
-        }, 750)
-        this.inputRef = React.createRef<ISearchBox>()
-        this.state = { query: props.initQuery }
-    }
+    // 当搜索查询变化时触发的回调函数
+    const onSearchChange = (ev?: React.ChangeEvent<HTMLInputElement>, newValue?: string) => {
+        if (newValue !== undefined) {
+            debouncedSearch.current(newValue);
+            setQuery(newValue);
+        }
+    };
 
-    onSearchChange = (_, newValue: string) => {
-        this.debouncedSearch(newValue)
-        this.setState({ query: newValue })
-    }
-
-    componentDidUpdate(prevProps: SearchProps) {
-        if (this.props.searchOn && !prevProps.searchOn) {
-            this.setState({ query: this.props.initQuery })
-            this.inputRef.current.focus()
+    // 离开焦点之后没有内容的时候，就关闭搜索
+    const onBlurHandle = () => {
+        if (query?.trim() === '') {
+            dispatch(toggleSearch());
         }
     }
 
-    render() {
-        return (
-            this.props.searchOn && (
-                <SearchBox
-                    componentRef={this.inputRef}
-                    className="article-search"
-                    placeholder={intl.get("search")}
-                    value={this.state.query}
-                    onChange={this.onSearchChange}
-                />
-            )
-        )
-    }
-}
+    // 当搜索开关状态或初始搜索查询变化时执行的副作用
+    useEffect(() => {
+        if (searchOn) {
+            setQuery(initQuery);
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
+        }
+    }, [searchOn, initQuery]);
 
+    // 渲染搜索框组件
+    return searchOn ? (
+        <SearchBox
+            componentRef={inputRef}
+            className="article-search"
+            placeholder={intl.get("search")} // 国际化搜索占位符
+            value={query}
+            onChange={onSearchChange}
+            onBlur={onBlurHandle}
+        />
+    ) : null;
+};
+
+// 从 Redux 状态中获取搜索开关状态和初始搜索查询
 const getSearchProps = (state: RootState) => ({
     searchOn: state.page.searchOn,
     initQuery: state.page.filter.search,
-})
-export default connect(getSearchProps)(ArticleSearch)
+});
+
+// 将 Redux 状态和分发函数连接到组件上
+export default connect(getSearchProps)(ArticleSearch);

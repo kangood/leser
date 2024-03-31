@@ -38,7 +38,7 @@
     "nav": {
         "menu": "メニュー",
         "refresh": "更新",
-        "markAllRead": "一括で開封済み",
+        "markAllRead": "選択した範囲を既読としてマーク",
         "notifications": "通知",
         "view": "ビュー",
         "settings": "設定",

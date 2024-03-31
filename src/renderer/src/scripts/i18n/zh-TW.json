@@ -39,7 +39,7 @@
     "nav": {
         "menu": "選單",
         "refresh": "重新整理",
-        "markAllRead": "全部標為已讀",
+        "markAllRead": "選中以下範圍標為已讀",
         "notifications": "訊息",
         "view": "檢視",
         "settings": "選項",

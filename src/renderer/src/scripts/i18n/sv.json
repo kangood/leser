@@ -38,7 +38,7 @@
     "nav": {
         "menu": "Meny",
         "refresh": "Uppdatera",
-        "markAllRead": "Markera alla som lästa",
+        "markAllRead": "Markera det valda området som läst",
         "notifications": "Aviseringar",
         "view": "Visa",
         "settings": "Inställningar",

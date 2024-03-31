@@ -20,7 +20,7 @@ export const SideTopRight = ({
                     className="btn"
                     id="mark-all-toggle"
                     onClick={markAllRead}
-                    title={intl.get("nav.markAllRead")}
+                    title={intl.get("article.markRead")}
                     onMouseDown={e => {
                         if (
                             state.contextMenu.event ===

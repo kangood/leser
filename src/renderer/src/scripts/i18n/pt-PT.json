@@ -39,7 +39,7 @@
     "nav": {
         "menu": "Menu",
         "refresh": "Atualizar",
-        "markAllRead": "Marcar todos como lidos",
+        "markAllRead": "Marcar a seleção como lida",
         "notifications": "Notificações",
         "view": "Visualização",
         "settings": "Definições",

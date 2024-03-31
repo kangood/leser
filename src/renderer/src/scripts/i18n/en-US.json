@@ -39,7 +39,7 @@
     "nav": {
         "menu": "Menu",
         "refresh": "Refresh",
-        "markAllRead": "Mark all as read",
+        "markAllRead": "Mark the selection as read",
         "notifications": "Notifications",
         "view": "View",
         "settings": "Settings",

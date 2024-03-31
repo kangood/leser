@@ -38,7 +38,7 @@
     "nav": {
         "menu": "메뉴",
         "refresh": "새로고침",
-        "markAllRead": "모두 읽은 것으로 처리",
+        "markAllRead": "선택한 항목을 읽음으로 표시",
         "notifications": "알림",
         "view": "보기",
         "settings": "설정",

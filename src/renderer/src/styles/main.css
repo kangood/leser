@@ -66,8 +66,10 @@
 body.blur .menu .btn-group {
     --black: var(--neutralSecondaryAlt);
 }
-body.darwin .menu .btn-group {
+.menu .btn-group {
     display: flex;
+}
+body.darwin .menu .btn-group {
     flex-direction: row-reverse;
 }
 .menu-container .menu .nav-wrapper {

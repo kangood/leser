@@ -88,7 +88,7 @@ const Page: React.FC<PageProps> = ({
                             "main" + (toggleMenuDisplay ? " menu-on" : "")
                         }>
                         <ArticleSearch />
-                        <div className="wide-side-wrapper">
+                        <div className="wide-side-wrapper dragging">
                             <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             <ContentFilter switchFilter={switchFilter} />
                             <SideTopRight

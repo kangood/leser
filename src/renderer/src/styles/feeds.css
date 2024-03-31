@@ -239,6 +239,7 @@ body.win32 .main:not(.menu-on) .feed-top .back-outside {
 }
 .content-filter .selected {
     width: 60px;
+    background-color: #d4d7d9;
 }
 .content-filter .btn:hover {
     background-color: #d4d7d9;

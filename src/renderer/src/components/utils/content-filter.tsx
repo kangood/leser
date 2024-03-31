@@ -19,7 +19,7 @@ export const ContentFilter = ({ switchFilter }) => {
         <div className="content-filter">
             <span className="seperator"></span>
             <a
-                className={`btn ${isActiveFilter(FilterType.StarredOnly) && 'selected'}`}
+                className={`btn undragging ${isActiveFilter(FilterType.StarredOnly) ? 'selected' : ''}`}
                 onClick={() => handleClick(FilterType.StarredOnly)}
                 title={intl.get("context.starredOnly")}
             >
@@ -27,7 +27,7 @@ export const ContentFilter = ({ switchFilter }) => {
                 {isActiveFilter(FilterType.StarredOnly) && <span>星标</span>}
             </a>
             <a
-                className={`btn ${isActiveFilter(FilterType.UnreadOnly) && 'selected'}`}
+                className={`btn undragging ${isActiveFilter(FilterType.UnreadOnly) ? 'selected' : ''}`}
                 onClick={() => handleClick(FilterType.UnreadOnly)}
                 title={intl.get("context.unreadOnly")}
             >
@@ -35,7 +35,7 @@ export const ContentFilter = ({ switchFilter }) => {
                 {isActiveFilter(FilterType.UnreadOnly) && <span>未读</span>}
             </a>
             <a
-                className={`btn ${isActiveFilter(FilterType.Default) && 'selected'}`}
+                className={`btn undragging ${isActiveFilter(FilterType.Default) ? 'selected' : ''}`}
                 onClick={() => handleClick(FilterType.Default)}
                 title={intl.get("allArticles")}
             >

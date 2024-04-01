@@ -11,8 +11,7 @@ const getState = (state: RootState) => state.app
 const getPage = (state: RootState) => state.page
 const getSettings = (state: RootState) => state.app.settings.display
 const getMenu = (state: RootState) => state.app.menu
-const getContext = (state: RootState) =>
-    state.app.contextMenu.type != ContextMenuType.Hidden
+const getContext = (state: RootState) => state.app.contextMenu.type != ContextMenuType.Hidden
 
 const mapStateToProps = createSelector(
     [getState, getPage, getSettings, getMenu, getContext],
@@ -25,6 +24,7 @@ const mapStateToProps = createSelector(
         itemFromFeed: page.itemFromFeed,
         viewType: page.viewType,
         state: state,
+        filter: page.filter.type
     })
 )
 

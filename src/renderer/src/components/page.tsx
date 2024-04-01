@@ -19,6 +19,7 @@ type PageProps = {
     itemFromFeed: boolean
     viewType: ViewType // 视图类型
     state: AppState
+    filter: FilterType
     dismissItem: () => void
     offsetItem: (offset: number) => void
     switchFilter: (filter: FilterType) => void
@@ -37,6 +38,7 @@ const Page: React.FC<PageProps> = ({
     itemFromFeed,
     viewType,
     state,
+    filter,
     dismissItem,
     offsetItem,
     switchFilter,
@@ -90,7 +92,7 @@ const Page: React.FC<PageProps> = ({
                         <ArticleSearch />
                         <div className="wide-side-wrapper dragging">
                             <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
-                            <ContentFilter switchFilter={switchFilter} />
+                            <ContentFilter filter={filter} switchFilter={switchFilter} />
                             <SideTopRight
                                 markAllRead={markAllRead}
                                 logs={logs}
@@ -161,7 +163,7 @@ const Page: React.FC<PageProps> = ({
                                     key={fid}
                                 />
                             ))}
-                            <ContentFilter switchFilter={switchFilter}/>
+                            <ContentFilter filter={filter} switchFilter={switchFilter}/>
                         </div>
                         <div className="side-wrapper">
                             <SideTopRight

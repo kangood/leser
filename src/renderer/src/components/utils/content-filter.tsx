@@ -3,8 +3,8 @@ import { Icon } from '@fluentui/react';
 import intl from 'react-intl-universal';
 import { FilterType } from '@renderer/scripts/models/feed';
 
-export const ContentFilter = ({ switchFilter }) => {
-    const [activeFilter, setActiveFilter] = useState(FilterType.Default);
+export const ContentFilter = ({ filter, switchFilter }) => {
+    const [activeFilter, setActiveFilter] = useState(filter);
 
     const handleClick = (filterType) => {
         switchFilter(filterType);

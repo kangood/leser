@@ -416,65 +416,6 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
                             ],
                         },
                     },
-                    // 移动至 feed 页面
-                    // {
-                    //     key: "section_2",
-                    //     itemType: ContextualMenuItemType.Section,
-                    //     sectionProps: {
-                    //         title: intl.get("context.filter"),
-                    //         bottomDivider: true,
-                    //         items: [
-                    //             {
-                    //                 key: "allArticles",
-                    //                 text: intl.get("allArticles"),
-                    //                 iconProps: { iconName: "ClearFilter" },
-                    //                 canCheck: true,
-                    //                 checked:
-                    //                     (this.props.filter &
-                    //                         ~FilterType.Toggles) ==
-                    //                     FilterType.Default,
-                    //                 onClick: () =>
-                    //                     this.props.switchFilter(
-                    //                         FilterType.Default
-                    //                     ),
-                    //             },
-                    //             {
-                    //                 key: "unreadOnly",
-                    //                 text: intl.get("context.unreadOnly"),
-                    //                 iconProps: {
-                    //                     iconName: "RadioBtnOn",
-                    //                     style: {
-                    //                         fontSize: 14,
-                    //                         textAlign: "center",
-                    //                     },
-                    //                 },
-                    //                 canCheck: true,
-                    //                 checked:
-                    //                     (this.props.filter &
-                    //                         ~FilterType.Toggles) ==
-                    //                     FilterType.UnreadOnly,
-                    //                 onClick: () =>
-                    //                     this.props.switchFilter(
-                    //                         FilterType.UnreadOnly
-                    //                     ),
-                    //             },
-                    //             {
-                    //                 key: "starredOnly",
-                    //                 text: intl.get("context.starredOnly"),
-                    //                 iconProps: { iconName: "FavoriteStarFill" },
-                    //                 canCheck: true,
-                    //                 checked:
-                    //                     (this.props.filter &
-                    //                         ~FilterType.Toggles) ==
-                    //                     FilterType.StarredOnly,
-                    //                 onClick: () =>
-                    //                     this.props.switchFilter(
-                    //                         FilterType.StarredOnly
-                    //                     ),
-                    //             },
-                    //         ],
-                    //     },
-                    // },
                     {
                         key: "section_3",
                         itemType: ContextualMenuItemType.Section,

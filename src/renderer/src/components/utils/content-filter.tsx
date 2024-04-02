@@ -4,15 +4,16 @@ import intl from 'react-intl-universal';
 import { FilterType } from '@renderer/scripts/models/feed';
 
 export const ContentFilter = ({ filter, switchFilter }) => {
-    const [activeFilter, setActiveFilter] = useState(filter);
+    console.log('oldF', filter);
+    const [activeFilter, setActiveFilter] = useState((filter | ((FilterType.Default | FilterType.CaseInsensitive) & FilterType.Toggles)));
 
     const handleClick = (filterType) => {
         switchFilter(filterType);
-        setActiveFilter(filterType);
+        setActiveFilter((filterType | (filter & FilterType.Toggles)));
     };
 
     const isActiveFilter = (filterType) => {
-        return activeFilter === filterType;
+        return activeFilter === (filterType | (filter & FilterType.Toggles));
     }
 
     return (

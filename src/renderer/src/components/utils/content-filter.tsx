@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Icon } from '@fluentui/react';
 import intl from 'react-intl-universal';
 import { FilterType } from '@renderer/scripts/models/feed';

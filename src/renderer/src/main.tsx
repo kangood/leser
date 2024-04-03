@@ -1,7 +1,7 @@
 import * as React from "react"
 import ReactDOM from 'react-dom/client';
 import { Provider } from "react-redux"
-import { createStore, applyMiddleware } from "redux"
+import { createStore, applyMiddleware, compose } from "redux"
 import thunkMiddleware from "redux-thunk"
 import { initializeIcons } from "@fluentui/react/lib/Icons"
 import { rootReducer, RootState } from "./scripts/reducer"
@@ -9,6 +9,7 @@ import Root from "./components/root"
 import { AppDispatch } from "./scripts/utils"
 import { applyThemeSettings } from "./scripts/settings"
 import { initApp, openTextMenu } from "./scripts/models/app"
+import { devToolsEnhancer } from 'redux-devtools-extension';
 
 window.settings.setProxy()
 
@@ -17,7 +18,10 @@ initializeIcons("icons/")
 
 const store = createStore(
     rootReducer,
-    applyMiddleware<AppDispatch, RootState>(thunkMiddleware)
+    compose(
+        applyMiddleware<AppDispatch, RootState>(thunkMiddleware),
+        devToolsEnhancer({})
+    )
 )
 
 store.dispatch(initApp())

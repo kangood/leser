@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src-elem 'self'; img-src *; style-src 'self' 'unsafe-inline'; font-src 'self' https://static2.sharepointonline.com; connect-src https: http:">
+    <!-- 使用 redux-devtools 的 dispatch 需要暂时用到 script-src 'unsafe-eval' -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-eval'; script-src-elem 'self'; img-src *; style-src 'self' 'unsafe-inline'; font-src 'self' https://static2.sharepointonline.com; connect-src https: http:"> -->
     <title>Fluent Reader</title>
     <link rel="stylesheet" href="./src/styles/index.css">
   </head>

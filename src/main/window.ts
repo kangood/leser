@@ -5,6 +5,8 @@ import { setThemeListener } from "./settings" // 导入设置主题的监听器
 import { setUtilsListeners } from "./utils" // 导入实用程序监听器
 import { is } from "@electron-toolkit/utils" // 导入工具函数 is
 
+import { default as installExtension, REDUX_DEVTOOLS } from "electron-devtools-installer"
+
 // 定义窗口管理器类
 export class WindowManager {
     mainWindow: BrowserWindow = null // 主窗口的引用，默认为 null
@@ -24,6 +26,9 @@ export class WindowManager {
             })
             this.setListeners() // 设置监听器
             this.createWindow() // 创建窗口
+            installExtension(REDUX_DEVTOOLS)
+                .then(name => console.log(`Added Extension:  ${name}`))
+                .catch(err => console.log("An error occurred: ", err))
         })
     }
 

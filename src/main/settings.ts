@@ -100,7 +100,7 @@ const VIEW_STORE_KEY = "view"
 
 // 处理获取视图类型的 IPC 消息
 ipcMain.on("get-view", event => {
-    event.returnValue = store.get(VIEW_STORE_KEY, ViewType.Cards)
+    event.returnValue = store.get(VIEW_STORE_KEY, ViewType.List)
 })
 
 // 处理设置视图类型的 IPC 消息
@@ -261,10 +261,7 @@ const LIST_CONFIGS_STORE_KEY = "listViewConfigs"
 ipcMain.on("get-view-configs", (event, view: ViewType) => {
     switch (view) {
         case ViewType.List:
-            event.returnValue = store.get(
-                LIST_CONFIGS_STORE_KEY,
-                ViewConfigs.ShowCover,
-            )
+            event.returnValue = store.get(LIST_CONFIGS_STORE_KEY, ViewConfigs.ShowCover)
             break
         default:
             event.returnValue = undefined
@@ -273,16 +270,13 @@ ipcMain.on("get-view-configs", (event, view: ViewType) => {
 })
 
 // 处理设置列表视图配置的 IPC 消息
-ipcMain.handle(
-    "set-view-configs",
-    (_, view: ViewType, configs: ViewConfigs) => {
-        switch (view) {
-            case ViewType.List:
-                store.set(LIST_CONFIGS_STORE_KEY, configs)
-                break
-        }
-    },
-)
+ipcMain.handle("set-view-configs", (_, view: ViewType, configs: ViewConfigs) => {
+    switch (view) {
+        case ViewType.List:
+            store.set(LIST_CONFIGS_STORE_KEY, configs)
+            break
+    }
+})
 
 // 设置用于存储 NeDB 使用状态的键值
 const NEDB_STATUS_STORE_KEY = "useNeDB"

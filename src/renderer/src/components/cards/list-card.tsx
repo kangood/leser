@@ -24,27 +24,31 @@ const ListCard: React.FunctionComponent<CardProps> = props => (
     >
         <div className="data">
             <CardInfo source={props.source} item={props.item} />
-            <h3 className="title">
-                <Highlights
-                    text={props.item.title}
-                    filter={props.filter}
-                    title
-                />
-            </h3>
-            {Boolean(props.viewConfigs & ViewConfigs.ShowSnippet) && (
-                <p className="snippet">
-                    <Highlights
-                        text={props.item.snippet}
-                        filter={props.filter}
-                    />
-                </p>
-            )}
         </div>
-        {props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover ? (
-            <div className="head">
-                <img src={props.item.thumb} />
+        <div className="bottom">
+            <div className="content">
+                <h3 className="title">
+                    <Highlights
+                        text={props.item.title}
+                        filter={props.filter}
+                        title
+                    />
+                </h3>
+                {Boolean(props.viewConfigs & ViewConfigs.ShowSnippet) && (
+                    <p className="snippet">
+                        <Highlights
+                            text={props.item.snippet}
+                            filter={props.filter}
+                        />
+                    </p>
+                )}
             </div>
-        ) : null}
+            {props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover ? (
+                <div className="cover">
+                    <img src={props.item.thumb} />
+                </div>
+            ) : null}
+        </div>
     </div>
 )
 

@@ -182,9 +182,11 @@
 
 .list-card {
     display: flex;
+    flex-direction: column;
     transition: box-shadow linear 0.08s;
     border-bottom: 1px solid var(--neutralQuaternaryAlt);
     box-shadow: #0000 0 5px 15px;
+    padding-right: 5px;
 }
 .list-card:hover,
 .ms-Fabric--isFocusVisible .list-card:focus {
@@ -193,24 +195,34 @@
 .list-card:active {
     box-shadow: #0000 0 5px 15px, inset #0004 0 0 15px;
 }
-.list-card div.head {
+.list-card .bottom {
+    display: flex;
+    margin-bottom: 10px;
+    margin-left: 20px;
+}
+.list-card .bottom .content {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 90px);
+}
+.list-card .bottom .cover {
     width: 80px;
     height: 80px;
-    margin: 8px 0 8px 10px;
+    margin-left: 10px;
 }
-.list-card div.head img {
+.list-card .bottom .cover img {
     width: 80px;
     height: 80px;
     object-fit: cover;
     -webkit-user-drag: none;
 }
 .list-card .data {
-    flex-grow: 1;
-    margin: 8px 10px;
     overflow: hidden;
+    margin-top: 20px;
+    margin-left: 20px;
 }
 .list-card .info {
-    margin: 0 0 8px;
+    margin: 0 0 5px;
     height: 16px;
 }
 .list-card h3.title {

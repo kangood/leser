@@ -26,7 +26,7 @@ const ListCard: React.FunctionComponent<CardProps> = props => (
             <CardInfo source={props.source} item={props.item} />
         </div>
         <div className="bottom">
-            <div className="content">
+            <div className="content" style={{width: (props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover) ? 'calc(100% - 90px)' : '100%'}}>
                 <h3 className="title">
                     <Highlights
                         text={props.item.title}

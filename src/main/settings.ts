@@ -261,7 +261,10 @@ const LIST_CONFIGS_STORE_KEY = "listViewConfigs"
 ipcMain.on("get-view-configs", (event, view: ViewType) => {
     switch (view) {
         case ViewType.List:
-            event.returnValue = store.get(LIST_CONFIGS_STORE_KEY, ViewConfigs.ShowCover)
+            event.returnValue = store.get(
+                LIST_CONFIGS_STORE_KEY,
+                ViewConfigs.ShowCover ^ ViewConfigs.FadeRead,
+            )
             break
         default:
             event.returnValue = undefined

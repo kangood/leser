@@ -263,7 +263,7 @@ ipcMain.on("get-view-configs", (event, view: ViewType) => {
         case ViewType.List:
             event.returnValue = store.get(
                 LIST_CONFIGS_STORE_KEY,
-                ViewConfigs.ShowCover ^ ViewConfigs.FadeRead,
+                ViewConfigs.ShowCover ^ ViewConfigs.ShowSnippet ^ ViewConfigs.FadeRead,
             )
             break
         default:

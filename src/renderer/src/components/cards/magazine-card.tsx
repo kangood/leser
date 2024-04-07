@@ -17,12 +17,8 @@ const MagazineCard: React.FunctionComponent<CardProps> = props => (
         className={className(props)}
         {...bindCardEventsToProps(props)}
         data-iid={props.item._id}
-        data-is-focusable>
-        {props.item.thumb ? (
-            <div className="head">
-                <img src={props.item.thumb} />
-            </div>
-        ) : null}
+        data-is-focusable
+    >
         <div className="data">
             <div>
                 <h3 className="title">
@@ -41,6 +37,11 @@ const MagazineCard: React.FunctionComponent<CardProps> = props => (
             </div>
             <CardInfo source={props.source} item={props.item} showCreator />
         </div>
+        {props.item.thumb ? (
+            <div className="head">
+                <img src={props.item.thumb} />
+            </div>
+        ) : null}
     </div>
 )
 

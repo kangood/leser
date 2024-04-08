@@ -17,7 +17,6 @@ export type MenuProps = {
     selected: string
     sources: SourceState
     groups: SourceGroup[]
-    searchOn: boolean
     itemOn: boolean
     allArticles: (init?: boolean) => void
     selectSourceGroup: (group: SourceGroup, menuKey: string) => void
@@ -36,9 +35,8 @@ export const Menu: React.FC<MenuProps> = ({
     status,
     display,
     selected,
-    sources,
+    sources: sourcesData,
     groups,
-    searchOn,
     itemOn,
     allArticles,
     selectSourceGroup,
@@ -94,21 +92,12 @@ export const Menu: React.FC<MenuProps> = ({
         // 订阅源上面的渲染
         {
             links: [
-                // {
-                //     name: intl.get("search"),
-                //     ariaLabel:
-                //         intl.get("search") + (searchOn ? " ✓" : " "),
-                //     key: "search",
-                //     icon: "Search",
-                //     onClick: toggleSearch,
-                //     url: null,
-                // },
                 {
                     name: intl.get("allArticles"),
                     ariaLabel:
                         intl.get("allArticles") +
                         countOverflow(
-                            Object.values(sources)
+                            Object.values(sourcesData)
                                 .filter(s => !s.hidden)
                                 .map(s => s.unreadCount)
                                 .reduce((a, b) => a + b, 0)
@@ -133,7 +122,7 @@ export const Menu: React.FC<MenuProps> = ({
                 .filter(g => g.sids.length > 0)
                 .map(g => {
                     if (g.isMultiple) {
-                        let sources = g.sids.map(sid => sources[sid])
+                        let sources = g.sids.map(sid => sourcesData[sid])
                         return {
                             name: g.name,
                             ariaLabel:
@@ -150,7 +139,7 @@ export const Menu: React.FC<MenuProps> = ({
                             links: sources.map(getSource),
                         }
                     } else {
-                        return getSource(sources[g.sids[0]])
+                        return getSource(sourcesData[g.sids[0]])
                     }
                 }),
         },

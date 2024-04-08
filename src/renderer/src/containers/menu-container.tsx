@@ -8,7 +8,6 @@ import { SourceGroup } from "../schema-types"
 import {
     selectAllArticles,
     selectSources,
-    toggleSearch,
 } from "../scripts/models/page"
 import { ViewType } from "../schema-types"
 import { initFeeds } from "../scripts/models/feed"
@@ -18,20 +17,18 @@ import { fetchItems } from "../scripts/models/item"
 const getApp = (state: RootState) => state.app
 const getSources = (state: RootState) => state.sources
 const getGroups = (state: RootState) => state.groups
-const getSearchOn = (state: RootState) => state.page.searchOn
 const getItemOn = (state: RootState) =>
     state.page.itemId !== null && state.page.viewType !== ViewType.List
 
 const mapStateToProps = createSelector(
-    [getApp, getSources, getGroups, getSearchOn, getItemOn],
-    (app, sources, groups, searchOn, itemOn) => ({
+    [getApp, getSources, getGroups, getItemOn],
+    (app, sources, groups, itemOn) => ({
         state: app,
         status: app.sourceInit && !app.settings.display,
         display: app.menu,
         selected: app.menuKey,
         sources: sources,
         groups: groups.map((g, i) => ({ ...g, index: i })),
-        searchOn: searchOn,
         itemOn: itemOn,
     })
 )

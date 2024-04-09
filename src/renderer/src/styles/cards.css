@@ -216,6 +216,9 @@
     object-fit: cover;
     -webkit-user-drag: none;
 }
+.coverImgExtra {
+    background-color: #e2e1df;
+}
 .list-card .data {
     overflow: hidden;
     margin-top: 20px;

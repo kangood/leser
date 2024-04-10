@@ -7,11 +7,12 @@ type CardInfoProps = {
     source: RSSSource
     item: RSSItem
     hideTime?: boolean
+    isValid?: boolean
     showCreator?: boolean
 }
 
 const CardInfo: React.FunctionComponent<CardInfoProps> = props => (
-    <p className="info">
+    <p className={'info' + (props.isValid ? '' : ' infoExtra')}>
         {props.source.iconurl ? <img src={props.source.iconurl} /> : null}
         <span className="name">
             {props.source.name}

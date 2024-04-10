@@ -130,7 +130,7 @@
 .default-card div.bg {
     background-color: #fffb;
 }
-.default-card img.head {
+.default-card img.cover {
     display: block;
     object-fit: cover;
     position: relative;
@@ -138,15 +138,15 @@
     height: 144px;
     -webkit-user-drag: none;
 }
-.default-card img.head,
+.default-card img.cover,
 .default-card p,
 .default-card h3 {
     transition: transform ease-out 0.12s;
 }
-.default-card.transform:hover img.head,
+.default-card.transform:hover img.cover,
 .default-card.transform:hover p,
 .default-card.transform:hover h3,
-.ms-Fabric--isFocusVisible .default-card.transform:focus img.head,
+.ms-Fabric--isFocusVisible .default-card.transform:focus img.cover,
 .ms-Fabric--isFocusVisible .default-card.transform:focus p,
 .ms-Fabric--isFocusVisible .default-card.transform:focus h3 {
     transform: translateY(-144px);
@@ -284,12 +284,12 @@
     transform: scale(0.97);
     background-color: unset;
 }
-.magazine-card div.head {
+.magazine-card .cover {
     width: 200px;
     height: 160px;
-    margin-right: 25px;
+    margin-left: 25px;
 }
-.magazine-card div.head img {
+.magazine-card .cover img {
     width: 200px;
     height: 160px;
     object-fit: cover;
@@ -307,6 +307,9 @@
 .magazine-card .info {
     height: 16px;
     margin: 0;
+}
+.magazine-card .infoExtra {
+    width: 700px;
 }
 .magazine-card h3.title,
 .magazine-card p.snippet {

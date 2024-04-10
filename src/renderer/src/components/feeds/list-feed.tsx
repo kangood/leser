@@ -1,111 +1,115 @@
-import * as React from "react"
-import intl from "react-intl-universal"
-import { FeedProps } from "./feed"
+import React, { useState, useEffect } from "react";
+import intl from "react-intl-universal";
 import {
     PrimaryButton,
     FocusZone,
     FocusZoneDirection,
     List,
-} from "@fluentui/react"
-import { RSSItem } from "../../scripts/models/item"
-import { AnimationClassNames } from "@fluentui/react"
-import { ViewType } from "../../schema-types"
-import ListCard from "../cards/list-card"
-import MagazineCard from "../cards/magazine-card"
-import CompactCard from "../cards/compact-card"
-import { CardProps } from "../cards/card"
+} from "@fluentui/react";
+import { RSSItem } from "../../scripts/models/item";
+import { AnimationClassNames } from "@fluentui/react";
+import { ViewType } from "../../schema-types";
+import ListCard from "../cards/list-card";
+import MagazineCard from "../cards/magazine-card";
+import CompactCard from "../cards/compact-card";
+import { CardProps } from "../cards/card";
 
-class ListFeed extends React.Component<FeedProps> {
-    onRenderItem = (item: RSSItem) => {
-        const props = {
-            feedId: this.props.feed._id,
+const ListFeed = (props) => {
+    const [loaded, setLoaded] = useState(false);
+
+    const onRenderItem = (item: RSSItem) => {
+        // 解决 wechat2rss 的 bug, 网站地址返回不对的时候，封面图的 URL 某些情况下可能会多了个 `https//`
+        if (item?.thumb?.includes('https://https//')) {
+            item.thumb = item.thumb.replace('https://https//', 'https://');
+        }
+        const cardProps = {
+            feedId: props.feed._id,
             key: item._id,
             item: item,
-            source: this.props.sourceMap[item.source],
-            filter: this.props.filter,
-            viewConfigs: this.props.viewConfigs,
-            shortcuts: this.props.shortcuts,
-            markRead: this.props.markRead,
-            contextMenu: this.props.contextMenu,
-            showItem: this.props.showItem,
-        } as CardProps
-        if (
-            this.props.viewType === ViewType.List &&
-            this.props.currentItem === item._id
-        ) {
-            props.selected = true
+            source: props.sourceMap[item.source],
+            filter: props.filter,
+            viewConfigs: props.viewConfigs,
+            shortcuts: props.shortcuts,
+            markRead: props.markRead,
+            contextMenu: props.contextMenu,
+            showItem: props.showItem,
+        } as CardProps;
+
+        if (props.viewType === ViewType.List && props.currentItem === item._id) {
+            cardProps.selected = true;
         }
 
-        switch (this.props.viewType) {
+        switch (props.viewType) {
             case ViewType.Magazine:
-                return <MagazineCard {...props} />
+                return <MagazineCard {...cardProps} />;
             case ViewType.Compact:
-                return <CompactCard {...props} />
+                return <CompactCard {...cardProps} />;
             default:
-                return <ListCard {...props} />
+                return <ListCard {...cardProps} />;
         }
-    }
+    };
 
-    getClassName = () => {
-        switch (this.props.viewType) {
+    const getClassName = () => {
+        switch (props.viewType) {
             case ViewType.Magazine:
-                return "magazine-feed"
+                return "magazine-feed";
             case ViewType.Compact:
-                return "compact-feed"
+                return "compact-feed";
             default:
-                return "list-feed"
+                return "list-feed";
         }
-    }
+    };
 
-    canFocusChild = (el: HTMLElement) => {
+    const canFocusChild = (el: HTMLElement) => {
         if (el.id === "load-more") {
-            const container = document.getElementById("refocus")
+            const container = document.getElementById("refocus");
             const result =
                 container.scrollTop >
-                container.scrollHeight - 2 * container.offsetHeight
-            if (!result) container.scrollTop += 100
-            return result
+                container.scrollHeight - 2 * container.offsetHeight;
+            if (!result) container.scrollTop += 100;
+            return result;
         } else {
-            return true
+            return true;
         }
-    }
+    };
 
-    render() {
-        return (
-            this.props.feed.loaded && (
-                <FocusZone
-                    as="div"
-                    id="refocus"
-                    direction={FocusZoneDirection.vertical}
-                    className={this.getClassName()}
-                    shouldReceiveFocus={this.canFocusChild}
-                    data-is-scrollable>
-                    <List
-                        className={AnimationClassNames.slideUpIn10}
-                        items={this.props.items}
-                        onRenderCell={this.onRenderItem}
-                        ignoreScrollingState
-                        usePageCache
-                    />
-                    {this.props.feed.loaded && !this.props.feed.allLoaded ? (
-                        <div className="load-more-wrapper">
-                            <PrimaryButton
-                                id="load-more"
-                                text={intl.get("loadMore")}
-                                disabled={this.props.feed.loading}
-                                onClick={() =>
-                                    this.props.loadMore(this.props.feed)
-                                }
-                            />
-                        </div>
-                    ) : null}
-                    {this.props.items.length === 0 && (
-                        <div className="empty">{intl.get("article.empty")}</div>
-                    )}
-                </FocusZone>
-            )
+    useEffect(() => {
+        setLoaded(props.feed.loaded);
+    }, [props.feed.loaded]);
+
+    return (
+        loaded && (
+            <FocusZone
+                as="div"
+                id="refocus"
+                direction={FocusZoneDirection.vertical}
+                className={getClassName()}
+                shouldReceiveFocus={canFocusChild}
+                data-is-scrollable
+            >
+                <List
+                    className={AnimationClassNames.slideUpIn10}
+                    items={props.items}
+                    onRenderCell={onRenderItem}
+                    ignoreScrollingState
+                    usePageCache
+                />
+                {props.feed.loaded && !props.feed.allLoaded ? (
+                    <div className="load-more-wrapper">
+                        <PrimaryButton
+                            id="load-more"
+                            text={intl.get("loadMore")}
+                            disabled={props.feed.loading}
+                            onClick={() => props.loadMore(props.feed)}
+                        />
+                    </div>
+                ) : null}
+                {props.items.length === 0 && (
+                    <div className="empty">{intl.get("article.empty")}</div>
+                )}
+            </FocusZone>
         )
-    }
-}
+    );
+};
 
-export default ListFeed
+export default ListFeed;

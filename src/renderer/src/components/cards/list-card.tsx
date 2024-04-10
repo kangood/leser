@@ -19,12 +19,6 @@ const ListCard: React.FunctionComponent<CardProps> = props => {
     // 检查图片是否有效显示
     const [isValid, setIsValid] = React.useState(true);
 
-    // 解决 wechat2rss 的 bug, 网站地址返回不对的时候，封面图的 URL 某些情况下可能会多了个 `https//`
-    let thumbUrl = props.item.thumb;
-    if (thumbUrl.includes('https://https//')) {
-        thumbUrl = thumbUrl.replace('https://https//', 'https://');
-    }
-
     return (
         <div
             className={className(props)}
@@ -36,7 +30,7 @@ const ListCard: React.FunctionComponent<CardProps> = props => {
                 <CardInfo source={props.source} item={props.item} />
             </div>
             <div className="bottom">
-                <div className="content" style={{width: (thumbUrl && props.viewConfigs & ViewConfigs.ShowCover) ? 'calc(100% - 90px)' : '100%'}}>
+                <div className="content" style={{width: (props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover) ? 'calc(100% - 90px)' : '100%'}}>
                     <h3 className="title">
                         <Highlights
                             text={props.item.title}
@@ -53,10 +47,10 @@ const ListCard: React.FunctionComponent<CardProps> = props => {
                         </p>
                     )}
                 </div>
-                {thumbUrl && props.viewConfigs & ViewConfigs.ShowCover ? (
+                {props.item.thumb && props.viewConfigs & ViewConfigs.ShowCover ? (
                     // 图片无法有效显示的话，就修改背景颜色
                     <div className={isValid ? 'cover' : 'cover coverImgExtra'}>
-                        <img style={{ display : isValid ? 'block' : 'none'}} src={thumbUrl} onError={() => setIsValid(false)} />
+                        <img style={{ display : isValid ? 'block' : 'none'}} src={props.item.thumb} onError={() => setIsValid(false)} />
                     </div>
                 ) : null}
             </div>

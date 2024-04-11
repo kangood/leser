@@ -3,14 +3,14 @@ import { Icon } from "@fluentui/react/lib/Icon"
 import { Nav, INavLink, INavLinkGroup } from "@fluentui/react"
 import { SourceGroup } from "../schema-types"
 import { SourceState, RSSSource } from "../scripts/models/source"
-import { ALL } from "../scripts/models/feed"
+import { ALL, FilterType } from "../scripts/models/feed"
 import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
 import { useEffect, useState } from "react"
 import React from "react"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 import { AppState } from "../scripts/models/app"
 
-export type MenuProps = {
+type MenuProps = {
     state: AppState
     status: boolean
     display: boolean
@@ -18,6 +18,7 @@ export type MenuProps = {
     sources: SourceState
     groups: SourceGroup[]
     itemOn: boolean
+    filterType: FilterType
     allArticles: (init?: boolean) => void
     selectSourceGroup: (group: SourceGroup, menuKey: string) => void
     selectSource: (source: RSSSource) => void
@@ -38,6 +39,7 @@ export const Menu: React.FC<MenuProps> = ({
     sources: sourcesData,
     groups,
     itemOn,
+    filterType,
     allArticles,
     selectSourceGroup,
     selectSource,
@@ -119,29 +121,41 @@ export const Menu: React.FC<MenuProps> = ({
         {
             name: intl.get("menu.subscriptions"),
             links: groups
-                .filter(g => g.sids.length > 0)
-                .map(g => {
-                    if (g.isMultiple) {
-                        let sources = g.sids.map(sid => sourcesData[sid])
-                        return {
-                            name: g.name,
-                            ariaLabel:
-                                g.name +
-                                countOverflow(
-                                    sources
-                                        .map(s => s.unreadCount)
-                                        .reduce((a, b) => a + b, 0)
-                                ),
-                            key: "g-" + g.index,
-                            url: null,
-                            isExpanded: g.expanded,
-                            onClick: () => selectSourceGroup(g, "g-" + g.index),
-                            links: sources.map(getSource),
+                    .filter(g => g.sids.length > 0)
+                    .map(g => {
+                        if (g.isMultiple) {
+                            let sources = g.sids.map(sid => sourcesData[sid])
+                            // 选中【未读、星标】时的标识
+                            const isUnreadOnly = (filterType & ~FilterType.Toggles) == FilterType.UnreadOnly;
+                            const isStarredOnly = (filterType & ~FilterType.Toggles) == FilterType.StarredOnly;
+                            if (isUnreadOnly) {
+                                // 当前选中未读，就过滤掉未读为0的数据
+                                sources = sources.filter((item) => item.unreadCount !== 0);
+                            } else if (isStarredOnly) {
+                                // 当前选中星标，就过滤掉非星标数据
+                                
+                            }
+                            return {
+                                name: g.name,
+                                ariaLabel:
+                                    g.name +
+                                    countOverflow(
+                                        sources
+                                            .map(s => s.unreadCount)
+                                            .reduce((a, b) => a + b, 0)
+                                    ),
+                                key: "g-" + g.index,
+                                url: null,
+                                isExpanded: g.expanded,
+                                onClick: () => selectSourceGroup(g, "g-" + g.index),
+                                links: sources.map(getSource),
+                            }
+                        } else {
+                            return getSource(sourcesData[g.sids[0]])
                         }
-                    } else {
-                        return getSource(sourcesData[g.sids[0]])
-                    }
-                }),
+                    })
+                    // 二次过滤，去掉组别中没有子节点的数据（如果 g.links 存在说明有分组，则过滤掉分组内零元素的数据）
+                    .filter(g => g.links ? g.links.length > 0 : true),
         },
     ]
 

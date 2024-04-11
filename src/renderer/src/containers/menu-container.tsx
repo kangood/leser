@@ -17,12 +17,12 @@ import { fetchItems } from "../scripts/models/item"
 const getApp = (state: RootState) => state.app
 const getSources = (state: RootState) => state.sources
 const getGroups = (state: RootState) => state.groups
-const getItemOn = (state: RootState) =>
-    state.page.itemId !== null && state.page.viewType !== ViewType.List
+const getItemOn = (state: RootState) => state.page.itemId !== null && state.page.viewType !== ViewType.List
+const getFilterType = (state: RootState) => state.page.filter.type
 
 const mapStateToProps = createSelector(
-    [getApp, getSources, getGroups, getItemOn],
-    (app, sources, groups, itemOn) => ({
+    [getApp, getSources, getGroups, getItemOn, getFilterType],
+    (app, sources, groups, itemOn, filterType) => ({
         state: app,
         status: app.sourceInit && !app.settings.display,
         display: app.menu,
@@ -30,6 +30,7 @@ const mapStateToProps = createSelector(
         sources: sources,
         groups: groups.map((g, i) => ({ ...g, index: i })),
         itemOn: itemOn,
+        filterType: filterType
     })
 )
 

@@ -9,7 +9,7 @@ import {
     AppThunk,
     platformCtrl,
 } from "../utils"
-import { RSSSource, updateSource, updateUnreadCounts } from "./source"
+import { RSSSource, updateSource, updateStarredCounts, updateUnreadCounts } from "./source"
 import { FeedActionTypes, INIT_FEED, LOAD_MORE, dismissItems } from "./feed"
 import {
     pushNotification,
@@ -361,6 +361,7 @@ export function markAllRead(
                 before: before,
             })
             dispatch(updateUnreadCounts())
+            dispatch(updateStarredCounts())
         } else {
             dispatch({
                 type: MARK_ALL_READ,

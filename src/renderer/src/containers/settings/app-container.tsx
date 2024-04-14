@@ -7,7 +7,7 @@ import {
 import * as db from "../../scripts/db"
 import AppTab from "../../components/settings/app"
 import { importAll } from "../../scripts/settings"
-import { updateUnreadCounts } from "../../scripts/models/source"
+import { updateStarredCounts, updateUnreadCounts } from "../../scripts/models/source"
 import { AppDispatch } from "../../scripts/utils"
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
@@ -29,6 +29,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
             .where(db.items.date.lt(date))
             .exec()
         await dispatch(updateUnreadCounts())
+        await dispatch(updateStarredCounts())
         dispatch(saveSettings())
     },
     importAll: async () => {

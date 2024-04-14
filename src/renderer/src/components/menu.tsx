@@ -50,6 +50,9 @@ export const Menu: React.FC<MenuProps> = ({
 
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
     const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+    // 选中【未读、星标】时的标识
+    const isUnreadOnly = (filterType & ~FilterType.Toggles) == FilterType.UnreadOnly;
+    const isStarredOnly = (filterType & ~FilterType.Toggles) == FilterType.StarredOnly;
 
     const [menuDisplay, setMenuDisplay] = useState<boolean>(
         window.innerWidth >= 1200 // 初始化时设置菜单状态
@@ -90,78 +93,89 @@ export const Menu: React.FC<MenuProps> = ({
 
     const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
-    const getLinkGroups = (): INavLinkGroup[] => [
-        // 订阅源上面的渲染
-        {
-            links: [
-                {
-                    name: intl.get("allArticles"),
-                    ariaLabel:
-                        intl.get("allArticles") +
-                        countOverflow(
-                            Object.values(sourcesData)
-                                .filter(s => !s.hidden)
-                                .map(s => s.unreadCount)
-                                .reduce((a, b) => a + b, 0)
-                        ),
-                    key: ALL,
-                    icon: "TextDocument",
-                    onClick: () => {
-                        // 在菜单需要隐藏时关闭
-                        if (!menuDisplay) {
-                            toggleMenu(false)
-                        }
-                        allArticles(selected !== ALL)
+    const getLinkGroups = (): INavLinkGroup[] => {
+        const singleSourceFilter = [];
+        const groupsSources = groups
+                                .filter(g => g.sids.length > 0)
+                                .map(g => {
+                                    if (g.isMultiple) {
+                                        let sources = g.sids.map(sid => sourcesData[sid])
+                                        if (isUnreadOnly) {
+                                            // 当前选中未读，就过滤掉未读为0的数据
+                                            sources = sources.filter((item) => item.unreadCount !== 0);
+                                        } else if (isStarredOnly) {
+                                            // 当前选中星标，就过滤掉非星标数据
+                                            sources = sources.filter((item) => item.starredCount > 0);
+                                        }
+                                        return {
+                                            name: g.name,
+                                            ariaLabel:
+                                                g.name +
+                                                countOverflow(
+                                                    sources
+                                                        .map(s => isStarredOnly ? s.starredCount : s.unreadCount)
+                                                        .reduce((a, b) => a + b, 0)
+                                                ),
+                                            key: "g-" + g.index,
+                                            url: null,
+                                            isExpanded: g.expanded,
+                                            onClick: () => selectSourceGroup(g, "g-" + g.index),
+                                            links: sources.map(getSource),
+                                        }
+                                    } else {
+                                        // 单独订阅源的【未读、星标】过滤处理
+                                        const rssSource = sourcesData[g.sids[0]];
+                                        if (isUnreadOnly && rssSource.unreadCount === 0) {
+                                            singleSourceFilter.push('s-' + rssSource.sid);
+                                        } else if (isStarredOnly && rssSource.starredCount === 0) {
+                                            singleSourceFilter.push('s-' + rssSource.sid);
+                                        }
+                                        return getSource(rssSource);
+                                    }
+                                })
+                                // 二次过滤，去掉组别中没有子节点的数据（如果 g.links 存在说明有分组，则过滤掉分组内零元素的数据）
+                                .filter(g => g.links ? g.links.length > 0 : true)
+                                // 三次过滤，去掉单独一个订阅源的不用展示的数据
+                                .filter(g => !singleSourceFilter.includes(g.key))
+
+        return [
+            // 订阅源上面的渲染
+            {
+                links: [
+                    {
+                        name: intl.get("allArticles"),
+                        ariaLabel:
+                            intl.get("allArticles") +
+                            countOverflow(
+                                Object.values(sourcesData)
+                                    .filter(s => !s.hidden)
+                                    .map(s => isStarredOnly ? s.starredCount : s.unreadCount)
+                                    .reduce((a, b) => a + b, 0)
+                            ),
+                        key: ALL,
+                        icon: "TextDocument",
+                        onClick: () => {
+                            // 在菜单需要隐藏时关闭
+                            if (!menuDisplay) {
+                                toggleMenu(false)
+                            }
+                            allArticles(selected !== ALL)
+                        },
+                        url: null,
                     },
-                    url: null,
-                },
-            ],
-        },
-        // 订阅源及下面的渲染
-        {
-            name: intl.get("menu.subscriptions"),
-            links: groups
-                    .filter(g => g.sids.length > 0)
-                    .map(g => {
-                        if (g.isMultiple) {
-                            let sources = g.sids.map(sid => sourcesData[sid])
-                            // 选中【未读、星标】时的标识
-                            const isUnreadOnly = (filterType & ~FilterType.Toggles) == FilterType.UnreadOnly;
-                            const isStarredOnly = (filterType & ~FilterType.Toggles) == FilterType.StarredOnly;
-                            if (isUnreadOnly) {
-                                // 当前选中未读，就过滤掉未读为0的数据
-                                sources = sources.filter((item) => item.unreadCount !== 0);
-                            } else if (isStarredOnly) {
-                                // 当前选中星标，就过滤掉非星标数据
-                                
-                            }
-                            return {
-                                name: g.name,
-                                ariaLabel:
-                                    g.name +
-                                    countOverflow(
-                                        sources
-                                            .map(s => s.unreadCount)
-                                            .reduce((a, b) => a + b, 0)
-                                    ),
-                                key: "g-" + g.index,
-                                url: null,
-                                isExpanded: g.expanded,
-                                onClick: () => selectSourceGroup(g, "g-" + g.index),
-                                links: sources.map(getSource),
-                            }
-                        } else {
-                            return getSource(sourcesData[g.sids[0]])
-                        }
-                    })
-                    // 二次过滤，去掉组别中没有子节点的数据（如果 g.links 存在说明有分组，则过滤掉分组内零元素的数据）
-                    .filter(g => g.links ? g.links.length > 0 : true),
-        },
-    ]
+                ],
+            },
+            // 订阅源及下面的渲染
+            {
+                name: intl.get("menu.subscriptions"),
+                links: groupsSources
+            },
+        ]
+    }
 
     const getSource = (s: RSSSource): INavLink => ({
         name: s.name,
-        ariaLabel: s.name + countOverflow(s.unreadCount),
+        ariaLabel: s.name + countOverflow(isStarredOnly ? s.starredCount : s.unreadCount),
         key: "s-" + s.sid,
         onClick: () => {
             selectSource(s)

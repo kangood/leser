@@ -12,6 +12,7 @@ import {
     addSourceSuccess,
     updateSource,
     updateFavicon,
+    updateStarredCounts,
 } from "./source"
 import { createSourceGroup, addSourceToGroup } from "./group"
 
@@ -237,6 +238,7 @@ function syncItems(hook: ServiceHooks["syncItems"]): AppThunk<Promise<void>> {
         if (updates.length > 0) {
             await db.itemsDB.createTransaction().exec(updates)
             await dispatch(updateUnreadCounts())
+            await dispatch(updateStarredCounts())
             dispatch(syncLocalItems(unreadCopy, starredCopy))
         }
     }

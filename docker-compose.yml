@@ -1,0 +1,21 @@
+# docker-compose 版本
+version: '3.9'
+services:
+  # 添加服务
+  image:
+    # dockerfile 的位置
+    build: 
+      context: ./
+        # Name of the dockerfile
+      dockerfile: Dockerfile
+    container_name: electron-reader
+    ports:
+       # Host port:Container port
+      - '4658:4658'
+    volumes:
+      # Bind-mounts configuration
+      - ./:/app
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+      # Ignoring any changes made in the "node_modules" folder
+      - /app/node_modules
+    stdin_open: true

@@ -4,7 +4,6 @@ import { createSelector } from "reselect"
 import { RootState } from "../scripts/reducer"
 import { fetchItems, markAllRead } from "../scripts/models/item"
 import {
-    toggleMenu,
     toggleLogMenu,
     toggleSettings,
     openViewMenu,
@@ -28,7 +27,6 @@ const mapStateToProps = createSelector(
 
 const mapDispatchToProps = dispatch => ({
     fetch: () => dispatch(fetchItems()),
-    menu: () => dispatch(toggleMenu()),
     logs: () => dispatch(toggleLogMenu()),
     views: () => dispatch(openViewMenu()),
     settings: () => dispatch(toggleSettings()),

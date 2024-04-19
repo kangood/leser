@@ -11,7 +11,6 @@ import {
 import { getWindowBreakpoint, AppThunk, ActionStatus } from "../utils"
 import { RSSItem, markRead } from "./item"
 import { SourceActionTypes, DELETE_SOURCE } from "./source"
-import { toggleMenu } from "./app"
 import { ViewType, ViewConfigs } from "../../schema-types"
 
 export const SELECT_PAGE = "SELECT_PAGE"
@@ -157,9 +156,6 @@ export const toggleSearch = (): AppThunk => {
     return (dispatch, getState) => {
         let state = getState()
         dispatch({ type: TOGGLE_SEARCH })
-        if (!getWindowBreakpoint() && state.app.menu) {
-            dispatch(toggleMenu())
-        }
         if (state.page.searchOn) {
             dispatch(
                 applyFilter({

@@ -1,7 +1,5 @@
 import * as React from "react"
 import { useEffect, useState } from "react"
-import intl from "react-intl-universal"
-import { Icon } from "@fluentui/react/lib/Icon"
 import { AppState } from "../scripts/models/app"
 import { ProgressIndicator, IObjectWithKey } from "@fluentui/react"
 import { WindowStateListenerType } from "../schema-types"
@@ -10,7 +8,6 @@ import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 type NavProps = {
     state: AppState
     itemShown: boolean
-    menu: () => void
     search: () => void
     markAllRead: () => void
     fetch: () => void

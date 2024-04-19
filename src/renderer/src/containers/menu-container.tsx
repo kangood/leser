@@ -2,7 +2,7 @@ import { connect } from "react-redux"
 import { createSelector } from "reselect"
 import { RootState } from "../scripts/reducer"
 import { Menu } from "../components/menu"
-import { toggleMenu, openGroupMenu } from "../scripts/models/app"
+import { openGroupMenu } from "../scripts/models/app"
 import { toggleGroupExpansion } from "../scripts/models/group"
 import { SourceGroup } from "../schema-types"
 import {
@@ -35,7 +35,6 @@ const mapStateToProps = createSelector(
 )
 
 const mapDispatchToProps = dispatch => ({
-    toggleMenu: () => dispatch(toggleMenu()),
     allArticles: (init = false) => {
         dispatch(selectAllArticles(init)), dispatch(initFeeds())
     },

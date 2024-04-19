@@ -9,7 +9,13 @@ WORKDIR /app
 COPY . /app
 # 在容器中安装依赖
 RUN npm install
+# COPY . . --exclude=node_modules
+# RUN mkdir -p /run/dbus
+# ENV DBUS_SESSION_BUS_ADDRESS unix:path=/tmp/dbus-oQkHHMjAbD,guid=3cb0b3c8f32cf0097ef8461d6620fa1b
+# RUN /etc/init.d/dbus start
+# RUN dbus-daemon --config-file=/usr/share/dbus-1/system.conf
+# RUN dbus-daemon --system
 # 暴露的端口号
 EXPOSE 4658
 # 启动 Docker 容器的命令
-CMD ["npm", "run", "build:linux"]
+CMD ["npm", "start"]

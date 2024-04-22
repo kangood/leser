@@ -26,8 +26,11 @@ export interface ServiceHooks {
     authenticate?: (configs: ServiceConfigs) => Promise<boolean>
     reauthenticate?: (configs: ServiceConfigs) => Promise<ServiceConfigs>
     updateSources?: () => AppThunk<Promise<[RSSSource[], Map<string, string>]>>
+    updateSourcesNew?: () => Promise<[RSSSource[], Map<string, string>]>
     fetchItems?: () => AppThunk<Promise<[RSSItem[], ServiceConfigs]>>
+    fetchItemsNew?: () => Promise<[RSSItem[], ServiceConfigs]>
     syncItems?: () => AppThunk<Promise<[Set<string>, Set<string>]>>
+    syncItemsNew?: () => Promise<[Set<string>, Set<string>]>
     markRead?: (item: RSSItem) => AppThunk
     markUnread?: (item: RSSItem) => AppThunk
     markAllRead?: (

@@ -195,7 +195,7 @@ export function initSourcesFailure(err): SourceActionTypes {
 }
 
 // 查询每个订阅源的未读文章数量
-async function unreadCount(sources: SourceState): Promise<SourceState> {
+export async function unreadCount(sources: SourceState): Promise<SourceState> {
     const rows = await db.itemsDB
         .select(db.items.source, lf.fn.count(db.items._id))
         .from(db.items)
@@ -209,7 +209,7 @@ async function unreadCount(sources: SourceState): Promise<SourceState> {
 }
 
 // 查询每个订阅源的星标文章数量
-async function starredCount(sources: SourceState): Promise<SourceState> {
+export async function starredCount(sources: SourceState): Promise<SourceState> {
     const rows = await db.itemsDB
         .select(db.items.source, lf.fn.count(db.items._id))
         .from(db.items)

@@ -1,29 +1,29 @@
 import { create } from 'zustand'
-import { FeedFilter, FilterType } from '../models/feed';
-import { PageState } from '../models/page';
-import { useFeedStore } from './feed-store';
+import { useCombinedState } from './combined-store'
+import { useItemStore } from './item-store';
+import { RSSItem } from '../models/item';
+import { PageActionTypes, SHOW_ITEM } from '../models/page';
 
-type PageStateType = {
-    page: PageState;
-    toggleFilter: (filterType: FilterType) => void;
-    applyFilter: (feedFilter: FeedFilter) => void;
+type PageStore = {
+    pageActionTypes?: PageActionTypes;
+    showItem: (feedId: string, item: RSSItem) => void;
+    showItemFromId: (id: number) => void;
 }
 
-export const usePageState = create<PageStateType>((set, get) => ({
-    page: new PageState(),
-    toggleFilter: (filterType: FilterType) => {
-        let nextFilter = { ...get().page.filter };
-        nextFilter.type ^= filterType;
-        get().applyFilter(nextFilter);
-    },
-    applyFilter: (feedFilter: FeedFilter) => {
-        const oldFilterType = get().page.filter.type;
-        // 新老 filterType 对比，不一样就 set
-        if (feedFilter.type !== oldFilterType) {
-            window.settings.setFilterType(feedFilter.type);
-            set(state => ({ page: { ...state.page, filter: feedFilter } }));
-            // 调用 initFeeds
-            useFeedStore.getState().initFeeds(true);
+export const usePageStore = create<PageStore>((set, get) => ({
+    showItem: (feedId: string, item: RSSItem) => {
+        const state = useCombinedState.getState();
+        if (
+            state.items.hasOwnProperty(item._id) &&
+            state.sources.hasOwnProperty(item.source)
+        ) {
+            set({ pageActionTypes: { type: SHOW_ITEM, feedId: feedId, item: item } });
         }
     },
+    showItemFromId: (iid: number) => {
+        const state = useCombinedState.getState();
+        const item = state.items[iid];
+        if (!item.hasRead) { useItemStore.getState().markRead(item) }
+        if (item) { get().showItem(null, item) }
+    }
 }))

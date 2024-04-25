@@ -1,13 +1,22 @@
 import * as db from "../db"
 import intl from "react-intl-universal"
 import { create } from 'zustand'
-import { ADD_SOURCE, DELETE_SOURCE, RSSSource, SourceActionTypes, SourceState, UPDATE_SOURCE, UPDATE_STARRED_COUNTS, UPDATE_UNREAD_COUNTS, starredCount, unreadCount } from '../models/source'
-import { useCombinedState } from './combined-store';
-import { ActionStatus, fetchFavicon } from "../utils";
+import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
+import { fetchFavicon } from "../utils";
 import { useAppStore } from "./app-store";
+import { insertItems } from "../models/item";
+import { useGroupStore } from "./group-store";
+
+type SourceInTypes = {
+    batch: boolean;
+}
 
 type SourceStore = {
-    sourceActionTypes?: SourceActionTypes;
+    sources: SourceState;
+    sourceInTypes?: SourceInTypes;
+    initSourcesRequest: () => void;
+    initSourcesSuccess: (sources: SourceState) => void;
+    initSources: () => Promise<void>;
     insertSource: (source: RSSSource) => Promise<RSSSource>;
     addSourceSuccess: (source: RSSSource, batch: boolean) => void;
     updateSource: (source: RSSSource) => void;
@@ -16,14 +25,42 @@ type SourceStore = {
     deleteSource: (source: RSSSource, batch: boolean) => Promise<void>;
     updateUnreadCounts: () => void;
     updateStarredCounts: () => void;
+    addSourceRequest: (batch: boolean) => void;
+    addSourceFailure: (err: Error, batch: boolean) => void;
+    addSource: (url: string, name?: string, batch?: boolean) => void;
 }
 
 let insertPromises = Promise.resolve();
 export const useSourceStore = create<SourceStore>((set, get) => ({
+    sources: {},
+    initSourcesRequest: () => {
+        console.log('~~initSourcesRequest~~');
+    },
+    initSourcesSuccess: (sources: SourceState) => {
+        set({ sources: sources });
+    },
+    initSources: () => {
+        return new Promise(async () => {
+            get().initSourcesRequest();
+            await db.init();
+            const sources = ( await db.sourcesDB.select().from(db.sources).exec() ) as RSSSource[];
+            const state: SourceState = {};
+            for (let source of sources) {
+                source.unreadCount = 0;
+                source.starredCount = 0;
+                state[source.sid] = source;
+            }
+            await unreadCount(state);
+            await starredCount(state);
+            useGroupStore.getState().fixBrokenGroups(state);
+            get().initSourcesSuccess(state);
+        });
+    },
     insertSource: (source: RSSSource) => {
         return new Promise((resolve, reject) => {
+            console.log('~~insertSource~~');
             insertPromises = insertPromises.then(async () => {
-                let sids = Object.values(useCombinedState.getState().sources).map(s => s.sid);
+                let sids = Object.values(useSourceStore.getState().sources).map(s => s.sid);
                 source.sid = Math.max(...sids, -1) + 1;
                 const row = db.sources.createRow(source);
                 try {
@@ -44,12 +81,15 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         })
     },
     addSourceSuccess: (source: RSSSource, batch: boolean) => {
-        set({ sourceActionTypes: {
-            type: ADD_SOURCE,
-            batch: batch,
-            status: ActionStatus.Success,
-            source: source,
-        } });
+        set({
+            sources: {
+                ...get().sources,
+                [source.sid]: source
+            },
+            sourceInTypes: {
+                batch: batch
+            }
+        });
     },
     updateSource: async (source: RSSSource) => {
         let sourceCopy = { ...source };
@@ -57,10 +97,10 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         delete sourceCopy.starredCount;
         const row = db.sources.createRow(sourceCopy);
         await db.sourcesDB.insertOrReplace().into(db.sources).values([row]).exec();
-        set({ sourceActionTypes: { type: UPDATE_SOURCE, source: source } });
+        set({ sources: { ...get().sources, [source.sid]: source } });
     },
     updateFavicon: async (sids?: number[], force = false) => {
-        const initSources = useCombinedState.getState().sources;
+        const initSources = useSourceStore.getState().sources;
         if (!sids) {
             sids = Object.values(initSources)
                 .filter(s => s.iconurl === undefined)
@@ -71,7 +111,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         const promises = sids.map(async sid => {
             const url = initSources[sid].url;
             let favicon = (await fetchFavicon(url)) || "";
-            const source = useCombinedState.getState().sources[sid];
+            const source = useSourceStore.getState().sources[sid];
             if (source && source.url === url && (force || source.iconurl === undefined)) {
                 source.iconurl = favicon;
                 get().updateSource(source);
@@ -80,7 +120,9 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         await Promise.all(promises);
     },
     deleteSourceDone: (source: RSSSource) => {
-        set({ sourceActionTypes: { type: DELETE_SOURCE, source: source } });
+        const state = get().sources;
+        delete state[source.sid];
+        set({ sources: { ...state } });
     },
     deleteSource: async (source: RSSSource, batch = false) => {
         return new Promise(async (_resolve, reject) => {
@@ -89,7 +131,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
                 await db.itemsDB.delete().from(db.items).where(db.items.source.eq(source.sid)).exec();
                 await db.sourcesDB.delete().from(db.sources).where(db.sources.sid.eq(source.sid)).exec();
                 get().deleteSourceDone(source);
-                window.settings.saveGroups(useCombinedState.getState().groups);
+                window.settings.saveGroups(useGroupStore.getState().groups);
             } catch (err) {
                 console.log(err);
                 reject(err);
@@ -100,22 +142,61 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
     },
     updateUnreadCounts: async () => {
         const sources: SourceState = {};
-        for (let source of Object.values(useCombinedState.getState().sources)) {
+        for (let source of Object.values(get().sources)) {
             sources[source.sid] = {
                 ...source,
                 unreadCount: 0,
             }
         }
-        set({ sourceActionTypes: { type: UPDATE_UNREAD_COUNTS, sources: await unreadCount(sources) } });
+        set({ sources: await unreadCount(sources) });
     },
     updateStarredCounts: async () => {
         const sources: SourceState = {};
-        for (let source of Object.values(useCombinedState.getState().sources)) {
+        for (let source of Object.values(useSourceStore.getState().sources)) {
             sources[source.sid] = {
                 ...source,
                 starredCount: 0,
             }
         }
-        set({ sourceActionTypes: { type: UPDATE_STARRED_COUNTS, sources: await starredCount(sources) } });
+        set({ sources: await starredCount(sources) });
+    },
+    addSourceRequest: (batch: boolean) => {
+        set({ sourceInTypes: { batch: batch } });
+    },
+    addSourceFailure: (err: Error, batch: boolean) => {
+        console.log('~~addSourceFailure~~', err);
+        set({ sourceInTypes: { batch: batch } });
+    },
+    addSource: async (url: string, name: string = null, batch = false) => {
+        const app = useAppStore.getState().app;
+        console.log('addSource~~', app);
+        if (app.sourceInit) {
+            get().addSourceRequest(batch);
+            const source = new RSSSource(url, name);
+            try {
+                console.log('addSource in', source);
+                const feed = await RSSSource.fetchMetaData(source);
+                const inserted = await get().insertSource(source);
+                inserted.unreadCount = feed.items.length;
+                inserted.starredCount = 0;
+                get().addSourceSuccess(inserted, batch);
+                window.settings.saveGroups(useGroupStore.getState().groups);
+                get().updateFavicon([inserted.sid]);
+                const items = await RSSSource.checkItems(inserted, feed.items);
+                await insertItems(items);
+                return inserted.sid;
+            } catch (e) {
+                get().addSourceFailure(e, batch);
+                if (!batch) {
+                    window.utils.showErrorBox(
+                        intl.get("sources.errorAdd"),
+                        String(e),
+                        intl.get("context.copy"),
+                    );
+                }
+                throw e;
+            }
+        }
+        throw new Error("Sources not initialized.");
     }
 }))

@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import { DISMISS_ITEMS, FeedActionTypes, FeedFilter, FeedState, INIT_FEED, INIT_FEEDS, RSSFeed } from "../models/feed";
+import { ALL, FeedFilter, FeedState, RSSFeed } from "../models/feed";
 import { RSSItem } from "../models/item";
-import { ActionStatus } from "../utils";
-import { useCombinedState } from "./combined-store";
+import { usePageStore } from "./page-store";
+import { useItemStore } from "./item-store";
 
 type FeedStore = {
-    feedActionTypes?: FeedActionTypes;
+    feeds: FeedState;
     initFeedsRequest: () => void;
     initFeedSuccess: (feed: RSSFeed, items: RSSItem[]) => void;
     initFeedFailure: (err: Error) => void;
@@ -13,40 +13,42 @@ type FeedStore = {
     initFeeds: (force?: boolean) => Promise<void>;
     dismissItems: () => void;
 };
-  
+
+const LOAD_QUANTITY = 50;
+
 export const useFeedStore = create<FeedStore>((set, get) => ({
+    feeds: { [ALL]: new RSSFeed(ALL) },
     initFeedsRequest: () => {
-        set({ feedActionTypes: { type: INIT_FEEDS, status: ActionStatus.Request } });
+        console.log('~~initFeedsRequest~~');
     },
     initFeedSuccess: (feed: RSSFeed, items: RSSItem[]) => {
-        console.log('initFeedSuccess');
         set({
-            feedActionTypes: {
-                type: INIT_FEED,
-                status: ActionStatus.Success,
-                items: items,
-                feed: feed,
+            feeds: {
+                [feed._id]: {
+                    ...feed,
+                    loaded: true,
+                    allLoaded: items.length < LOAD_QUANTITY,
+                    iids: items.map(i => i._id),
+                },
             }
         });
     },
     initFeedFailure: (err: Error) => {
-        console.log('initFeedFailure');
-        set({ feedActionTypes: { type: INIT_FEED, status: ActionStatus.Failure, err: err } });
+        console.log('~~initFeedFailure~~', err);
     },
     initFeedsSuccess: () => {
-        set({ feedActionTypes: { type: INIT_FEEDS, status: ActionStatus.Success } });
+        console.log('~~initFeedsSuccess~~');
     },
     initFeeds: async (force = false) => {
         get().initFeedsRequest();
         let promises = new Array<Promise<void>>();
-        for (let feed of Object.values(useCombinedState.getState().feeds)) {
+        for (let feed of Object.values(useFeedStore.getState().feeds)) {
             if (!feed.loaded || force) {
                 let p = RSSFeed.loadFeed(feed)
                     .then(items => {
                         get().initFeedSuccess(feed, items);
                     })
                     .catch(err => {
-                        console.log(err);
                         get().initFeedFailure(err);
                     });
                 promises.push(p);
@@ -56,7 +58,7 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
         get().initFeedsSuccess();
     },
     dismissItems: () => {
-        const state = useCombinedState.getState();
+        const state = { page: usePageStore.getState().page, feeds: useFeedStore.getState().feeds, items: useItemStore.getState().items };
         let fid = state.page.feedId;
         let filter = state.feeds[fid].filter;
         let iids = new Set<number>();
@@ -66,6 +68,17 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
                 iids.add(iid);
             }
         }
-        set({ feedActionTypes: { type: DISMISS_ITEMS, fid: fid, iids: iids } });
+        let nextState = { ...get().feeds };
+        let feed = get().feeds[fid];
+        console.log('~~dismissItems~~');
+        set({
+            feeds: {
+                ...nextState,
+                [fid]: {
+                    ...feed,
+                    iids: feed.iids.filter(iid => !iids.has(iid))
+                }
+            }
+         });
     }
 }));

@@ -4,23 +4,24 @@ import { FETCH_ITEMS, ItemActionTypes, ItemState, MARK_READ, RSSItem, insertItem
 import { ActionStatus } from '../utils';
 import { RSSSource } from '../models/source';
 import { useAppStore } from "./app-store";
-import { useCombinedState } from "./combined-store";
 import { useFeedStore } from "./feed-store";
 import { useServiceStore } from "./service-store";
 import { useSourceStore } from './source-store';
 
 type ItemStore = {
+    items: ItemState;
     itemActionTypes?: ItemActionTypes;
     fetchItemsRequest: (fetchCount: number) => void;
     fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => void;
     fetchItemsFailure: (source: RSSSource, err: Error) => void;
     fetchItemsIntermediate: () => void;
-    fetchItems: (background: boolean, sids?: number[]) => void;
+    fetchItems: (background?: boolean, sids?: number[]) => void;
     markReadDone: (item: RSSItem) => void;
     markRead: (item: RSSItem) => void;
 }
 
 export const useItemStore = create<ItemStore>((set, get) => ({
+    items: {},
     fetchItemsRequest: (fetchCount = 0) => {
         set({ itemActionTypes: { type: FETCH_ITEMS, status: ActionStatus.Request, fetchCount } })
     },
@@ -35,7 +36,7 @@ export const useItemStore = create<ItemStore>((set, get) => ({
     },
     fetchItems: async(background = false, sids = null) => {
         let promises = new Array<Promise<RSSItem[]>>();
-        const initState = useCombinedState.getState();
+        const initState = { app: useAppStore.getState().app, sources: useSourceStore.getState().sources };
         if (!initState.app.fetchingItems && !initState.app.syncing) {
             if (
                 sids === null ||
@@ -44,7 +45,7 @@ export const useItemStore = create<ItemStore>((set, get) => ({
                 await useServiceStore.getState().syncWithService(background);
             }
             let timenow = new Date().getTime();
-            const sourcesState = useCombinedState.getState().sources;
+            const sourcesState = useSourceStore.getState().sources;
             let sources =
                 sids === null
                     ? Object.values(sourcesState).filter(s => {
@@ -81,7 +82,7 @@ export const useItemStore = create<ItemStore>((set, get) => ({
                 })
                 insertItems(items)
                     .then(inserted => {
-                        get().fetchItemsSuccess(inserted.reverse(), useCombinedState.getState().items);
+                        get().fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
                         resolve();
                         if (background) {
                             for (let item of inserted) {
@@ -98,7 +99,7 @@ export const useItemStore = create<ItemStore>((set, get) => ({
                         useAppStore.getState().setupAutoFetch();
                     })
                     .catch((err: Error) => {
-                        get().fetchItemsSuccess([], useCombinedState.getState().items);
+                        get().fetchItemsSuccess([], useItemStore.getState().items);
                         window.utils.showErrorBox( "A database error has occurred.", String(err) );
                         console.log(err);
                         reject(err);
@@ -110,7 +111,7 @@ export const useItemStore = create<ItemStore>((set, get) => ({
         set({ itemActionTypes: { type: MARK_READ, item: item } });
     },
     markRead: (item: RSSItem) => {
-        item = useCombinedState.getState().items[item._id];
+        item = useItemStore.getState().items[item._id];
         if (!item.hasRead) {
             db.itemsDB
                 .update(db.items)

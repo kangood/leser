@@ -1,9 +1,7 @@
 import * as db from "../db";
 import lf from "lovefield";
 import { create } from 'zustand';
-import { SAVE_SERVICE_CONFIGS, SYNC_LOCAL_ITEMS, SYNC_SERVICE, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
-import { useCombinedState } from './combined-store';
-import { ActionStatus } from '../utils';
+import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
 import { ServiceConfigs } from '@renderer/schema-types';
 import { useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
@@ -13,6 +11,7 @@ import { insertItems } from "../models/item";
 import { useItemStore } from "./item-store";
 
 type ServiceStore = {
+    service?: ServiceConfigs;
     serviceActionTypes?: ServiceActionTypes;
     getServiceHooks: () => ServiceHooks;
     saveServiceConfigs: (configs: ServiceConfigs) => void;
@@ -25,14 +24,14 @@ type ServiceStore = {
 }
 export const useServiceStore = create<ServiceStore>((set, get) => ({
     getServiceHooks: () => {
-        return getServiceHooksFromType(useCombinedState.getState().service.type);
+        return getServiceHooksFromType(get().service.type);
     },
     saveServiceConfigs: (configs: ServiceConfigs) => {
         window.settings.setServiceConfigs(configs);
-        set({ serviceActionTypes: { type: SAVE_SERVICE_CONFIGS, configs: configs } });
+        set({ service: configs });
     },
     reauthenticate: async (hooks: ServiceHooks) => {
-        let configs = useCombinedState.getState().service;
+        let configs = useServiceStore.getState().service;
         if (!(await hooks.authenticate(configs))) {
             configs = await hooks.reauthenticate(configs);
             get().saveServiceConfigs(configs);
@@ -44,13 +43,13 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
     updateSources: async (hook: ServiceHooks["updateSourcesNew"]) => {
         const [sources, groupsMap] = await hook();
         const existing = new Map<string, RSSSource>();
-        for (let source of Object.values(useCombinedState.getState().sources)) {
+        for (let source of Object.values(useSourceStore.getState().sources)) {
             if (source.serviceRef) {
                 existing.set(source.serviceRef, source);
             }
         }
         const forceSettings = () => {
-            if (!useCombinedState.getState().app.settings.saving) {
+            if (!useAppStore.getState().app.settings.saving) {
                 useAppStore.getState().saveSettings();
             }
         }
@@ -60,18 +59,20 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
                 existing.delete(s.serviceRef);
                 return doc;
             } else {
-                const docs = (await db.sourcesDB
-                    .select()
-                    .from(db.sources)
-                    .where(db.sources.url.eq(s.url))
-                    .exec()) as RSSSource[];
+                const docs = (
+                    await db.sourcesDB
+                        .select()
+                        .from(db.sources)
+                        .where(db.sources.url.eq(s.url))
+                        .exec()
+                ) as RSSSource[];
                 if (docs.length === 0) {
                     forceSettings();
                     // 添加数据源
                     const inserted = await useSourceStore.getState().insertSource(s);
                     inserted.unreadCount = 0;
                     useSourceStore.getState().addSourceSuccess(inserted, true);
-                    window.settings.saveGroups(useCombinedState.getState().groups);
+                    window.settings.saveGroups(useGroupStore.getState().groups);
                     // 更新网站图标
                     useSourceStore.getState().updateFavicon([inserted.sid]);
                     return inserted;
@@ -108,13 +109,12 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
                     useGroupStore.getState().addSourceToGroup(gid, source.sid);
                 }
             }
-            const configs = useCombinedState.getState().service;
+            const configs = useServiceStore.getState().service;
             delete configs.importGroups;
             get().saveServiceConfigs(configs);
         }
     },
     syncItems: async (hook: ServiceHooks["syncItemsNew"]) => {
-        const state = useCombinedState.getState();
         const [unreadRefs, starredRefs] = await hook();
         const unreadCopy = new Set(unreadRefs);
         const starredCopy = new Set(starredRefs);
@@ -178,7 +178,7 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
         const [items, configs] = await hook();
         if (items.length > 0) {
             const inserted = await insertItems(items);
-            useItemStore.getState().fetchItemsSuccess(inserted.reverse(), useCombinedState.getState().items);
+            useItemStore.getState().fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
             if (background) {
                 for (let item of inserted) {
                     if (item.notify) useAppStore.getState().pushNotification(item);
@@ -192,19 +192,19 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
         const hooks = get().getServiceHooks();
         if (hooks.updateSourcesNew && hooks.fetchItems && hooks.syncItems) {
             try {
-                set({ serviceActionTypes: { type: SYNC_SERVICE, status: ActionStatus.Request } });
+                console.log('~~syncWithService.Request~~');
                 if (hooks.reauthenticate) {
                     get().reauthenticate(hooks);
                 }
                 get().updateSources(hooks.updateSourcesNew);
                 await get().syncItems(hooks.syncItemsNew);
                 await get().fetchItems(hooks.fetchItemsNew, background);
-                set({ serviceActionTypes: { type: SYNC_SERVICE, status: ActionStatus.Success } });
+                console.log('~~syncWithService.Success~~');
             } catch (err) {
                 console.log(err);
-                set({ serviceActionTypes: { type: SYNC_SERVICE, status: ActionStatus.Failure, err: err } });
+                console.log('~~syncWithService.Failure~~');
             } finally {
-                if (useCombinedState.getState().app.settings.saving) {
+                if (useAppStore.getState().app.settings.saving) {
                     useAppStore.getState().saveSettings();
                 }
             }

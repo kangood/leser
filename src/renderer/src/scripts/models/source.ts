@@ -201,11 +201,11 @@ export async function unreadCount(sources: SourceState): Promise<SourceState> {
         .from(db.items)
         .where(db.items.hasRead.eq(false))
         .groupBy(db.items.source)
-        .exec()
+        .exec();
     for (let row of rows) {
-        sources[row["source"]].unreadCount = row["COUNT(_id)"]
+        sources[row["source"]].unreadCount = row["COUNT(_id)"];
     }
-    return sources
+    return sources;
 }
 
 // 查询每个订阅源的星标文章数量

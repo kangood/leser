@@ -1,29 +1,63 @@
 import { create } from 'zustand'
-import { useCombinedState } from './combined-store'
 import { useItemStore } from './item-store';
 import { RSSItem } from '../models/item';
-import { PageActionTypes, SHOW_ITEM } from '../models/page';
+import { PageState } from '../models/page';
+import { ALL, FeedFilter } from '../models/feed';
+import { getWindowBreakpoint } from '../utils';
+import { useSourceStore } from './source-store';
+
+type PageInTypes = {
+    keepMenu: boolean;
+    filter: FeedFilter;
+    init: boolean;
+}
 
 type PageStore = {
-    pageActionTypes?: PageActionTypes;
+    page: PageState;
+    pageInTypes?: PageInTypes;
+    selectAllArticles: (init?: boolean) => void;
     showItem: (feedId: string, item: RSSItem) => void;
     showItemFromId: (id: number) => void;
 }
 
 export const usePageStore = create<PageStore>((set, get) => ({
+    page: new PageState(),
+    selectAllArticles: (init = false) => {
+        set({
+            page: {
+                ...get().page,
+                feedId: ALL,
+                itemId: null
+            },
+            pageInTypes: {
+                keepMenu: getWindowBreakpoint(),
+                filter: get().page.filter,
+                init: init
+            }
+        });
+    },
     showItem: (feedId: string, item: RSSItem) => {
-        const state = useCombinedState.getState();
+        const state = { items: useItemStore.getState().items, sources: useSourceStore.getState().sources };
         if (
             state.items.hasOwnProperty(item._id) &&
             state.sources.hasOwnProperty(item.source)
         ) {
-            set({ pageActionTypes: { type: SHOW_ITEM, feedId: feedId, item: item } });
+            set({
+                page: {
+                    ...get().page,
+                    itemId: item._id,
+                    itemFromFeed: Boolean(feedId)
+                }
+            });
         }
     },
     showItemFromId: (iid: number) => {
-        const state = useCombinedState.getState();
-        const item = state.items[iid];
-        if (!item.hasRead) { useItemStore.getState().markRead(item) }
-        if (item) { get().showItem(null, item) }
+        const item = useItemStore.getState().items[iid];
+        if (!item.hasRead) {
+            useItemStore.getState().markRead(item);
+        }
+        if (item) {
+            get().showItem(null, item);
+        }
     }
 }))

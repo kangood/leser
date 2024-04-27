@@ -3,6 +3,9 @@ import { ALL, FeedFilter, FeedState, RSSFeed } from "../models/feed";
 import { RSSItem } from "../models/item";
 import { usePageStore } from "./page-store";
 import { useItemStore } from "./item-store";
+import { produce } from "immer";
+import { devtools } from "zustand/middleware";
+import { useAppStore } from "./app-store";
 
 type FeedStore = {
     feeds: FeedState;
@@ -16,7 +19,8 @@ type FeedStore = {
 
 const LOAD_QUANTITY = 50;
 
-export const useFeedStore = create<FeedStore>((set, get) => ({
+export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
+    // 初始值差个 `groups:[]`
     feeds: { [ALL]: new RSSFeed(ALL) },
     initFeedsRequest: () => {
         console.log('~~initFeedsRequest~~');
@@ -32,12 +36,14 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
                 },
             }
         });
+        // [itemReducer]
     },
     initFeedFailure: (err: Error) => {
         console.log('~~initFeedFailure~~', err);
     },
     initFeedsSuccess: () => {
         console.log('~~initFeedsSuccess~~');
+        useAppStore.getState().initFeedsSuccess();
     },
     initFeeds: async (force = false) => {
         get().initFeedsRequest();
@@ -68,17 +74,20 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
                 iids.add(iid);
             }
         }
-        let nextState = { ...get().feeds };
         let feed = get().feeds[fid];
         console.log('~~dismissItems~~');
-        set({
-            feeds: {
-                ...nextState,
-                [fid]: {
-                    ...feed,
-                    iids: feed.iids.filter(iid => !iids.has(iid))
-                }
-            }
-         });
+        set(produce((draft: FeedStore) => {
+            draft.feeds[fid].iids = feed.iids.filter(iid => !iids.has(iid));
+        }));
+        // let nextState = { ...get().feeds };
+        // set({
+        //     feeds: {
+        //         ...nextState,
+        //         [fid]: {
+        //             ...feed,
+        //             iids: feed.iids.filter(iid => !iids.has(iid))
+        //         }
+        //     }
+        // });
     }
-}));
+}), { name: "feed" }))

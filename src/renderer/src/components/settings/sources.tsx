@@ -59,6 +59,7 @@ const enum EditDropdownKeys {
     Url = "u",
 }
 
+// 保持类组件原样，直到 selection 加载问题解决
 class SourcesTab extends React.Component<SourcesTabProps, SourcesTabState> {
     selection: Selection
 

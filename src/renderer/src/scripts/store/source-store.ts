@@ -4,8 +4,9 @@ import { create } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
 import { useAppStore } from "./app-store";
-import { insertItems } from "../models/item";
+import { MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { useGroupStore } from "./group-store";
+import { devtools } from "zustand/middleware";
 
 type SourceInTypes = {
     batch: boolean;
@@ -20,7 +21,7 @@ type SourceStore = {
     insertSource: (source: RSSSource) => Promise<RSSSource>;
     addSourceSuccess: (source: RSSSource, batch: boolean) => void;
     updateSource: (source: RSSSource) => void;
-    updateFavicon: (sids?: number[], force?: boolean) => void;
+    updateFavicon: (sids?: number[], force?: boolean) => Promise<void>;
     deleteSourceDone: (source: RSSSource) => void;
     deleteSource: (source: RSSSource, batch: boolean) => Promise<void>;
     updateUnreadCounts: () => void;
@@ -28,33 +29,37 @@ type SourceStore = {
     addSourceRequest: (batch: boolean) => void;
     addSourceFailure: (err: Error, batch: boolean) => void;
     addSource: (url: string, name?: string, batch?: boolean) => void;
+    markReadDone: (item: RSSItem, type?: string) => void;
 }
 
 let insertPromises = Promise.resolve();
-export const useSourceStore = create<SourceStore>((set, get) => ({
+export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     sources: {},
     initSourcesRequest: () => {
         console.log('~~initSourcesRequest~~');
     },
     initSourcesSuccess: (sources: SourceState) => {
         set({ sources: sources });
+        // [appReducer]
+        useAppStore.getState().initSourcesSuccess();
+        // [feedReducer]
     },
-    initSources: () => {
-        return new Promise(async () => {
-            get().initSourcesRequest();
-            await db.init();
-            const sources = ( await db.sourcesDB.select().from(db.sources).exec() ) as RSSSource[];
-            const state: SourceState = {};
-            for (let source of sources) {
-                source.unreadCount = 0;
-                source.starredCount = 0;
-                state[source.sid] = source;
-            }
-            await unreadCount(state);
-            await starredCount(state);
-            useGroupStore.getState().fixBrokenGroups(state);
-            get().initSourcesSuccess(state);
-        });
+    initSources: async () => {
+        get().initSourcesRequest();
+        // 查询数据库中的数据源，并初始化时把 [unreadCount, starredCount] 都置空，再重新计算
+        await db.init();
+        const sources = ( await db.sourcesDB.select().from(db.sources).exec() ) as RSSSource[];
+        const state: SourceState = {};
+        for (let source of sources) {
+            source.unreadCount = 0;
+            source.starredCount = 0;
+            state[source.sid] = source;
+        }
+        await unreadCount(state);
+        await starredCount(state);
+        // 订阅源分组
+        useGroupStore.getState().fixBrokenGroups(state);
+        get().initSourcesSuccess(state);
     },
     insertSource: (source: RSSSource) => {
         return new Promise((resolve, reject) => {
@@ -97,7 +102,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         delete sourceCopy.starredCount;
         const row = db.sources.createRow(sourceCopy);
         await db.sourcesDB.insertOrReplace().into(db.sources).values([row]).exec();
-        set({ sources: { ...get().sources, [source.sid]: source } });
+        set((state) => ({ sources: { ...state.sources, [source.sid]: source } }));
     },
     updateFavicon: async (sids?: number[], force = false) => {
         const initSources = useSourceStore.getState().sources;
@@ -198,5 +203,16 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
             }
         }
         throw new Error("Sources not initialized.");
+    },
+    markReadDone: (item: RSSItem, type?: string) => {
+        set((state) => ({
+            sources: {
+                ...state.sources,
+                [item.source]: {
+                    ...state.sources[item.source],
+                    unreadCount: state.sources[item.source].unreadCount + (type === MARK_UNREAD ? 1 : -1)
+                }
+            }
+        }))
     }
-}))
+}), { name: "source" }))

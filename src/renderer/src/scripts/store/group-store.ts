@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { SourceGroup } from '@renderer/schema-types';
 import { SourceGroupActionTypes } from '../models/group';
 import { SourceState } from '../models/source';
+import { devtools } from 'zustand/middleware';
 
 type GroupStore = {
     groups: SourceGroup[];
@@ -14,7 +15,7 @@ type GroupStore = {
     addSourceToGroup: (groupIndex: number, sid: number) => void;
 }
 
-export const useGroupStore = create<GroupStore>((set, get) => ({
+export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
     groups: [],
     reorderSourceGroups: (groups: SourceGroup[]) => {
         window.settings.saveGroups(groups);
@@ -83,4 +84,4 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
         get().addSourceToGroupDone(groupIndex, sid);
         window.settings.saveGroups(get().groups);
     }
-}))
+}), { name: "group" }))

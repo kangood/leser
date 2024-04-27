@@ -49,6 +49,7 @@
     "eslint-plugin-react": "^7.33.2",
     "events": "^3.3.0",
     "font-list": "^1.4.2",
+    "immer": "^10.0.4",
     "js-md5": "^0.7.3",
     "lovefield": "^2.1.12",
     "nedb": "^1.8.0",

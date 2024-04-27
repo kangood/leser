@@ -1,18 +1,27 @@
 import { create } from 'zustand'
-import { AppLog, AppLogType, AppState, ContextMenuType, LogMenuActionType, PUSH_NOTIFICATION, SettingsActionTypes } from '../models/app';
+import { AppLog, AppLogType, AppState, ContextMenuType } from '../models/app';
 import { RSSItem } from '../models/item';
 import { SourceOpenTarget } from '../models/source';
-import { usePageStore } from './page-store';
-import { useItemStore } from './item-store';
+import { PageInTypes, usePageStore } from './page-store';
+import { ItemInTypes, useItemStore } from './item-store';
 import { getCurrentLocale, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
 import { initTouchBarWithTexts } from '../utils';
 import { useSourceStore } from './source-store';
 import { useFeedStore } from './feed-store';
+import { devtools } from 'zustand/middleware';
+import { ALL } from '../models/feed';
 
 type AppStore = {
     app: AppState;
+    initSourcesSuccess: () => void;
+    initFeedsSuccess: () => void;
+    fetchItemsRequest: (itemInTypes: ItemInTypes) => void;
+    fetchItemsFailure: (itemInTypes: ItemInTypes) => void;
+    fetchItemsIntermediate: () => void;
+    fetchItemsSuccess:(itemInTypes: ItemInTypes) => void;
+    selectAllArticles: (pageInTypes: PageInTypes) => void;
     initIntlDone: (locale: string) => void;
     initIntl: () => Promise<void>;
     initApp: () => void;
@@ -24,12 +33,74 @@ type AppStore = {
 
 let fetchTimeout: NodeJS.Timeout;
 
-export const useAppStore = create<AppStore>((set, get) => ({
+export const useAppStore = create<AppStore>()(devtools((set, get) => ({
     app: new AppState(),
+    initSourcesSuccess: () => {
+        set((state) => ({ app: { ...state.app, sourceInit: true } }))
+    },
+    initFeedsSuccess: () => {
+        set((state) => ({ app: { ...state.app, feedInit: true } }))
+    },
+    fetchItemsRequest: (itemInTypes: ItemInTypes) => {
+        set((state) =>({ app: { ...state.app, ...itemInTypes } }))
+    },
+    fetchItemsFailure: (itemInTypes: ItemInTypes) => {
+        set((state) =>({
+            app: {
+                ...state.app,
+                logMenu: {
+                    ...state.app.logMenu,
+                    notify: !state.app.logMenu.display,
+                    logs: [
+                        ...state.app.logMenu.logs,
+                        new AppLog(
+                            AppLogType.Failure,
+                            intl.get("log.fetchFailure", { name: itemInTypes.errSource.name }),
+                            String(itemInTypes.err)
+                        )
+                    ]
+                }
+            } 
+        }))
+    },
+    fetchItemsIntermediate: () => {
+        set((state) => ({ app: { ...state.app, fetchingProgress: state.app.fetchingProgress + 1 } }))
+    },
+    fetchItemsSuccess: (itemInTypes: ItemInTypes) => {
+        set((state) => ({
+            app: {
+                ...state.app,
+                fetchingItems: false,
+                fetchingTotal: 0,
+                logMenu: itemInTypes.items.length === 0 
+                    ? state.app.logMenu
+                    : {
+                        ...state.app.logMenu,
+                        logs: [
+                            ...state.app.logMenu.logs,
+                            new AppLog(
+                                AppLogType.Info,
+                                intl.get("log.fetchSuccess", { count: itemInTypes.items.length })
+                            )
+                        ]
+                    }
+            }
+        }))
+    },
+    selectAllArticles: (pageInTypes: PageInTypes) => {
+        set((state) => ({
+            app: {
+                ...state.app,
+                menu: state.app.menu && pageInTypes.keepMenu,
+                menuKey: ALL,
+                title: intl.get("allArticles")
+            }
+        }))
+    },
     initIntlDone: (locale: string) => {
         document.documentElement.lang = locale;
         setThemeDefaultFont(locale);
-        set({ app: { ...get().app, locale: locale } });
+        set((state) => ({ app: { ...state.app, locale: locale } }));
     },
     initIntl: async () => {
         let locale = getCurrentLocale();
@@ -47,7 +118,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         document.body.classList.add(window.utils.platform);
         get().initIntl()
             .then(async () => {
-                if (window.utils.platform === "darwin") { initTouchBarWithTexts() };
+                if (window.utils.platform === "darwin") {
+                    initTouchBarWithTexts();
+                }
                 await useSourceStore.getState().initSources();
             })
             .then(() => {
@@ -59,6 +132,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
             })
             .then(() => {
                 useSourceStore.getState().updateFavicon();
+            }).catch(error => {
+                console.log('An error occurred:', error);
             });
     },
     saveSettings: () => {
@@ -141,4 +216,4 @@ export const useAppStore = create<AppStore>((set, get) => ({
             } 
         });
     }
-}))
+}), { name: "app" }))

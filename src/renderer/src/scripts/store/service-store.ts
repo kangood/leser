@@ -2,13 +2,14 @@ import * as db from "../db";
 import lf from "lovefield";
 import { create } from 'zustand';
 import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
-import { ServiceConfigs } from '@renderer/schema-types';
+import { ServiceConfigs, SyncService } from '@renderer/schema-types';
 import { useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
 import { useSourceStore } from "./source-store";
 import { useGroupStore } from "./group-store";
 import { insertItems } from "../models/item";
 import { useItemStore } from "./item-store";
+import { devtools } from "zustand/middleware";
 
 type ServiceStore = {
     service?: ServiceConfigs;
@@ -22,7 +23,8 @@ type ServiceStore = {
     syncWithService: (background: boolean) => Promise<void>;
     fetchItems: (hook: ServiceHooks["fetchItemsNew"], background: boolean) => void;
 }
-export const useServiceStore = create<ServiceStore>((set, get) => ({
+export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
+    service: { type: SyncService.None },
     getServiceHooks: () => {
         return getServiceHooksFromType(get().service.type);
     },
@@ -210,4 +212,4 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
             }
         }
     },
-}))
+}), { name: "service" }))

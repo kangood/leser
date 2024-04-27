@@ -1,40 +1,68 @@
 import * as db from '../db';
 import { create } from 'zustand'
-import { FETCH_ITEMS, ItemActionTypes, ItemState, MARK_READ, RSSItem, insertItems } from '../models/item';
-import { ActionStatus } from '../utils';
+import { ItemState, MARK_READ, RSSItem, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
 import { useAppStore } from "./app-store";
 import { useFeedStore } from "./feed-store";
 import { useServiceStore } from "./service-store";
 import { useSourceStore } from './source-store';
+import { devtools } from 'zustand/middleware';
+
+export type ItemInTypes = {
+    fetchingItems?: boolean;
+    fetchingProgress?: number;
+    fetchingTotal?: number;
+    errSource?: RSSSource;
+    err?: Error;
+    items?: RSSItem[];
+    itemState?: ItemState;
+}
 
 type ItemStore = {
     items: ItemState;
-    itemActionTypes?: ItemActionTypes;
+    itemInTypes?: ItemInTypes;
     fetchItemsRequest: (fetchCount: number) => void;
     fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => void;
     fetchItemsFailure: (source: RSSSource, err: Error) => void;
     fetchItemsIntermediate: () => void;
-    fetchItems: (background?: boolean, sids?: number[]) => void;
+    fetchItems: (background?: boolean, sids?: number[]) => Promise<void>;
+    toggleHiddenDone: (item: RSSItem, type?: string) => void;
     markReadDone: (item: RSSItem) => void;
     markRead: (item: RSSItem) => void;
 }
 
-export const useItemStore = create<ItemStore>((set, get) => ({
+export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     items: {},
     fetchItemsRequest: (fetchCount = 0) => {
-        set({ itemActionTypes: { type: FETCH_ITEMS, status: ActionStatus.Request, fetchCount } })
+        const itemInTypes: ItemInTypes = {
+            fetchingItems: true,
+            fetchingProgress: 0,
+            fetchingTotal: fetchCount
+        };
+        useAppStore.getState().fetchItemsRequest(itemInTypes);
     },
     fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => {
-        set({ itemActionTypes: { type: FETCH_ITEMS, status: ActionStatus.Success, items: items, itemState: itemState } })
+        let newMap = {};
+        for (let i of items) {
+            newMap[i._id] = i;
+        }
+        set((state) => ({ items: { ...state.items, ...newMap } }));
+        // [appReducer]
+        const itemInTypes: ItemInTypes = { items: items, itemState: itemState };
+        useAppStore.getState().fetchItemsSuccess(itemInTypes);
+        // [feedReducer、sourceReducer]
     },
     fetchItemsFailure: (source: RSSSource, err: Error) => {
-        set({ itemActionTypes: { type: FETCH_ITEMS, status: ActionStatus.Failure, errSource: source, err: err } })
+        const itemInTypes: ItemInTypes = {
+            errSource: source,
+            err: err
+        };
+        useAppStore.getState().fetchItemsFailure(itemInTypes);
     },
     fetchItemsIntermediate: () => {
-        set({ itemActionTypes: { type: FETCH_ITEMS, status: ActionStatus.Intermediate } })
+        useAppStore.getState().fetchItemsIntermediate();
     },
-    fetchItems: async(background = false, sids = null) => {
+    fetchItems: async (background = false, sids = null) => {
         let promises = new Array<Promise<RSSItem[]>>();
         const initState = { app: useAppStore.getState().app, sources: useSourceStore.getState().sources };
         if (!initState.app.fetchingItems && !initState.app.syncing) {
@@ -69,7 +97,6 @@ export const useItemStore = create<ItemStore>((set, get) => ({
             }
             get().fetchItemsRequest(promises.length);
             const results = await Promise.allSettled(promises);
-
             return await new Promise<void>((resolve, reject) => {
                 let items = new Array<RSSItem>();
                 results.map((r, i) => {
@@ -107,8 +134,21 @@ export const useItemStore = create<ItemStore>((set, get) => ({
             })
         }
     },
+    toggleHiddenDone: (item: RSSItem, type?: string) => {
+        set((state) => ({
+            items: {
+                ...state.items,
+                [item._id]: applyItemReduction(
+                    state.items[item._id],
+                    type
+                )
+            }
+        }))
+    },
     markReadDone: (item: RSSItem) => {
-        set({ itemActionTypes: { type: MARK_READ, item: item } });
+        get().toggleHiddenDone(item, MARK_READ);
+        // [sourceReducer]
+        useSourceStore.getState().markReadDone(item);
     },
     markRead: (item: RSSItem) => {
         item = useItemStore.getState().items[item._id];
@@ -124,4 +164,4 @@ export const useItemStore = create<ItemStore>((set, get) => ({
             }
         }
     }
-}))
+}), { name: "item" }))

@@ -1,11 +1,35 @@
 import React, { useState, useEffect } from "react";
 import intl from "react-intl-universal";
-import DefaultCard from "../cards/default-card";
 import { PrimaryButton, FocusZone } from "@fluentui/react";
-import { RSSItem } from "../../scripts/models/item";
+import { useShallow } from "zustand/react/shallow";
 import { List, AnimationClassNames } from "@fluentui/react";
 
+import DefaultCard from "../cards/default-card";
+import { RSSItem } from "../../scripts/models/item";
+import { useItemStore } from "@renderer/scripts/store/item-store";
+import { useFeedStore } from "@renderer/scripts/store/feed-store";
+import { usePageStore } from "@renderer/scripts/store/page-store";
+import { useSourceStore } from "@renderer/scripts/store/source-store";
+import { useAppStore } from "@renderer/scripts/store/app-store";
+
 const CardsFeed = (props) => {
+
+    const { filter, showItem } = usePageStore(useShallow(state => ({
+        filter: state.page.filter,
+        showItem: state.showItem
+    })));
+    const { feed, loadMore } = useFeedStore(useShallow(state => ({
+        feed: state.feeds[props.feedId],
+        loadMore: state.loadMore
+    })));
+    const { items, itemShortcuts, markRead } = useItemStore(useShallow(state => ({
+        items: feed.iids.map(iid => items[iid]),
+        itemShortcuts: state.itemShortcuts,
+        markRead: state.markRead
+    })));
+    const sourceMap = useSourceStore(state => state.sources);
+    const openItemMenu = useAppStore(state => state.openItemMenu);
+
     const [width, setWidth] = useState(window.innerWidth);
     const [height, setHeight] = useState(window.innerHeight);
 
@@ -38,10 +62,12 @@ const CardsFeed = (props) => {
 
     const flexFixItems = () => {
         let elemPerRow = Math.floor(width / 280);
-        let elemLastRow = props.items.length % elemPerRow;
-        let items = [...props.items];
-        for (let i = 0; i < elemPerRow - elemLastRow; i += 1) items.push(null);
-        return items;
+        let elemLastRow = items.length % elemPerRow;
+        let itemsNew = [...items];
+        for (let i = 0; i < elemPerRow - elemLastRow; i++) {
+            itemsNew.push(null);
+        }
+        return itemsNew;
     };
 
     const onRenderItem = (item: RSSItem, index: number) => {
@@ -51,15 +77,15 @@ const CardsFeed = (props) => {
         }
         return item ? (
             <DefaultCard
-                feedId={props.feed._id}
+                feedId={feed._id}
                 key={item._id}
                 item={item}
-                source={props.sourceMap[item.source]}
-                filter={props.filter}
-                shortcuts={props.shortcuts}
-                markRead={props.markRead}
-                contextMenu={props.contextMenu}
-                showItem={props.showItem}
+                source={sourceMap[item.source]}
+                filter={filter}
+                shortcuts={itemShortcuts}
+                markRead={markRead}
+                contextMenu={openItemMenu}
+                showItem={showItem}
             />
         ) : (
             <div className="flex-fix" key={"f-" + index}></div>
@@ -80,7 +106,7 @@ const CardsFeed = (props) => {
     };
 
     return (
-        props.feed.loaded && (
+        feed.loaded && (
             <FocusZone
                 as="div"
                 id="refocus"
@@ -97,17 +123,17 @@ const CardsFeed = (props) => {
                     ignoreScrollingState
                     usePageCache
                 />
-                {props.feed.loaded && !props.feed.allLoaded ? (
+                {feed.loaded && !feed.allLoaded ? (
                     <div className="load-more-wrapper">
                         <PrimaryButton
                             id="load-more"
                             text={intl.get("loadMore")}
-                            disabled={props.feed.loading}
-                            onClick={() => props.loadMore(props.feed)}
+                            disabled={feed.loading}
+                            onClick={() => loadMore(feed)}
                         />
                     </div>
                 ) : null}
-                {props.items.length === 0 && (
+                {items.length === 0 && (
                     <div className="empty">{intl.get("article.empty")}</div>
                 )}
             </FocusZone>

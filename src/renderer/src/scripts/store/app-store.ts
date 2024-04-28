@@ -29,6 +29,7 @@ type AppStore = {
     pushNotification: (item: RSSItem) => void;
     setupAutoFetch: () => void;
     openTextMenu: (position: [number, number], text: string, url?: string) => void;
+    openItemMenu: (feedId: string, item: RSSItem, event: MouseEvent) => void;
 }
 
 let fetchTimeout: NodeJS.Timeout;
@@ -215,5 +216,17 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 }
             } 
         });
+    },
+    openItemMenu: (feedId: string, item: RSSItem, event: MouseEvent) => {
+        set(state => ({
+            app: {
+                ...state.app,
+                contextMenu: {
+                    type: ContextMenuType.Item,
+                    event: event,
+                    target: [item, feedId]
+                }
+            }
+        }));
     }
 }), { name: "app" }))

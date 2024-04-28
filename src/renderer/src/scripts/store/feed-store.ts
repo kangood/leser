@@ -15,6 +15,10 @@ type FeedStore = {
     initFeedsSuccess: () => void;
     initFeeds: (force?: boolean) => Promise<void>;
     dismissItems: () => void;
+    loadMoreRequest: (feed: RSSFeed) => void;
+    loadMoreSuccess: (feed: RSSFeed, items: RSSItem[]) => void;
+    loadMoreFailure: (feed: RSSFeed, err: Error) => void;
+    loadMore: (feed: RSSFeed) => Promise<void>;
 };
 
 const LOAD_QUANTITY = 50;
@@ -37,6 +41,8 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             }
         });
         // [itemReducer]
+        useItemStore.getState().initFeedSuccess(items);
+        // [pageReducer]
     },
     initFeedFailure: (err: Error) => {
         console.log('~~initFeedFailure~~', err);
@@ -89,5 +95,64 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
         //         }
         //     }
         // });
+    },
+    loadMoreRequest: (feed: RSSFeed) => {
+        set(state => ({
+            feeds: {
+                ...state.feeds,
+                [feed._id]: {
+                    ...feed,
+                    loaded: true
+                }
+            }
+        }));
+    },
+    loadMoreSuccess: (feed: RSSFeed, items: RSSItem[]) => {
+        set(state => ({
+            feeds: {
+                ...state.feeds,
+                [feed._id]: {
+                    ...feed,
+                    loading: false,
+                    allLoaded: items.length < LOAD_QUANTITY,
+                    iids: [
+                        ...feed.iids,
+                        ...items.map(i => i._id)
+                    ]
+                }
+            }
+        }));
+        // [itemReducer]
+        useItemStore.getState().loadMoreSuccess(items);
+    },
+    loadMoreFailure: (feed: RSSFeed, _err: Error) => {
+        set(state => ({
+            feeds: {
+                ...state.feeds,
+                [feed._id]: {
+                    ...feed,
+                    loading: false
+                }
+            }
+        }));
+    },
+    loadMore: async (feed: RSSFeed) => {
+        if (feed.loaded && !feed.loading && !feed.allLoaded) {
+            get().loadMoreRequest(feed);
+            const skipNum = feed.iids.filter(i =>
+                FeedFilter.testItem(feed.filter, useItemStore.getState().items[i])
+            ).length;
+            return RSSFeed.loadFeed(feed, skipNum)
+                .then(items => {
+                    get().loadMoreSuccess(feed, items);
+                })
+                .catch(e => {
+                    console.log(e);
+                    get().loadMoreFailure(feed, e);
+                });
+        }
+        return new Promise((_, reject) => {
+            reject();
+        })
     }
 }), { name: "feed" }))

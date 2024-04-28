@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
 import { useAppStore } from "./app-store";
-import { MARK_UNREAD, RSSItem, insertItems } from "../models/item";
+import { MARK_READ, MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { useGroupStore } from "./group-store";
 import { devtools } from "zustand/middleware";
 
@@ -30,6 +30,8 @@ type SourceStore = {
     addSourceFailure: (err: Error, batch: boolean) => void;
     addSource: (url: string, name?: string, batch?: boolean) => void;
     markReadDone: (item: RSSItem, type?: string) => void;
+    markUnreadDone: (item: RSSItem) => void;
+    toggleStarredDone: (item: RSSItem) => void;
 }
 
 let insertPromises = Promise.resolve();
@@ -204,7 +206,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
         }
         throw new Error("Sources not initialized.");
     },
-    markReadDone: (item: RSSItem, type?: string) => {
+    markReadDone: (item: RSSItem, type = MARK_READ) => {
         set((state) => ({
             sources: {
                 ...state.sources,
@@ -212,6 +214,20 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                     ...state.sources[item.source],
                     unreadCount: state.sources[item.source].unreadCount + (type === MARK_UNREAD ? 1 : -1)
                 }
+            }
+        }))
+    },
+    markUnreadDone: (item: RSSItem) => {
+        get().markReadDone(item, MARK_UNREAD);
+    },
+    toggleStarredDone: (item: RSSItem) => {
+        set(state => ({
+            sources: {
+                ...state.sources,
+                [item.source]: {
+                    ...state[item.source],
+                    starredCount: state.sources[item.source].starredCount + (item.starred ? -1 : 1),
+                } as RSSSource
             }
         }))
     }

@@ -1,14 +1,15 @@
+import * as db from '../db';
 import { create } from 'zustand'
 import { AppLog, AppLogType, AppState, ContextMenuType } from '../models/app';
 import { RSSItem } from '../models/item';
 import { SourceOpenTarget } from '../models/source';
 import { PageInTypes, usePageActions } from './page-store';
 import { ItemInTypes, useItemActions } from './item-store';
-import { getCurrentLocale, setThemeDefaultFont } from '../settings';
+import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
 import { initTouchBarWithTexts } from '../utils';
-import { useSourceStore } from './source-store';
+import { useSourceActions, useSourceStore } from './source-store';
 import { useFeedActions } from './feed-store';
 import { devtools } from 'zustand/middleware';
 import { ALL } from '../models/feed';
@@ -35,6 +36,8 @@ type AppStore = {
         openMarkAllMenu: () => void;
         toggleLogMenu: () => void;
         toggleSettings: (open?: boolean, sids?: Array<number>) => void;
+        deleteArticles: (days: number) => Promise<void>;
+        importAll: () => Promise<void>;
     }
 }
 
@@ -129,7 +132,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     if (window.utils.platform === "darwin") {
                         initTouchBarWithTexts();
                     }
-                    await useSourceStore.getState().initSources();
+                    await useSourceActions().initSources();
                 })
                 .then(() => {
                     useFeedActions().initFeeds();
@@ -139,7 +142,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     await useItemActions().fetchItems();
                 })
                 .then(() => {
-                    useSourceStore.getState().updateFavicon();
+                    useSourceActions().updateFavicon();
                 }).catch(error => {
                     console.log('An error occurred:', error);
                 });
@@ -287,6 +290,26 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     },
                 }
             }));
+        },
+        deleteArticles: async (days: number) => {
+            get().actions.saveSettings();
+            let date = new Date();
+            date.setTime(date.getTime() - days * 86400000);
+            await db.itemsDB
+                .delete()
+                .from(db.items)
+                .where(db.items.date.lt(date))
+                .exec();
+            await useSourceActions().updateUnreadCounts();
+            await useSourceActions().updateStarredCounts();
+            get().actions.saveSettings();
+        },
+        importAll: async () => {
+            get().actions.saveSettings();
+            let cancelled = await importAll();
+            if (cancelled) {
+                get().actions.saveSettings();
+            }
         },
     }
 }), { name: "app" }))

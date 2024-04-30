@@ -5,7 +5,7 @@ import { RSSSource } from '../models/source';
 import { useAppActions, useAppStore } from "./app-store";
 import { useFeedActions, useFeedStore } from "./feed-store";
 import { useServiceStore } from "./service-store";
-import { useSourceStore } from './source-store';
+import { useSourceActions, useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
 import { RSSFeed } from '../models/feed';
@@ -103,7 +103,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 for (let source of sources) {
                     let promise = RSSSource.fetchItems(source);
                     promise.then(() => {
-                        useSourceStore.getState().updateSource({ ...source, lastFetched: new Date() });
+                        useSourceActions().updateSource({ ...source, lastFetched: new Date() });
                     })
                     promise.finally(() => get().actions.fetchItemsIntermediate());
                     promises.push(promise);
@@ -161,17 +161,17 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         toggleStarredDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, TOGGLE_STARRED);
             // [sourceReducer]
-            useSourceStore.getState().toggleStarredDone(item);
+            useSourceActions().toggleStarredDone(item);
         },
         markReadDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, MARK_READ);
             // [sourceReducer]
-            useSourceStore.getState().markReadDone(item);
+            useSourceActions().markReadDone(item);
         },
         markUnreadDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, MARK_UNREAD);
             // [sourceReducer]
-            useSourceStore.getState().markUnreadDone(item);
+            useSourceActions().markUnreadDone(item);
         },
         markRead: (item: RSSItem) => {
             item = useItemStore.getState().items[item._id];

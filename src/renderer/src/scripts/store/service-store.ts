@@ -5,7 +5,7 @@ import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFrom
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
 import { useAppActions, useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
-import { useSourceStore } from "./source-store";
+import { useSourceActions, useSourceStore } from "./source-store";
 import { useGroupStore } from "./group-store";
 import { insertItems } from "../models/item";
 import { useItemActions, useItemStore } from "./item-store";
@@ -71,12 +71,12 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                 if (docs.length === 0) {
                     forceSettings();
                     // 添加数据源
-                    const inserted = await useSourceStore.getState().insertSource(s);
+                    const inserted = await useSourceActions().insertSource(s);
                     inserted.unreadCount = 0;
-                    useSourceStore.getState().addSourceSuccess(inserted, true);
+                    useSourceActions().addSourceSuccess(inserted, true);
                     window.settings.saveGroups(useGroupStore.getState().groups);
                     // 更新网站图标
-                    useSourceStore.getState().updateFavicon([inserted.sid]);
+                    useSourceActions().updateFavicon([inserted.sid]);
                     return inserted;
                 } else if (docs[0].serviceRef !== s.serviceRef) {
                     // 将现有来源标记为远程，并删除所有项目
@@ -84,7 +84,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                     forceSettings();
                     doc.serviceRef = s.serviceRef;
                     doc.unreadCount = 0;
-                    useSourceStore.getState().updateSource(doc);
+                    useSourceActions().updateSource(doc);
                     await db.itemsDB
                         .delete()
                         .from(db.items)
@@ -99,7 +99,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         for (let [_, source] of existing) {
             // 删除服务端同步过来的数据源
             forceSettings();
-            promises.push(useSourceStore.getState().deleteSource(source, true).then(() => null));
+            promises.push(useSourceActions().deleteSource(source, true).then(() => null));
         }
         let sourcesResults = (await Promise.all(promises)).filter(s => s);
         if (groupsMap) {
@@ -171,8 +171,8 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         }
         if (updates.length > 0) {
             await db.itemsDB.createTransaction().exec(updates);
-            await useSourceStore.getState().updateUnreadCounts();
-            await useSourceStore.getState().updateStarredCounts();
+            await useSourceActions().updateUnreadCounts();
+            await useSourceActions().updateStarredCounts();
             get().syncLocalItems(unreadCopy, starredCopy);
         }
     },

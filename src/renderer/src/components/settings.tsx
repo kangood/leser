@@ -6,10 +6,10 @@ import AboutTab from "./settings/about"
 import { Pivot, PivotItem, Spinner, FocusTrapZone } from "@fluentui/react"
 import SourcesTabContainer from "../containers/settings/sources-container"
 import GroupsTabContainer from "../containers/settings/groups-container"
-import AppTabContainer from "../containers/settings/app-container"
 import RulesTabContainer from "../containers/settings/rules-container"
 import ServiceTabContainer from "../containers/settings/service-container"
 import { initTouchBarWithTexts } from "../scripts/utils"
+import AppTab from "./settings/app"
 
 type SettingsProps = {
     display: boolean
@@ -94,7 +94,7 @@ class Settings extends React.Component<SettingsProps> {
                         <PivotItem
                             headerText={intl.get("settings.app")}
                             itemIcon="Settings">
-                            <AppTabContainer />
+                            <AppTab />
                         </PivotItem>
                         <PivotItem
                             headerText={intl.get("settings.about")}

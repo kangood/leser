@@ -13,8 +13,26 @@ import ListCard from "../cards/list-card";
 import MagazineCard from "../cards/magazine-card";
 import CompactCard from "../cards/compact-card";
 import { CardProps } from "../cards/card";
+import { FeedProps } from "./feed";
+import { useCurrentItem, useFilter, useShowItem, useViewConfigs } from "@renderer/scripts/store/page-store";
+import { useOpenItemMenu } from "@renderer/scripts/store/app-store";
+import { useFeed, useLoadMore } from "@renderer/scripts/store/feed-store";
+import { useItemActions, useItems } from "@renderer/scripts/store/item-store";
+import { useSourceMap } from "@renderer/scripts/store/source-store";
 
-const ListFeed = (props) => {
+const ListFeed = (props: FeedProps) => {
+    // zustand store
+    const sourceMap = useSourceMap();
+    const openItemMenu = useOpenItemMenu();
+    const filter = useFilter();
+    const currentItem = useCurrentItem();
+    const viewConfigs = useViewConfigs();
+    const showItem = useShowItem();
+    const feed = useFeed(props.feedId);
+    const loadMore = useLoadMore();
+    const items = useItems(feed);
+    const { itemShortcuts, markRead } = useItemActions();
+
     const [loaded, setLoaded] = useState(false);
 
     const onRenderItem = (item: RSSItem) => {
@@ -23,19 +41,19 @@ const ListFeed = (props) => {
             item.thumb = item.thumb.replace('https://https//', 'https://');
         }
         const cardProps = {
-            feedId: props.feed._id,
+            feedId: feed._id,
             key: item._id,
             item: item,
-            source: props.sourceMap[item.source],
-            filter: props.filter,
-            viewConfigs: props.viewConfigs,
-            shortcuts: props.shortcuts,
-            markRead: props.markRead,
-            contextMenu: props.contextMenu,
-            showItem: props.showItem,
+            source: sourceMap[item.source],
+            filter: filter,
+            viewConfigs: viewConfigs,
+            shortcuts: itemShortcuts,
+            markRead: markRead,
+            contextMenu: openItemMenu,
+            showItem: showItem,
         } as CardProps;
 
-        if (props.viewType === ViewType.List && props.currentItem === item._id) {
+        if (props.viewType === ViewType.List && currentItem === item._id) {
             cardProps.selected = true;
         }
 
@@ -74,8 +92,8 @@ const ListFeed = (props) => {
     };
 
     useEffect(() => {
-        setLoaded(props.feed.loaded);
-    }, [props.feed.loaded]);
+        setLoaded(feed.loaded);
+    }, [feed.loaded]);
 
     return (
         loaded && (
@@ -89,22 +107,22 @@ const ListFeed = (props) => {
             >
                 <List
                     className={AnimationClassNames.slideUpIn10}
-                    items={props.items}
+                    items={items}
                     onRenderCell={onRenderItem}
                     ignoreScrollingState
                     usePageCache
                 />
-                {props.feed.loaded && !props.feed.allLoaded ? (
+                {feed.loaded && !feed.allLoaded ? (
                     <div className="load-more-wrapper">
                         <PrimaryButton
                             id="load-more"
                             text={intl.get("loadMore")}
-                            disabled={props.feed.loading}
-                            onClick={() => props.loadMore(props.feed)}
+                            disabled={feed.loading}
+                            onClick={() => loadMore(feed)}
                         />
                     </div>
                 ) : null}
-                {props.items.length === 0 && (
+                {items.length === 0 && (
                     <div className="empty">{intl.get("article.empty")}</div>
                 )}
             </FocusZone>

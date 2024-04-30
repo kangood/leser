@@ -6,29 +6,23 @@ import { List, AnimationClassNames } from "@fluentui/react";
 
 import DefaultCard from "../cards/default-card";
 import { RSSItem } from "../../scripts/models/item";
-import { useItemStore } from "@renderer/scripts/store/item-store";
-import { useFeedStore } from "@renderer/scripts/store/feed-store";
-import { usePageStore } from "@renderer/scripts/store/page-store";
-import { useSourceStore } from "@renderer/scripts/store/source-store";
-import { useAppStore } from "@renderer/scripts/store/app-store";
+import { useItemActions, useItemStore, useItems } from "@renderer/scripts/store/item-store";
+import { useFeed, useFeedStore, useLoadMore } from "@renderer/scripts/store/feed-store";
+import { useFilter, usePageStore, useShowItem } from "@renderer/scripts/store/page-store";
+import { useSourceMap } from "@renderer/scripts/store/source-store";
+import { useOpenItemMenu } from "@renderer/scripts/store/app-store";
+import { FeedProps } from "./feed";
 
-const CardsFeed = (props) => {
-
-    const { filter, showItem } = usePageStore(useShallow(state => ({
-        filter: state.page.filter,
-        showItem: state.showItem
-    })));
-    const { feed, loadMore } = useFeedStore(useShallow(state => ({
-        feed: state.feeds[props.feedId],
-        loadMore: state.loadMore
-    })));
-    const { items, itemShortcuts, markRead } = useItemStore(useShallow(state => ({
-        items: feed.iids.map(iid => items[iid]),
-        itemShortcuts: state.itemShortcuts,
-        markRead: state.markRead
-    })));
-    const sourceMap = useSourceStore(state => state.sources);
-    const openItemMenu = useAppStore(state => state.openItemMenu);
+const CardsFeed = (props: FeedProps) => {
+    // zustand store
+    const sourceMap = useSourceMap();
+    const openItemMenu = useOpenItemMenu();
+    const filter = useFilter();
+    const showItem = useShowItem();
+    const feed = useFeed(props.feedId);
+    const loadMore = useLoadMore();
+    const items = useItems(feed);
+    const { itemShortcuts, markRead } = useItemActions();
 
     const [width, setWidth] = useState(window.innerWidth);
     const [height, setHeight] = useState(window.innerHeight);

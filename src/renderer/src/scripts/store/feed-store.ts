@@ -41,7 +41,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             }
         });
         // [itemReducer]
-        useItemStore.getState().initFeedSuccess(items);
+        useItemStore.getState().actions.initFeedSuccess(items);
         // [pageReducer]
     },
     initFeedFailure: (err: Error) => {
@@ -123,7 +123,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             }
         }));
         // [itemReducer]
-        useItemStore.getState().loadMoreSuccess(items);
+        useItemStore.getState().actions.loadMoreSuccess(items);
     },
     loadMoreFailure: (feed: RSSFeed, _err: Error) => {
         set(state => ({
@@ -156,3 +156,6 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
         })
     }
 }), { name: "feed" }))
+
+export const useFeed = (feedId: string) => useFeedStore(state => state.feeds[feedId]);
+export const useLoadMore = () => useFeedStore(state => state.loadMore);

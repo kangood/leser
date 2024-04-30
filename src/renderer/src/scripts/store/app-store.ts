@@ -129,7 +129,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
             })
             .then(async () => {
                 usePageStore.getState().selectAllArticles();
-                await useItemStore.getState().fetchItems();
+                await useItemStore.getState().actions.fetchItems();
             })
             .then(() => {
                 useSourceStore.getState().updateFavicon();
@@ -195,7 +195,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     let app = useAppStore.getState().app;
                     if (!app.settings.display) {
                         if (!app.fetchingItems) {
-                            useItemStore.getState().fetchItems(true);
+                            useItemStore.getState().actions.fetchItems(true);
                         }
                     } else {
                         setupTimeout(1);
@@ -230,3 +230,5 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         }));
     }
 }), { name: "app" }))
+
+export const useOpenItemMenu = () => useAppStore(state => state.openItemMenu);

@@ -79,7 +79,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
     showItemFromId: (iid: number) => {
         const item = useItemStore.getState().items[iid];
         if (!item.hasRead) {
-            useItemStore.getState().markRead(item);
+            useItemStore.getState().actions.markRead(item);
         }
         if (item) {
             get().showItem(null, item);
@@ -87,3 +87,8 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
     },
     
 }), { name: "page" }))
+
+export const useFilter = () => usePageStore(state => state.page.filter);
+export const useCurrentItem = () => usePageStore(state => state.page.itemId);
+export const useViewConfigs = () => usePageStore(state => state.page.viewConfigs);
+export const useShowItem = () => usePageStore(state => state.showItem);

@@ -1,5 +1,4 @@
 import * as React from "react"
-import { FeedContainer } from "../containers/feed-container"
 import { Icon, FocusTrapZone } from "@fluentui/react"
 import ArticleContainer from "../containers/article-container"
 import { ViewType } from "../schema-types"
@@ -10,6 +9,7 @@ import { AppState } from "../scripts/models/app"
 import { SideTopRight } from "./side-top-right"
 import { ContentFilter } from "./utils/content-filter"
 import { FeedTop } from "./feeds/feed-top"
+import { Feed } from "./feeds/feed"
 
 type PageProps = {
     contextOn: boolean
@@ -106,7 +106,7 @@ const Page: React.FC<PageProps> = ({
                             />
                         </div>
                         {feeds.map(fid => (
-                            <FeedContainer
+                            <Feed
                                 viewType={viewType}
                                 feedId={fid}
                                 key={fid + viewType}
@@ -157,7 +157,7 @@ const Page: React.FC<PageProps> = ({
                         <div className="list-feed-container">
                             <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             {feeds.map(fid => (
-                                <FeedContainer
+                                <Feed
                                     viewType={viewType}
                                     feedId={fid}
                                     key={fid}

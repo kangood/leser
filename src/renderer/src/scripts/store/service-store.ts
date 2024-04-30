@@ -180,7 +180,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         const [items, configs] = await hook();
         if (items.length > 0) {
             const inserted = await insertItems(items);
-            useItemStore.getState().fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
+            useItemStore.getState().actions.fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
             if (background) {
                 for (let item of inserted) {
                     if (item.notify) useAppStore.getState().pushNotification(item);

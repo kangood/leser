@@ -34,6 +34,7 @@ type SourceStore = {
     toggleStarredDone: (item: RSSItem) => void;
 }
 
+
 let insertPromises = Promise.resolve();
 export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     sources: {},
@@ -232,3 +233,5 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
         }))
     }
 }), { name: "source" }))
+
+export const useSourceMap = () => useSourceStore(state => state.sources);

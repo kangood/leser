@@ -11,7 +11,7 @@ export const SideTopRight = ({
   maximize,
   maximized,
   close,
-  state,
+  appState,
 }) => {
     return (
         <div className="side-top-right dragging">
@@ -23,7 +23,7 @@ export const SideTopRight = ({
                     title={intl.get("article.markRead")}
                     onMouseDown={e => {
                         if (
-                            state.contextMenu.event ===
+                            appState.contextMenu.event ===
                             "#mark-all-toggle"
                         )
                             e.stopPropagation()
@@ -35,7 +35,7 @@ export const SideTopRight = ({
                     id="log-toggle"
                     title={intl.get("nav.notifications")}
                     onClick={logs}>
-                    {state.logMenu.notify ? (
+                    {appState.logMenu.notify ? (
                         <Icon iconName="RingerSolid" />
                     ) : (
                         <Icon iconName="Ringer" />
@@ -48,7 +48,7 @@ export const SideTopRight = ({
                     onClick={viewsWrapper}
                     onMouseDown={e => {
                         if (
-                            state.contextMenu.event ===
+                            appState.contextMenu.event ===
                             "#view-toggle"
                         )
                             e.stopPropagation()

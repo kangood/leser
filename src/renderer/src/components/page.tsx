@@ -4,65 +4,40 @@ import ArticleContainer from "../containers/article-container"
 import { ViewType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
-import { FilterType } from "../scripts/models/feed"
-import { AppState } from "../scripts/models/app"
 import { SideTopRight } from "./side-top-right"
 import { ContentFilter } from "./utils/content-filter"
 import { FeedTop } from "./feeds/feed-top"
 import { Feed } from "./feeds/feed"
+import { usePageActions, usePageCurrentItem, usePageFeeds, usePageFilter, usePageItemFromFeed, usePageViewType } from "@renderer/scripts/store/page-store"
+import { useApp, useAppActions, useAppContextMenuOn, useAppSettingsDisplay } from "@renderer/scripts/store/app-store"
 
-type PageProps = {
-    contextOn: boolean
-    settingsOn: boolean // 是否打开了设置模块
-    feeds: string[]
-    itemId: number
-    itemFromFeed: boolean
-    viewType: ViewType // 视图类型
-    state: AppState
-    filter: FilterType
-    dismissItem: () => void
-    offsetItem: (offset: number) => void
-    switchFilter: (filter: FilterType) => void
-    toggleSearch: () => void
-    markAllRead: () => void
-    logs: () => void
-    views: () => void
-    settings: () => void
-}
-
-const Page: React.FC<PageProps> = ({
-    contextOn,
-    settingsOn,
-    feeds,
-    itemId,
-    itemFromFeed,
-    viewType,
-    state,
-    filter,
-    dismissItem,
-    offsetItem,
-    switchFilter,
-    toggleSearch,
-    markAllRead,
-    logs,
-    views,
-    settings,
-}) => {
-
+const Page: React.FC = () => {
+    // zustand store
+    const filter = usePageFilter();
+    const feeds = usePageFeeds();
+    const currentItem = usePageCurrentItem();
+    const pageItemFromFeed = usePageItemFromFeed();
+    const { showOffsetItem, toggleSearch, switchFilter, dismissItem } = usePageActions();
+    const appState = useApp();
+    const appSettingsDisplay = useAppSettingsDisplay();
+    const appContextMenuOn = useAppContextMenuOn();
+    const { openViewMenu, openMarkAllMenu, toggleLogMenu, toggleSettings } = useAppActions();
+    const viewType = usePageViewType();
     const toggleMenuDisplay = useToggleMenuStore(state => state.display);
     const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+
     const [maximized, setMaximized] = React.useState<boolean>(window.utils.isMaximized());
     
     const offsetItemHandler = (event: React.MouseEvent, offset: number) => {
         event.stopPropagation()
-        offsetItem(offset)
+        showOffsetItem(offset)
     }
     const prevItem = (event: React.MouseEvent) => offsetItemHandler(event, -1)
     const nextItem = (event: React.MouseEvent) => offsetItemHandler(event, 1)
 
     const viewsWrapper = () => {
-        if (state.contextMenu.event !== "#view-toggle") {
-            views()
+        if (appState.contextMenu.event !== "#view-toggle") {
+            openViewMenu();
         }
     }
 
@@ -83,7 +58,7 @@ const Page: React.FC<PageProps> = ({
         viewType !== ViewType.List ? (
             // 视图类型!=列表时的内容模块
             <>
-                {settingsOn ? null : (
+                {appSettingsDisplay ? null : (
                     <div
                         key="card"
                         className={
@@ -91,18 +66,18 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="wide-side-wrapper dragging">
-                            <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
+                            <FeedTop appState={appState} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             <ContentFilter filter={filter} switchFilter={switchFilter} />
                             <SideTopRight
-                                markAllRead={markAllRead}
-                                logs={logs}
+                                markAllRead={openMarkAllMenu}
+                                logs={toggleLogMenu}
                                 viewsWrapper={viewsWrapper}
-                                settings={settings}
+                                settings={toggleSettings}
                                 minimize={minimize}
                                 maximize={maximize}
                                 maximized={maximized}
                                 close={close}
-                                state={state}
+                                appState={appState}
                             />
                         </div>
                         {feeds.map(fid => (
@@ -114,19 +89,19 @@ const Page: React.FC<PageProps> = ({
                         ))}
                     </div>
                 )}
-                {itemId && (
+                {currentItem && (
                     <FocusTrapZone
-                        disabled={contextOn}
-                        ignoreExternalFocusing={true}
+                        disabled={appContextMenuOn}
+                        disableRestoreFocus={true}
                         isClickableOutsideFocusTrap={true}
                         className="article-container"
                         onClick={dismissItem}>
                         <div
                             className="article-wrapper"
                             onClick={e => e.stopPropagation()}>
-                            <ArticleContainer itemId={itemId} />
+                            <ArticleContainer itemId={currentItem} />
                         </div>
-                        {itemFromFeed && (
+                        {pageItemFromFeed && (
                             <>
                                 <div className="btn-group prev">
                                     <a className="btn" onClick={prevItem}>
@@ -147,7 +122,7 @@ const Page: React.FC<PageProps> = ({
             // 视图类型=列表时的内容模块
             <>
                 {/* 打开设置模块时隐藏，没打开则正常显示内容 */}
-                {settingsOn ? null : (
+                {appSettingsDisplay ? null : (
                     <div
                         key="list"
                         className={
@@ -155,7 +130,7 @@ const Page: React.FC<PageProps> = ({
                         }>
                         <ArticleSearch />
                         <div className="list-feed-container">
-                            <FeedTop state={state} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
+                            <FeedTop appState={appState} toggleMenu={toggleMenu} toggleSearch={toggleSearch} />
                             {feeds.map(fid => (
                                 <Feed
                                     viewType={viewType}
@@ -167,19 +142,19 @@ const Page: React.FC<PageProps> = ({
                         </div>
                         <div className="side-wrapper">
                             <SideTopRight
-                                markAllRead={markAllRead}
-                                logs={logs}
+                                markAllRead={openMarkAllMenu}
+                                logs={toggleLogMenu}
                                 viewsWrapper={viewsWrapper}
-                                settings={settings}
+                                settings={toggleSettings}
                                 minimize={minimize}
                                 maximize={maximize}
                                 maximized={maximized}
                                 close={close}
-                                state={state}
+                                appState={appState}
                             />
-                            {itemId ? (
+                            {currentItem ? (
                                 <div className="side-article-wrapper">
-                                    <ArticleContainer itemId={itemId} />
+                                    <ArticleContainer itemId={currentItem} />
                                 </div>
                             ) : (
                                 <div className="side-logo-wrapper">

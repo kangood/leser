@@ -8,9 +8,8 @@ import { rootReducer, RootState } from "./scripts/reducer"
 import Root from "./components/root"
 import { AppDispatch } from "./scripts/utils"
 import { applyThemeSettings } from "./scripts/settings"
-import { initApp, openTextMenu } from "./scripts/models/app"
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import { useAppStore } from "./scripts/store/app-store";
+import { useAppActions, useAppStore } from "./scripts/store/app-store";
 
 window.settings.setProxy()
 
@@ -26,11 +25,11 @@ const store = createStore(
 )
 
 // store.dispatch(initApp())
-useAppStore.getState().initApp();
+useAppActions().initApp();
 
 window.utils.addMainContextListener((pos, text) => {
     // store.dispatch(openTextMenu(pos, text))
-    useAppStore.getState().openTextMenu(pos, text);
+    useAppActions().openTextMenu(pos, text);
 })
 
 window.fontList = [""]

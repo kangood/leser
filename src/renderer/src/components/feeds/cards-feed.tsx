@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from "react";
 import intl from "react-intl-universal";
 import { PrimaryButton, FocusZone } from "@fluentui/react";
-import { useShallow } from "zustand/react/shallow";
 import { List, AnimationClassNames } from "@fluentui/react";
 
 import DefaultCard from "../cards/default-card";
 import { RSSItem } from "../../scripts/models/item";
-import { useItemActions, useItemStore, useItems } from "@renderer/scripts/store/item-store";
-import { useFeed, useFeedStore, useLoadMore } from "@renderer/scripts/store/feed-store";
-import { useFilter, usePageStore, useShowItem } from "@renderer/scripts/store/page-store";
+import { useItemActions, useItemsByFeed } from "@renderer/scripts/store/item-store";
+import { useFeedById, useFeedActions } from "@renderer/scripts/store/feed-store";
+import { usePageFilter, usePageActions } from "@renderer/scripts/store/page-store";
 import { useSourceMap } from "@renderer/scripts/store/source-store";
-import { useOpenItemMenu } from "@renderer/scripts/store/app-store";
 import { FeedProps } from "./feed";
+import { useAppActions } from "@renderer/scripts/store/app-store";
 
 const CardsFeed = (props: FeedProps) => {
     // zustand store
     const sourceMap = useSourceMap();
-    const openItemMenu = useOpenItemMenu();
-    const filter = useFilter();
-    const showItem = useShowItem();
-    const feed = useFeed(props.feedId);
-    const loadMore = useLoadMore();
-    const items = useItems(feed);
+    const openItemMenu = useAppActions().openItemMenu;
+    const filter = usePageFilter();
+    const showItem = usePageActions().showItem;
+    const feed = useFeedById(props.feedId);
+    const loadMore = useFeedActions().loadMore;
+    const items = useItemsByFeed(feed);
     const { itemShortcuts, markRead } = useItemActions();
 
     const [width, setWidth] = useState(window.innerWidth);

@@ -3,7 +3,7 @@ import intl from "react-intl-universal"
 import { create } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
-import { useAppStore } from "./app-store";
+import { useAppActions, useAppStore } from "./app-store";
 import { MARK_READ, MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { useGroupStore } from "./group-store";
 import { devtools } from "zustand/middleware";
@@ -44,7 +44,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     initSourcesSuccess: (sources: SourceState) => {
         set({ sources: sources });
         // [appReducer]
-        useAppStore.getState().initSourcesSuccess();
+        useAppActions().initSourcesSuccess();
         // [feedReducer]
     },
     initSources: async () => {
@@ -134,7 +134,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     },
     deleteSource: async (source: RSSSource, batch = false) => {
         return new Promise(async (_resolve, reject) => {
-            if (!batch) { useAppStore.getState().saveSettings() };
+            if (!batch) { useAppActions().saveSettings() };
             try {
                 await db.itemsDB.delete().from(db.items).where(db.items.source.eq(source.sid)).exec();
                 await db.sourcesDB.delete().from(db.sources).where(db.sources.sid.eq(source.sid)).exec();
@@ -144,7 +144,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                 console.log(err);
                 reject(err);
             } finally {
-                if (!batch) { useAppStore.getState().saveSettings() };
+                if (!batch) { useAppActions().saveSettings() };
             }
         });
     },

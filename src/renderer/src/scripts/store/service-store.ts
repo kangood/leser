@@ -3,12 +3,12 @@ import lf from "lovefield";
 import { create } from 'zustand';
 import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
-import { useAppStore } from './app-store';
+import { useAppActions, useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
 import { useSourceStore } from "./source-store";
 import { useGroupStore } from "./group-store";
 import { insertItems } from "../models/item";
-import { useItemStore } from "./item-store";
+import { useItemActions, useItemStore } from "./item-store";
 import { devtools } from "zustand/middleware";
 
 type ServiceStore = {
@@ -52,7 +52,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         }
         const forceSettings = () => {
             if (!useAppStore.getState().app.settings.saving) {
-                useAppStore.getState().saveSettings();
+                useAppActions().saveSettings();
             }
         }
         let promises = sources.map(async s => {
@@ -180,10 +180,12 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         const [items, configs] = await hook();
         if (items.length > 0) {
             const inserted = await insertItems(items);
-            useItemStore.getState().actions.fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
+            useItemActions().fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
             if (background) {
                 for (let item of inserted) {
-                    if (item.notify) useAppStore.getState().pushNotification(item);
+                    if (item.notify) {
+                        useAppActions().pushNotification(item);
+                    }
                 }
                 if (inserted.length > 0) window.utils.requestAttention();
             }
@@ -207,7 +209,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                 console.log('~~syncWithService.Failure~~');
             } finally {
                 if (useAppStore.getState().app.settings.saving) {
-                    useAppStore.getState().saveSettings();
+                    useAppActions().saveSettings();
                 }
             }
         }

@@ -14,23 +14,23 @@ import MagazineCard from "../cards/magazine-card";
 import CompactCard from "../cards/compact-card";
 import { CardProps } from "../cards/card";
 import { FeedProps } from "./feed";
-import { useCurrentItem, useFilter, useShowItem, useViewConfigs } from "@renderer/scripts/store/page-store";
-import { useOpenItemMenu } from "@renderer/scripts/store/app-store";
-import { useFeed, useLoadMore } from "@renderer/scripts/store/feed-store";
-import { useItemActions, useItems } from "@renderer/scripts/store/item-store";
+import { usePageCurrentItem, usePageFilter, usePageActions, usePageViewConfigs } from "@renderer/scripts/store/page-store";
+import { useFeedById, useFeedActions } from "@renderer/scripts/store/feed-store";
+import { useItemActions, useItemsByFeed } from "@renderer/scripts/store/item-store";
 import { useSourceMap } from "@renderer/scripts/store/source-store";
+import { useAppActions } from "@renderer/scripts/store/app-store";
 
 const ListFeed = (props: FeedProps) => {
     // zustand store
     const sourceMap = useSourceMap();
-    const openItemMenu = useOpenItemMenu();
-    const filter = useFilter();
-    const currentItem = useCurrentItem();
-    const viewConfigs = useViewConfigs();
-    const showItem = useShowItem();
-    const feed = useFeed(props.feedId);
-    const loadMore = useLoadMore();
-    const items = useItems(feed);
+    const openItemMenu = useAppActions().openItemMenu;
+    const filter = usePageFilter();
+    const currentItem = usePageCurrentItem();
+    const viewConfigs = usePageViewConfigs();
+    const showItem = usePageActions().showItem;
+    const feed = useFeedById(props.feedId);
+    const loadMore = useFeedActions().loadMore;
+    const items = useItemsByFeed(feed);
     const { itemShortcuts, markRead } = useItemActions();
 
     const [loaded, setLoaded] = useState(false);

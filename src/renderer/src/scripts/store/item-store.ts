@@ -2,8 +2,8 @@ import * as db from '../db';
 import { create } from 'zustand'
 import { ItemState, MARK_READ, MARK_UNREAD, RSSItem, TOGGLE_HIDDEN, TOGGLE_STARRED, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
-import { useAppStore } from "./app-store";
-import { useFeedStore } from "./feed-store";
+import { useAppActions, useAppStore } from "./app-store";
+import { useFeedActions, useFeedStore } from "./feed-store";
 import { useServiceStore } from "./service-store";
 import { useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
@@ -52,7 +52,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 fetchingProgress: 0,
                 fetchingTotal: fetchCount
             };
-            useAppStore.getState().fetchItemsRequest(itemInTypes);
+            useAppActions().fetchItemsRequest(itemInTypes);
         },
         fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => {
             let newMap = {};
@@ -62,7 +62,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             set((state) => ({ items: { ...state.items, ...newMap } }));
             // [appReducer]
             const itemInTypes: ItemInTypes = { items: items, itemState: itemState };
-            useAppStore.getState().fetchItemsSuccess(itemInTypes);
+            useAppActions().fetchItemsSuccess(itemInTypes);
             // [feedReducer、sourceReducer]
         },
         fetchItemsFailure: (source: RSSSource, err: Error) => {
@@ -70,10 +70,10 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 errSource: source,
                 err: err
             };
-            useAppStore.getState().fetchItemsFailure(itemInTypes);
+            useAppActions().fetchItemsFailure(itemInTypes);
         },
         fetchItemsIntermediate: () => {
-            useAppStore.getState().fetchItemsIntermediate();
+            useAppActions().fetchItemsIntermediate();
         },
         fetchItems: async (background = false, sids = null) => {
             let promises = new Array<Promise<RSSItem[]>>();
@@ -127,16 +127,16 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                             if (background) {
                                 for (let item of inserted) {
                                     if (item.notify) {
-                                        useAppStore.getState().pushNotification(item);
+                                        useAppActions().pushNotification(item);
                                     }
                                 }
                                 if (inserted.length > 0) {
                                     window.utils.requestAttention();
                                 }
                             } else {
-                                useFeedStore.getState().dismissItems();
+                                useFeedActions().dismissItems();
                             }
-                            useAppStore.getState().setupAutoFetch();
+                            useAppActions().setupAutoFetch();
                         })
                         .catch((err: Error) => {
                             get().actions.fetchItemsSuccess([], useItemStore.getState().items);
@@ -271,5 +271,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     }
 }), { name: "item" }))
 
-export const useItems = (feed: RSSFeed) => useItemStore(state => feed.iids.map(iid => state.items[iid]));
+export const useItems = () => useItemStore(state => state.items);
+export const useItemsByFeed = (feed: RSSFeed) => useItemStore(state => feed.iids.map(iid => state.items[iid]));
+
 export const useItemActions = () => useItemStore(state => state.actions);

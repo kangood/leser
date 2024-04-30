@@ -2,12 +2,12 @@ import * as React from "react"
 import { connect } from "react-redux"
 import { ContextMenuContainer } from "../containers/context-menu-container"
 import { closeContextMenu } from "../scripts/models/app"
-import PageContainer from "../containers/page-container"
 import MenuContainer from "../containers/menu-container"
 import NavContainer from "../containers/nav-container"
 import LogMenuContainer from "../containers/log-menu-container"
 import SettingsContainer from "../containers/settings-container"
 import { RootState } from "../scripts/reducer"
+import Page from "./page"
 
 const Root = ({ locale, dispatch }) =>
     locale && (
@@ -16,7 +16,7 @@ const Root = ({ locale, dispatch }) =>
             key={locale}
             onMouseDown={() => dispatch(closeContextMenu())}>
             <NavContainer />
-            <PageContainer />
+            <Page />
             <LogMenuContainer />
             <MenuContainer />
             <SettingsContainer />

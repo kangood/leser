@@ -18,7 +18,7 @@ import { RSSItem } from "../scripts/models/item";
 import { ContextReduxProps } from "../containers/context-menu-container";
 import { ViewType, ImageCallbackTypes, ViewConfigs } from "../schema-types";
 import { FilterType } from "../scripts/models/feed";
-import { usePageStore } from "@renderer/scripts/store/page-store";
+import { usePageActions, usePageStore } from "@renderer/scripts/store/page-store";
 
 export type ContextMenuProps = ContextReduxProps & {
     type: ContextMenuType;
@@ -69,8 +69,7 @@ const getSearchItem = (text: string): IContextualMenuItem => {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = (props) => {
-    const toggleFilter = usePageStore(state => state.toggleFilter);
-    const checkedFilter = usePageStore(state => state.checkedFilter);
+    const { toggleFilter, checkedFilter } = usePageActions();
 
     const getItems = (): IContextualMenuItem[] => {
         switch (props.type) {

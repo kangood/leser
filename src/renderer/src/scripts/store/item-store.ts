@@ -2,9 +2,9 @@ import * as db from '../db';
 import { create } from 'zustand'
 import { ItemState, MARK_READ, MARK_UNREAD, RSSItem, TOGGLE_HIDDEN, TOGGLE_STARRED, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
-import { useAppActions, useAppStore } from "./app-store";
-import { useFeedActions, useFeedStore } from "./feed-store";
-import { useServiceStore } from "./service-store";
+import { useApp, useAppActions } from "./app-store";
+import { useFeedActions } from "./feed-store";
+import { useServiceActions } from "./service-store";
 import { useSourceActions, useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
@@ -43,7 +43,7 @@ type ItemStore = {
     }
 }
 
-export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
+const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     items: {},
     actions: {
         fetchItemsRequest: (fetchCount = 0) => {
@@ -77,13 +77,13 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
         fetchItems: async (background = false, sids = null) => {
             let promises = new Array<Promise<RSSItem[]>>();
-            const initState = { app: useAppStore.getState().app, sources: useSourceStore.getState().sources };
+            const initState = { app: useApp(), sources: useSourceStore.getState().sources };
             if (!initState.app.fetchingItems && !initState.app.syncing) {
                 if (
                     sids === null ||
                     sids.filter(sid => initState.sources[sid].serviceRef !== undefined).length > 0
                 ) {
-                    await useServiceStore.getState().syncWithService(background);
+                    await useServiceActions().syncWithService(background);
                 }
                 let timenow = new Date().getTime();
                 const sourcesState = useSourceStore.getState().sources;
@@ -183,7 +183,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markReadDone(item);
                 if (item.serviceRef) {
-                    useServiceStore.getState().getServiceHooks().markRead?.(item);
+                    useServiceActions().getServiceHooks().markRead?.(item);
                 }
             }
         },
@@ -197,7 +197,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markUnreadDone(item);
                 if (item.serviceRef) {
-                    useServiceStore.getState().getServiceHooks().markUnread?.(item);
+                    useServiceActions().getServiceHooks().markUnread?.(item);
                 }
             }
         },
@@ -209,7 +209,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 .exec();
             get().actions.toggleStarredDone(item);
             if (item.serviceRef) {
-                const hooks = useServiceStore.getState().getServiceHooks();
+                const hooks = useServiceActions().getServiceHooks();
                 if (item.starred) {
                     hooks.unstar?.(item);
                 } else {

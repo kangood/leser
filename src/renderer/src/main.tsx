@@ -9,7 +9,7 @@ import Root from "./components/root"
 import { AppDispatch } from "./scripts/utils"
 import { applyThemeSettings } from "./scripts/settings"
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import { useAppActions, useAppStore } from "./scripts/store/app-store";
+import { useAppActions } from "./scripts/store/app-store";
 
 window.settings.setProxy()
 

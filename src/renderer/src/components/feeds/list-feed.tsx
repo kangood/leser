@@ -17,12 +17,12 @@ import { FeedProps } from "./feed";
 import { usePageCurrentItem, usePageFilter, usePageActions, usePageViewConfigs } from "@renderer/scripts/store/page-store";
 import { useFeedById, useFeedActions } from "@renderer/scripts/store/feed-store";
 import { useItemActions, useItemsByFeed } from "@renderer/scripts/store/item-store";
-import { useSourceMap } from "@renderer/scripts/store/source-store";
+import { useSources } from "@renderer/scripts/store/source-store";
 import { useAppActions } from "@renderer/scripts/store/app-store";
 
 const ListFeed = (props: FeedProps) => {
     // zustand store
-    const sourceMap = useSourceMap();
+    const sources = useSources();
     const openItemMenu = useAppActions().openItemMenu;
     const filter = usePageFilter();
     const currentItem = usePageCurrentItem();
@@ -44,7 +44,7 @@ const ListFeed = (props: FeedProps) => {
             feedId: feed._id,
             key: item._id,
             item: item,
-            source: sourceMap[item.source],
+            source: sources[item.source],
             filter: filter,
             viewConfigs: viewConfigs,
             shortcuts: itemShortcuts,

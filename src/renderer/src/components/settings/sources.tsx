@@ -18,26 +18,13 @@ import {
     MessageBarType,
     Toggle,
 } from '@fluentui/react';
-import { SourceState, RSSSource, SourceOpenTarget } from '../../scripts/models/source';
+import { RSSSource, SourceOpenTarget } from '../../scripts/models/source';
 import { urlTest } from '../../scripts/utils';
 import DangerButton from '../utils/danger-button';
-
-type SourcesTabProps = {
-    sources: SourceState;
-    serviceOn: boolean;
-    sids: number[];
-    acknowledgeSIDs: () => void;
-    addSource: (url: string) => void;
-    updateSourceName: (source: RSSSource, name: string) => void;
-    updateSourceIcon: (source: RSSSource, iconUrl: string) => Promise<void>;
-    updateSourceOpenTarget: (source: RSSSource, target: SourceOpenTarget) => void;
-    updateFetchFrequency: (source: RSSSource, frequency: number) => void;
-    deleteSource: (source: RSSSource) => void;
-    deleteSources: (sources: RSSSource[]) => void;
-    importOPML: () => void;
-    exportOPML: () => void;
-    toggleSourceHidden: (source: RSSSource) => void;
-};
+import { useAppActions, useAppSettingsSids } from '@renderer/scripts/store/app-store';
+import { useSourceActions, useSources } from '@renderer/scripts/store/source-store';
+import { useServiceOn } from '@renderer/scripts/store/service-store';
+import { useGroupActions } from '@renderer/scripts/store/group-store';
 
 const enum EditDropdownKeys {
     Name = 'n',
@@ -45,7 +32,15 @@ const enum EditDropdownKeys {
     Url = 'u',
 }
 
-const SourcesTab: React.FC<SourcesTabProps> = (props) => {
+const SourcesTab: React.FC = () => {
+    // zustand store
+    const sids = useAppSettingsSids();
+    const { toggleSettings, updateSourceIcon } = useAppActions();
+    const sources = useSources();
+    const { updateSource, addSource, deleteSource, deleteSources, toggleSourceHidden } = useSourceActions();
+    const serviceOn = useServiceOn();
+    const { importOPML, exportOPML } = useGroupActions();
+
     const [newUrl, setNewUrl] = useState('');
     const [selectedSource, setSelectedSource] = useState<RSSSource | null>(null);
     const [selectedSources, setSelectedSources] = useState<RSSSource[] | null>(null);
@@ -67,11 +62,11 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
     });
 
     useEffect(() => {
-        if (props.sids.length > 0) {
-            for (let sid of props.sids) {
+        if (sids.length > 0) {
+            for (let sid of sids) {
                 selection.setKeySelected(String(sid), true, false);
             }
-            props.acknowledgeSIDs();
+            toggleSettings();
         }
     }, []);
 
@@ -128,7 +123,7 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
 
     const onFetchFrequencyChange = (_, option: IDropdownOption) => {
         let frequency = parseInt(option.key as string);
-        props.updateFetchFrequency(selectedSource, frequency);
+        updateSource({ ...selectedSource, fetchFrequency: frequency });
         setSelectedSource(state => ({
             ...state,
             fetchFrequency: frequency,
@@ -156,16 +151,16 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
 
     const updateSourceName = () => {
         let newName = newSourceName.trim();
-        props.updateSourceName(selectedSource, newName);
+        updateSource({ ...selectedSource, name: newName });
         setSelectedSource(state => ({
             ...state,
             name: newName
         }));
     }
 
-    const updateSourceIcon = () => {
+    const updateSourceIconHandle = () => {
         let newIcon = newSourceIcon.trim();
-        props.updateSourceIcon(selectedSource, newIcon);
+        updateSourceIcon(selectedSource, newIcon);
         setSelectedSource(state => ({
             ...state,
             iconurl: newIcon
@@ -183,17 +178,17 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
         }
     }
 
-    const addSource = (event: React.FormEvent) => {
+    const addSourceHandle = (event: React.FormEvent) => {
         event.preventDefault();
         let trimmed = newUrl.trim();
         if (urlTest(trimmed)) {
-            props.addSource(trimmed);
+            addSource(trimmed);
         }
     }
 
     const onOpenTargetChange = (_, option: IChoiceGroupOption) => {
         let newTarget = parseInt(option.key) as SourceOpenTarget;
-        props.updateSourceOpenTarget(selectedSource, newTarget);
+        updateSource({ ...selectedSource, openTarget: newTarget });
         setSelectedSource(state => ({
             ...state,
             openTarget: newTarget
@@ -201,7 +196,7 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
     }
 
     const onToggleHidden = () => {
-        props.toggleSourceHidden(selectedSource);
+        toggleSourceHidden(selectedSource);
         setSelectedSource(state => ({
             ...state,
             hidden: !selectedSource.hidden
@@ -210,7 +205,7 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
 
     return (
         <div className="tab-body">
-            {props.serviceOn && (
+            {serviceOn && (
                 <MessageBar messageBarType={MessageBarType.info}>
                     {intl.get("sources.serviceWarning")}
                 </MessageBar>
@@ -219,19 +214,19 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
             <Stack horizontal>
                 <Stack.Item>
                     <PrimaryButton
-                        onClick={props.importOPML}
+                        onClick={importOPML}
                         text={intl.get("sources.import")}
                     />
                 </Stack.Item>
                 <Stack.Item>
                     <DefaultButton
-                        onClick={props.exportOPML}
+                        onClick={exportOPML}
                         text={intl.get("sources.export")}
                     />
                 </Stack.Item>
             </Stack>
 
-            <form onSubmit={addSource}>
+            <form onSubmit={addSourceHandle}>
                 <Label htmlFor="newUrl">{intl.get("sources.add")}</Label>
                 <Stack horizontal>
                     <Stack.Item grow>
@@ -260,8 +255,8 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
             </form>
 
             <DetailsList
-                compact={Object.keys(props.sources).length >= 10}
-                items={Object.values(props.sources)}
+                compact={Object.keys(sources).length >= 10}
+                items={Object.values(sources)}
                 columns={columns()}
                 getKey={s => s.sid}
                 setKey="selected"
@@ -341,7 +336,7 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
                                                 newSourceIcon.trim()
                                             )
                                         }
-                                        onClick={updateSourceIcon}
+                                        onClick={updateSourceIconHandle}
                                         text={intl.get("edit")}
                                     />
                                 </Stack.Item>
@@ -416,7 +411,7 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
                             <Stack.Item>
                                 <DangerButton
                                     onClick={() =>
-                                        props.deleteSource(
+                                        deleteSource(
                                             selectedSource
                                         )
                                     }
@@ -434,15 +429,15 @@ const SourcesTab: React.FC<SourcesTabProps> = (props) => {
                 </>
             )}
             {selectedSources &&
-                (selectedSources.filter(s => s.serviceRef).length ===
-                0 ? (
+                (selectedSources.filter(s => s.serviceRef).length === 0
+                ? (
                     <>
                         <Label>{intl.get("sources.selectedMulti")}</Label>
                         <Stack horizontal>
                             <Stack.Item>
                                 <DangerButton
                                     onClick={() =>
-                                        props.deleteSources(
+                                        deleteSources(
                                             selectedSources
                                         )
                                     }

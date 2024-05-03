@@ -2,10 +2,11 @@ import { create } from "zustand";
 import { ALL, FeedFilter, FeedState, RSSFeed } from "../models/feed";
 import { RSSItem } from "../models/item";
 import { usePageStore } from "./page-store";
-import { useItemActions, useItemStore } from "./item-store";
+import { useItemActions, useItems } from "./item-store";
 import { produce } from "immer";
 import { devtools } from "zustand/middleware";
-import { useAppActions, useAppStore } from "./app-store";
+import { useAppActions } from "./app-store";
+import { RSSSource } from "../models/source";
 
 type FeedStore = {
     feeds: FeedState;
@@ -20,12 +21,14 @@ type FeedStore = {
         loadMoreSuccess: (feed: RSSFeed, items: RSSItem[]) => void;
         loadMoreFailure: (feed: RSSFeed, err: Error) => void;
         loadMore: (feed: RSSFeed) => Promise<void>;
+        hideSource: (source: RSSSource) => void;
+        unhideSource: (source: RSSSource) => void;
     }
 };
 
 const LOAD_QUANTITY = 50;
 
-export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
+const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
     // 初始值差个 `groups:[]`
     feeds: { [ALL]: new RSSFeed(ALL) },
     actions: {
@@ -73,7 +76,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             get().actions.initFeedsSuccess();
         },
         dismissItems: () => {
-            const state = { page: usePageStore.getState().page, feeds: useFeedStore.getState().feeds, items: useItemStore.getState().items };
+            const state = { page: usePageStore.getState().page, feeds: useFeedStore.getState().feeds, items: useItems() };
             let fid = state.page.feedId;
             let filter = state.feeds[fid].filter;
             let iids = new Set<number>();
@@ -143,7 +146,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             if (feed.loaded && !feed.loading && !feed.allLoaded) {
                 get().actions.loadMoreRequest(feed);
                 const skipNum = feed.iids.filter(i =>
-                    FeedFilter.testItem(feed.filter, useItemStore.getState().items[i])
+                    FeedFilter.testItem(feed.filter, useItems()[i])
                 ).length;
                 return RSSFeed.loadFeed(feed, skipNum)
                     .then(items => {
@@ -157,7 +160,32 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             return new Promise((_, reject) => {
                 reject();
             })
-        }
+        },
+        hideSource: (source: RSSSource) => {
+            set(state => {
+                let nextState = {};
+                for (let [id, feed] of Object.entries(state.feeds)) {
+                    nextState[id] = new RSSFeed(
+                        id,
+                        feed.sids.filter(sid => sid != source.sid),
+                        feed.filter
+                    );
+                }
+                return { feeds: nextState };
+            });
+        },
+        unhideSource: (source: RSSSource) => {
+            set(state => ({
+                feeds: {
+                    ...state.feeds,
+                    [ALL]: new RSSFeed(
+                        ALL,
+                        [...state.feeds[ALL].sids, source.sid],
+                        state.feeds[ALL].filter
+                    ),
+                }
+            }))
+        },
     }
 }), { name: "feed" }))
 

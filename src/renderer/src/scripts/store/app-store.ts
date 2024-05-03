@@ -2,13 +2,13 @@ import * as db from '../db';
 import { create } from 'zustand'
 import { AppLog, AppLogType, AppState, ContextMenuType } from '../models/app';
 import { RSSItem } from '../models/item';
-import { SourceOpenTarget } from '../models/source';
+import { RSSSource, SourceOpenTarget } from '../models/source';
 import { PageInTypes, usePageActions } from './page-store';
 import { ItemInTypes, useItemActions } from './item-store';
 import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
-import { initTouchBarWithTexts } from '../utils';
+import { initTouchBarWithTexts, validateFavicon } from '../utils';
 import { useSourceActions, useSourceStore } from './source-store';
 import { useFeedActions } from './feed-store';
 import { devtools } from 'zustand/middleware';
@@ -38,12 +38,13 @@ type AppStore = {
         toggleSettings: (open?: boolean, sids?: Array<number>) => void;
         deleteArticles: (days: number) => Promise<void>;
         importAll: () => Promise<void>;
+        updateSourceIcon: (source: RSSSource, iconUrl: string) => void;
     }
 }
 
 let fetchTimeout: NodeJS.Timeout;
 
-export const useAppStore = create<AppStore>()(devtools((set, get) => ({
+const useAppStore = create<AppStore>()(devtools((set, get) => ({
     app: new AppState(),
     actions: {
         initSourcesSuccess: () => {
@@ -311,10 +312,20 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 get().actions.saveSettings();
             }
         },
+        updateSourceIcon: async (source: RSSSource, iconUrl: string) => {
+            get().actions.saveSettings();
+            if (await validateFavicon(iconUrl)) {
+                useSourceActions().updateSource({ ...source, iconurl: iconUrl });
+            } else {
+                window.utils.showErrorBox(intl.get("sources.badIcon"), "");
+            }
+            get().actions.saveSettings();
+        },
     }
 }), { name: "app" }))
 
 export const useApp = () => useAppStore(state => state.app);
+export const useAppSettingsSids = () => useAppStore(state => state.app.settings.sids);
 export const useAppSettingsDisplay = () => useAppStore(state => state.app.settings.display);
 export const useAppContextMenuOn = () => useAppStore(state => state.app.contextMenu.type != ContextMenuType.Hidden);
 

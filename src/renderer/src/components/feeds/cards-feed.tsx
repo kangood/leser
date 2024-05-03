@@ -8,13 +8,13 @@ import { RSSItem } from "../../scripts/models/item";
 import { useItemActions, useItemsByFeed } from "@renderer/scripts/store/item-store";
 import { useFeedById, useFeedActions } from "@renderer/scripts/store/feed-store";
 import { usePageFilter, usePageActions } from "@renderer/scripts/store/page-store";
-import { useSourceMap } from "@renderer/scripts/store/source-store";
+import { useSources } from "@renderer/scripts/store/source-store";
 import { FeedProps } from "./feed";
 import { useAppActions } from "@renderer/scripts/store/app-store";
 
 const CardsFeed = (props: FeedProps) => {
     // zustand store
-    const sourceMap = useSourceMap();
+    const sources = useSources();
     const openItemMenu = useAppActions().openItemMenu;
     const filter = usePageFilter();
     const showItem = usePageActions().showItem;
@@ -73,7 +73,7 @@ const CardsFeed = (props: FeedProps) => {
                 feedId={feed._id}
                 key={item._id}
                 item={item}
-                source={sourceMap[item.source]}
+                source={sources[item.source]}
                 filter={filter}
                 shortcuts={itemShortcuts}
                 markRead={markRead}

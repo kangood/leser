@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import { useItemActions, useItemStore, useItems } from './item-store';
+import { useItemActions, useItems } from './item-store';
 import { RSSItem } from '../models/item';
 import { PageState } from '../models/page';
 import { ALL, FeedFilter, FilterType } from '../models/feed';
 import { getWindowBreakpoint } from '../utils';
 import { useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
-import { useAppActions, useAppStore } from './app-store';
+import { useAppActions } from './app-store';
 import { useFeedActions, useFeeds } from './feed-store';
 
 export type PageInTypes = {
@@ -80,7 +80,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             // [feedReducer]
         },
         showItem: (feedId: string, item: RSSItem) => {
-            const state = { items: useItemStore.getState().items, sources: useSourceStore.getState().sources };
+            const state = { items: useItems(), sources: useSourceStore.getState().sources };
             if (
                 state.items.hasOwnProperty(item._id) &&
                 state.sources.hasOwnProperty(item.source)
@@ -95,7 +95,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             }
         },
         showItemFromId: (iid: number) => {
-            const item = useItemStore.getState().items[iid];
+            const item = useItems()[iid];
             if (!item.hasRead) {
                 useItemActions().markRead(item);
             }

@@ -1,6 +1,5 @@
 import React, { useState } from "react"
 import intl from "react-intl-universal"
-import { SourceState, RSSSource } from "../../scripts/models/source"
 import {
     Stack,
     Label,
@@ -26,6 +25,7 @@ import { SourceRule, RuleActions } from "../../scripts/models/rule"
 import { FilterType } from "../../scripts/models/feed"
 import { MyParserItem, validateRegex } from "../../scripts/utils"
 import { RSSItem } from "../../scripts/models/item"
+import { useSourceActions, useSources } from "@renderer/scripts/store/source-store"
 
 const actionKeyMap = {
     "r-true": "article.markRead",
@@ -36,11 +36,6 @@ const actionKeyMap = {
     "h-false": "article.unhide",
     "n-true": "article.notify",
     "n-false": "article.dontNotify",
-}
-
-type RulesTabProps = {
-    sources: SourceState
-    updateSourceRules: (source: RSSSource, rules: SourceRule[]) => void
 }
 
 type RulesTabState = {
@@ -58,7 +53,11 @@ type RulesTabState = {
     mockResult: string
 }
 
-const RulesTab: React.FC<RulesTabProps> = (props) => {
+const RulesTab: React.FC = () => {
+    // zustand store
+    const sources = useSources();
+    const { updateSource } = useSourceActions();
+
     const [rulesDraggedItem, setRulesDraggedItem] = useState<SourceRule>();
     const [rulesDraggedIndex, setRulesDraggedIndex] = useState<number>(-1);
 
@@ -115,8 +114,8 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
 
         items.splice(insertIndex, 0, ...draggedItems)
         rulesSelection.setAllSelected(false)
-        let source = props.sources[parseInt(state.sid)]
-        props.updateSourceRules(source, items)
+        let source = sources[parseInt(state.sid)]
+        updateSource({ ...source, rules });
     }
 
     const initRuleEdit = (rule: SourceRule = null) => {
@@ -137,7 +136,7 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
         }))
     }
 
-    const getSourceRules = () => props.sources[parseInt(state.sid)].rules;
+    const getSourceRules = () => sources[parseInt(state.sid)].rules;
 
     const ruleColumns = (): IColumn[] => [
         {
@@ -165,7 +164,7 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
     }
 
     const sourceOptions = (): IDropdownOption[] =>
-        Object.entries(props.sources).map(([sid, s]) => ({
+        Object.entries(sources).map(([sid, s]) => ({
             key: sid,
             text: s.name,
             data: { icon: s.iconurl },
@@ -268,14 +267,14 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
             filterType,
             state.match
         )
-        let source = props.sources[parseInt(state.sid)]
+        let source = sources[parseInt(state.sid)]
         let rules = source.rules ? [...source.rules] : []
         if (state.editIndex === -1) {
             rules.push(rule)
         } else {
             rules.splice(state.editIndex, 1, rule)
         }
-        props.updateSourceRules(source, rules)
+        updateSource({ ...source, rules });
         setState(prevState => ({ ...prevState, editIndex: -1 }))
         initRuleEdit()
     }
@@ -290,11 +289,8 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
     const deleteRules = () => {
         let rules = getSourceRules()
         for (let i of state.selectedRules) rules[i] = null
-        let source = props.sources[parseInt(state.sid)]
-        props.updateSourceRules(
-            source,
-            rules.filter(r => r !== null)
-        )
+        let source = sources[parseInt(state.sid)]
+        updateSource({ ...source, rules: rules.filter(r => r !== null) });
         initRuleEdit()
     }
 
@@ -331,7 +327,7 @@ const RulesTab: React.FC<RulesTabProps> = (props) => {
 
     const testMockItem = () => {
         let parsed = { title: state.mockTitle }
-        let source = props.sources[parseInt(state.sid)]
+        let source = sources[parseInt(state.sid)]
         let item = new RSSItem(parsed as MyParserItem, source)
         item.snippet = state.mockContent
         item.creator = state.mockCreator

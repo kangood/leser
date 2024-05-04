@@ -4,12 +4,12 @@ import { Icon } from "@fluentui/react/lib/Icon"
 import { AnimationClassNames } from "@fluentui/react/lib/Styling"
 import AboutTab from "./settings/about"
 import { Pivot, PivotItem, Spinner, FocusTrapZone } from "@fluentui/react"
-import RulesTabContainer from "../containers/settings/rules-container"
 import ServiceTabContainer from "../containers/settings/service-container"
 import { initTouchBarWithTexts } from "../scripts/utils"
 import AppTab from "./settings/app"
 import SourcesTab from "./settings/sources"
 import GroupsTab from "./settings/groups"
+import RulesTab from "./settings/rules"
 
 type SettingsProps = {
     display: boolean
@@ -84,7 +84,7 @@ class Settings extends React.Component<SettingsProps> {
                         <PivotItem
                             headerText={intl.get("settings.rules")}
                             itemIcon="FilterSettings">
-                            <RulesTabContainer />
+                            <RulesTab />
                         </PivotItem>
                         <PivotItem
                             headerText={intl.get("settings.service")}

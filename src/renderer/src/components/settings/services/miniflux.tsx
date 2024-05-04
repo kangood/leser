@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useState } from "react"
 import intl from "react-intl-universal"
 import { ServiceConfigsTabProps } from "../service"
 import { SyncService } from "../../../schema-types"
@@ -30,26 +30,20 @@ type MinifluxConfigsTabState = {
     importGroups: boolean
 }
 
-class MinifluxConfigsTab extends React.Component<
-    ServiceConfigsTabProps,
-    MinifluxConfigsTabState
-> {
-    constructor(props: ServiceConfigsTabProps) {
-        super(props)
-        const configs = props.configs as MinifluxConfigs
-        this.state = {
-            existing: configs.type === SyncService.Miniflux,
-            endpoint: configs.endpoint || "",
-            apiKeyAuth: true,
-            username: "",
-            password: "",
-            apiKey: "",
-            fetchLimit: configs.fetchLimit || 250,
-            importGroups: true,
-        }
-    }
+const MinifluxConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
 
-    fetchLimitOptions = (): IDropdownOption[] => [
+    const [state, setState] = useState<MinifluxConfigsTabState>({
+        existing: (props.configs as MinifluxConfigs).type === SyncService.Miniflux,
+        endpoint: (props.configs as MinifluxConfigs).endpoint || "",
+        apiKeyAuth: true,
+        username: "",
+        password: "",
+        apiKey: "",
+        fetchLimit: (props.configs as MinifluxConfigs).fetchLimit || 250,
+        importGroups: true,
+    })
+
+    const fetchLimitOptions = (): IDropdownOption[] => [
         { key: 250, text: intl.get("service.fetchLimitNum", { count: 250 }) },
         { key: 500, text: intl.get("service.fetchLimitNum", { count: 500 }) },
         { key: 750, text: intl.get("service.fetchLimitNum", { count: 750 }) },
@@ -60,11 +54,11 @@ class MinifluxConfigsTab extends React.Component<
             text: intl.get("service.fetchUnlimited"),
         },
     ]
-    onFetchLimitOptionChange = (_, option: IDropdownOption) => {
-        this.setState({ fetchLimit: option.key as number })
+    const onFetchLimitOptionChange = (_, option: IDropdownOption) => {
+        setState(prevState => ({ ...prevState, fetchLimit: option.key as number }));
     }
 
-    authenticationOptions = (): IDropdownOption[] => [
+    const authenticationOptions = (): IDropdownOption[] => [
         { key: "apiKey", text: "API Key" /*intl.get("service.password")*/ },
         {
             key: "userPass",
@@ -74,250 +68,250 @@ class MinifluxConfigsTab extends React.Component<
                 intl.get("service.password"),
         },
     ]
-    onAuthenticationOptionsChange = (_, option: IDropdownOption) => {
-        this.setState({ apiKeyAuth: option.key == "apiKey" })
+    const onAuthenticationOptionsChange = (_, option: IDropdownOption) => {
+        setState(prevState => ({ ...prevState, apiKeyAuth: option.key == "apiKey" }));
     }
 
-    handleInputChange = event => {
-        const name: string = event.target.name
-        // @ts-expect-error
-        this.setState({ [name]: event.target.value })
+    const handleInputChange = event => {
+        const name: string = event.target.name;
+        setState(prevState => ({ ...prevState, [name]: event.target.value }));
     }
 
-    checkNotEmpty = (v: string) => {
-        return !this.state.existing && v.length == 0
+    const checkNotEmpty = (v: string) => {
+        return !state.existing && v.length == 0
             ? intl.get("emptyField")
             : ""
     }
 
-    validateForm = () => {
+    const validateForm = () => {
         return (
-            urlTest(this.state.endpoint.trim()) &&
-            (this.state.existing ||
-                this.state.apiKey ||
-                (this.state.username && this.state.password))
+            urlTest(state.endpoint.trim()) &&
+            (state.existing ||
+                state.apiKey ||
+                (state.username && state.password))
         )
     }
 
-    save = async () => {
-        let configs: MinifluxConfigs
+    const save = async () => {
+        let configs: MinifluxConfigs;
 
-        if (this.state.existing) {
+        if (state.existing) {
             configs = {
-                ...this.props.configs,
-                endpoint: this.state.endpoint,
-                fetchLimit: this.state.fetchLimit,
-            } as MinifluxConfigs
+                ...props.configs,
+                endpoint: state.endpoint,
+                fetchLimit: state.fetchLimit,
+            } as MinifluxConfigs;
 
-            if (this.state.apiKey || this.state.password)
-                configs.authKey = this.state.apiKeyAuth
-                    ? this.state.apiKey
+            if (state.apiKey || state.password) {
+                configs.authKey = state.apiKeyAuth
+                    ? state.apiKey
                     : Buffer.from(
-                          this.state.username + ":" + this.state.password,
+                          state.username + ":" + state.password,
                           "binary"
-                      ).toString("base64")
+                      ).toString("base64");
+            }
         } else {
             configs = {
                 type: SyncService.Miniflux,
-                endpoint: this.state.endpoint,
-                apiKeyAuth: this.state.apiKeyAuth,
-                authKey: this.state.apiKeyAuth
-                    ? this.state.apiKey
+                endpoint: state.endpoint,
+                apiKeyAuth: state.apiKeyAuth,
+                authKey: state.apiKeyAuth
+                    ? state.apiKey
                     : Buffer.from(
-                          this.state.username + ":" + this.state.password,
+                          state.username + ":" + state.password,
                           "binary"
                       ).toString("base64"),
-                fetchLimit: this.state.fetchLimit,
-            }
+                fetchLimit: state.fetchLimit,
+            };
 
-            if (this.state.importGroups) configs.importGroups = true
+            if (state.importGroups) {
+                configs.importGroups = true;
+            }
         }
 
-        this.props.blockActions()
-        const valid = await this.props.authenticate(configs)
+        props.blockActions();
+        const valid = await props.authenticate(configs);
 
         if (valid) {
-            this.props.save(configs)
-            this.setState({ existing: true })
-            this.props.sync()
+            props.save(configs);
+            setState(prevState => ({ ...prevState, existing: true }));
+            props.sync();
         } else {
-            this.props.blockActions()
+            props.blockActions();
             window.utils.showErrorBox(
                 intl.get("service.failure"),
                 intl.get("service.failureHint")
-            )
+            );
         }
     }
 
-    remove = async () => {
-        this.props.exit()
-        await this.props.remove()
+    const remove = async () => {
+        props.exit();
+        await props.remove();
     }
 
-    render() {
-        return (
-            <>
-                {!this.state.existing && (
-                    <MessageBar messageBarType={MessageBarType.warning}>
-                        {intl.get("service.overwriteWarning")}
-                    </MessageBar>
-                )}
-                <Stack horizontalAlign="center" style={{ marginTop: 48 }}>
-                    <Icon
-                        iconName="MarkDownLanguage"
-                        style={{
-                            color: "var(--black)",
-                            fontSize: 32,
-                            userSelect: "none",
-                        }}
-                    />
-                    <Label style={{ margin: "8px 0 36px" }}>Miniflux</Label>
+    return (
+        <>
+            {!state.existing && (
+                <MessageBar messageBarType={MessageBarType.warning}>
+                    {intl.get("service.overwriteWarning")}
+                </MessageBar>
+            )}
+            <Stack horizontalAlign="center" style={{ marginTop: 48 }}>
+                <Icon
+                    iconName="MarkDownLanguage"
+                    style={{
+                        color: "var(--black)",
+                        fontSize: 32,
+                        userSelect: "none",
+                    }}
+                />
+                <Label style={{ margin: "8px 0 36px" }}>Miniflux</Label>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.endpoint")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <TextField
+                            onGetErrorMessage={v =>
+                                urlTest(v.trim())
+                                    ? ""
+                                    : intl.get("sources.badUrl")
+                            }
+                            validateOnLoad={false}
+                            name="endpoint"
+                            value={state.endpoint}
+                            onChange={handleInputChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("groups.type")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <Dropdown
+                            options={authenticationOptions()}
+                            selectedKey={
+                                state.apiKeyAuth
+                                    ? "apiKey"
+                                    : "userPass"
+                            }
+                            onChange={onAuthenticationOptionsChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                {state.apiKeyAuth && (
                     <Stack className="login-form" horizontal>
                         <Stack.Item>
-                            <Label>{intl.get("service.endpoint")}</Label>
+                            <Label>{intl.get("service.password")}</Label>
                         </Stack.Item>
                         <Stack.Item grow>
                             <TextField
-                                onGetErrorMessage={v =>
-                                    urlTest(v.trim())
-                                        ? ""
-                                        : intl.get("sources.badUrl")
+                                type="password"
+                                placeholder={
+                                    state.existing
+                                        ? intl.get("service.unchanged")
+                                        : ""
                                 }
+                                onGetErrorMessage={checkNotEmpty}
                                 validateOnLoad={false}
-                                name="endpoint"
-                                value={this.state.endpoint}
-                                onChange={this.handleInputChange}
+                                name="apiKey"
+                                value={state.apiKey}
+                                onChange={handleInputChange}
                             />
                         </Stack.Item>
                     </Stack>
+                )}
+                {!state.apiKeyAuth && (
                     <Stack className="login-form" horizontal>
                         <Stack.Item>
-                            <Label>{intl.get("groups.type")}</Label>
+                            <Label>{intl.get("service.username")}</Label>
                         </Stack.Item>
                         <Stack.Item grow>
-                            <Dropdown
-                                options={this.authenticationOptions()}
-                                selectedKey={
-                                    this.state.apiKeyAuth
-                                        ? "apiKey"
-                                        : "userPass"
+                            <TextField
+                                disabled={state.existing}
+                                onGetErrorMessage={checkNotEmpty}
+                                validateOnLoad={false}
+                                name="username"
+                                value={state.username}
+                                onChange={handleInputChange}
+                            />
+                        </Stack.Item>
+                    </Stack>
+                )}
+                {!state.apiKeyAuth && (
+                    <Stack className="login-form" horizontal>
+                        <Stack.Item>
+                            <Label>{intl.get("service.password")}</Label>
+                        </Stack.Item>
+                        <Stack.Item grow>
+                            <TextField
+                                type="password"
+                                placeholder={
+                                    state.existing
+                                        ? intl.get("service.unchanged")
+                                        : ""
                                 }
-                                onChange={this.onAuthenticationOptionsChange}
+                                onGetErrorMessage={checkNotEmpty}
+                                validateOnLoad={false}
+                                name="password"
+                                value={state.password}
+                                onChange={handleInputChange}
                             />
                         </Stack.Item>
                     </Stack>
-                    {this.state.apiKeyAuth && (
-                        <Stack className="login-form" horizontal>
-                            <Stack.Item>
-                                <Label>{intl.get("service.password")}</Label>
-                            </Stack.Item>
-                            <Stack.Item grow>
-                                <TextField
-                                    type="password"
-                                    placeholder={
-                                        this.state.existing
-                                            ? intl.get("service.unchanged")
-                                            : ""
-                                    }
-                                    onGetErrorMessage={this.checkNotEmpty}
-                                    validateOnLoad={false}
-                                    name="apiKey"
-                                    value={this.state.apiKey}
-                                    onChange={this.handleInputChange}
-                                />
-                            </Stack.Item>
-                        </Stack>
-                    )}
-                    {!this.state.apiKeyAuth && (
-                        <Stack className="login-form" horizontal>
-                            <Stack.Item>
-                                <Label>{intl.get("service.username")}</Label>
-                            </Stack.Item>
-                            <Stack.Item grow>
-                                <TextField
-                                    disabled={this.state.existing}
-                                    onGetErrorMessage={this.checkNotEmpty}
-                                    validateOnLoad={false}
-                                    name="username"
-                                    value={this.state.username}
-                                    onChange={this.handleInputChange}
-                                />
-                            </Stack.Item>
-                        </Stack>
-                    )}
-                    {!this.state.apiKeyAuth && (
-                        <Stack className="login-form" horizontal>
-                            <Stack.Item>
-                                <Label>{intl.get("service.password")}</Label>
-                            </Stack.Item>
-                            <Stack.Item grow>
-                                <TextField
-                                    type="password"
-                                    placeholder={
-                                        this.state.existing
-                                            ? intl.get("service.unchanged")
-                                            : ""
-                                    }
-                                    onGetErrorMessage={this.checkNotEmpty}
-                                    validateOnLoad={false}
-                                    name="password"
-                                    value={this.state.password}
-                                    onChange={this.handleInputChange}
-                                />
-                            </Stack.Item>
-                        </Stack>
-                    )}
-                    <Stack className="login-form" horizontal>
-                        <Stack.Item>
-                            <Label>{intl.get("service.fetchLimit")}</Label>
-                        </Stack.Item>
-                        <Stack.Item grow>
-                            <Dropdown
-                                options={this.fetchLimitOptions()}
-                                selectedKey={this.state.fetchLimit}
-                                onChange={this.onFetchLimitOptionChange}
-                            />
-                        </Stack.Item>
-                    </Stack>
-                    {!this.state.existing && (
-                        <Checkbox
-                            label={intl.get("service.importGroups")}
-                            checked={this.state.importGroups}
-                            onChange={(_, c) =>
-                                this.setState({ importGroups: c })
+                )}
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.fetchLimit")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <Dropdown
+                            options={fetchLimitOptions()}
+                            selectedKey={state.fetchLimit}
+                            onChange={onFetchLimitOptionChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                {!state.existing && (
+                    <Checkbox
+                        label={intl.get("service.importGroups")}
+                        checked={state.importGroups}
+                        onChange={(_, c) =>
+                            setState(prevState => ({ ...prevState, importGroups: c }))
+                        }
+                    />
+                )}
+                <Stack horizontal style={{ marginTop: 32 }}>
+                    <Stack.Item>
+                        <PrimaryButton
+                            disabled={!validateForm()}
+                            onClick={save}
+                            text={
+                                state.existing
+                                    ? intl.get("edit")
+                                    : intl.get("confirm")
                             }
                         />
-                    )}
-                    <Stack horizontal style={{ marginTop: 32 }}>
-                        <Stack.Item>
-                            <PrimaryButton
-                                disabled={!this.validateForm()}
-                                onClick={this.save}
-                                text={
-                                    this.state.existing
-                                        ? intl.get("edit")
-                                        : intl.get("confirm")
-                                }
+                    </Stack.Item>
+                    <Stack.Item>
+                        {state.existing ? (
+                            <DangerButton
+                                onClick={remove}
+                                text={intl.get("delete")}
                             />
-                        </Stack.Item>
-                        <Stack.Item>
-                            {this.state.existing ? (
-                                <DangerButton
-                                    onClick={this.remove}
-                                    text={intl.get("delete")}
-                                />
-                            ) : (
-                                <DefaultButton
-                                    onClick={this.props.exit}
-                                    text={intl.get("cancel")}
-                                />
-                            )}
-                        </Stack.Item>
-                    </Stack>
+                        ) : (
+                            <DefaultButton
+                                onClick={props.exit}
+                                text={intl.get("cancel")}
+                            />
+                        )}
+                    </Stack.Item>
                 </Stack>
-            </>
-        )
-    }
+            </Stack>
+        </>
+    )
 }
 
 export default MinifluxConfigsTab

@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useState } from "react"
 import intl from "react-intl-universal"
 import md5 from "js-md5"
 import { ServiceConfigsTabProps } from "../service"
@@ -30,24 +30,17 @@ type FeverConfigsTabState = {
     importGroups: boolean
 }
 
-class FeverConfigsTab extends React.Component<
-    ServiceConfigsTabProps,
-    FeverConfigsTabState
-> {
-    constructor(props: ServiceConfigsTabProps) {
-        super(props)
-        const configs = props.configs as FeverConfigs
-        this.state = {
-            existing: configs.type === SyncService.Fever,
-            endpoint: configs.endpoint || "",
-            username: configs.username || "",
-            password: "",
-            fetchLimit: configs.fetchLimit || 250,
-            importGroups: true,
-        }
-    }
+const FeverConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
+    const [state, setState] = useState<FeverConfigsTabState>({
+        existing: (props.configs as FeverConfigs).type === SyncService.Fever,
+        endpoint: (props.configs as FeverConfigs).endpoint || "",
+        username: (props.configs as FeverConfigs).username || "",
+        password: "",
+        fetchLimit: (props.configs as FeverConfigs).fetchLimit || 250,
+        importGroups: true,
+    });
 
-    fetchLimitOptions = (): IDropdownOption[] => [
+    const fetchLimitOptions = (): IDropdownOption[] => [
         { key: 250, text: intl.get("service.fetchLimitNum", { count: 250 }) },
         { key: 500, text: intl.get("service.fetchLimitNum", { count: 500 }) },
         { key: 750, text: intl.get("service.fetchLimitNum", { count: 750 }) },
@@ -57,198 +50,199 @@ class FeverConfigsTab extends React.Component<
             key: Number.MAX_SAFE_INTEGER,
             text: intl.get("service.fetchUnlimited"),
         },
-    ]
-    onFetchLimitOptionChange = (_, option: IDropdownOption) => {
-        this.setState({ fetchLimit: option.key as number })
+    ];
+
+    const onFetchLimitOptionChange = (_, option: IDropdownOption) => {
+        setState((prevState) => ({ ...prevState, fetchLimit: option.key as number }));
     }
 
-    handleInputChange = event => {
-        const name: string = event.target.name
-        // @ts-expect-error
-        this.setState({ [name]: event.target.value })
+    const handleInputChange = (event) => {
+        const name: string = event.target.name;
+        setState((prevState) => ({ ...prevState, [name]: event.target.value }));
     }
 
-    checkNotEmpty = (v: string) => {
-        return !this.state.existing && v.length == 0
+    const checkNotEmpty = (v: string) => {
+        return !state.existing && v.length == 0
             ? intl.get("emptyField")
             : ""
     }
 
-    validateForm = () => {
+    const validateForm = () => {
         return (
-            urlTest(this.state.endpoint.trim()) &&
-            (this.state.existing ||
-                (this.state.username && this.state.password))
+            urlTest(state.endpoint.trim()) &&
+            (state.existing ||
+                (state.username && state.password))
         )
     }
 
-    save = async () => {
-        let configs: FeverConfigs
-        if (this.state.existing) {
+    const save = async () => {
+        let configs: FeverConfigs;
+        if (state.existing) {
             configs = {
-                ...this.props.configs,
-                endpoint: this.state.endpoint,
-                fetchLimit: this.state.fetchLimit,
-            } as FeverConfigs
-            if (this.state.password)
+                ...props.configs,
+                endpoint: state.endpoint,
+                fetchLimit: state.fetchLimit,
+            } as FeverConfigs;
+            if (state.password) {
                 configs.apiKey = md5(
-                    `${configs.username}:${this.state.password}`
-                )
+                    `${configs.username}:${state.password}`
+                );
+            }
         } else {
             configs = {
                 type: SyncService.Fever,
-                endpoint: this.state.endpoint,
-                username: this.state.username,
-                fetchLimit: this.state.fetchLimit,
-                apiKey: md5(`${this.state.username}:${this.state.password}`),
+                endpoint: state.endpoint,
+                username: state.username,
+                fetchLimit: state.fetchLimit,
+                apiKey: md5(`${state.username}:${state.password}`),
+            };
+            if (state.importGroups) {
+                configs.importGroups = true;
             }
-            if (this.state.importGroups) configs.importGroups = true
         }
-        this.props.blockActions()
-        const valid = await this.props.authenticate(configs)
+        props.blockActions();
+        const valid = await props.authenticate(configs);
         if (valid) {
-            this.props.save(configs)
-            this.setState({ existing: true })
-            this.props.sync()
+            props.save(configs);
+            setState(prevState => ({ ...prevState, existing: true }));
+            props.sync();
         } else {
-            this.props.blockActions()
+            props.blockActions();
             window.utils.showErrorBox(
                 intl.get("service.failure"),
                 intl.get("service.failureHint")
-            )
+            );
         }
     }
 
-    remove = async () => {
-        this.props.exit()
-        await this.props.remove()
+    const remove = async () => {
+        props.exit();
+        await props.remove();
     }
 
-    render() {
-        return (
-            <>
-                {!this.state.existing && (
-                    <MessageBar messageBarType={MessageBarType.warning}>
-                        {intl.get("service.overwriteWarning")}
-                    </MessageBar>
-                )}
-                <Stack horizontalAlign="center" style={{ marginTop: 48 }}>
-                    <Icon
-                        iconName="Calories"
-                        style={{
-                            color: "var(--black)",
-                            fontSize: 32,
-                            userSelect: "none",
-                        }}
+    return (
+        <>
+            {!state.existing && (
+                <MessageBar messageBarType={MessageBarType.warning}>
+                    {intl.get("service.overwriteWarning")}
+                </MessageBar>
+            )}
+            <Stack horizontalAlign="center" style={{ marginTop: 48 }}>
+                <Icon
+                    iconName="Calories"
+                    style={{
+                        color: "var(--black)",
+                        fontSize: 32,
+                        userSelect: "none",
+                    }}
+                />
+                <Label style={{ margin: "8px 0 36px" }}>Fever API</Label>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.endpoint")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <TextField
+                            onGetErrorMessage={v =>
+                                urlTest(v.trim())
+                                    ? ""
+                                    : intl.get("sources.badUrl")
+                            }
+                            validateOnLoad={false}
+                            name="endpoint"
+                            value={state.endpoint}
+                            onChange={handleInputChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.username")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <TextField
+                            disabled={state.existing}
+                            onGetErrorMessage={checkNotEmpty}
+                            validateOnLoad={false}
+                            name="username"
+                            value={state.username}
+                            onChange={handleInputChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.password")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <TextField
+                            type="password"
+                            placeholder={
+                                state.existing
+                                    ? intl.get("service.unchanged")
+                                    : ""
+                            }
+                            onGetErrorMessage={checkNotEmpty}
+                            validateOnLoad={false}
+                            name="password"
+                            value={state.password}
+                            onChange={handleInputChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                <Stack className="login-form" horizontal>
+                    <Stack.Item>
+                        <Label>{intl.get("service.fetchLimit")}</Label>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                        <Dropdown
+                            options={fetchLimitOptions()}
+                            selectedKey={state.fetchLimit}
+                            onChange={onFetchLimitOptionChange}
+                        />
+                    </Stack.Item>
+                </Stack>
+                {!state.existing && (
+                    <Checkbox
+                        label={intl.get("service.importGroups")}
+                        checked={state.importGroups}
+                        onChange={(_, c) =>
+                            setState(prevState => ({ ...prevState, importGroups: c }))
+                        }
                     />
-                    <Label style={{ margin: "8px 0 36px" }}>Fever API</Label>
-                    <Stack className="login-form" horizontal>
-                        <Stack.Item>
-                            <Label>{intl.get("service.endpoint")}</Label>
-                        </Stack.Item>
-                        <Stack.Item grow>
-                            <TextField
-                                onGetErrorMessage={v =>
-                                    urlTest(v.trim())
-                                        ? ""
-                                        : intl.get("sources.badUrl")
-                                }
-                                validateOnLoad={false}
-                                name="endpoint"
-                                value={this.state.endpoint}
-                                onChange={this.handleInputChange}
-                            />
-                        </Stack.Item>
-                    </Stack>
-                    <Stack className="login-form" horizontal>
-                        <Stack.Item>
-                            <Label>{intl.get("service.username")}</Label>
-                        </Stack.Item>
-                        <Stack.Item grow>
-                            <TextField
-                                disabled={this.state.existing}
-                                onGetErrorMessage={this.checkNotEmpty}
-                                validateOnLoad={false}
-                                name="username"
-                                value={this.state.username}
-                                onChange={this.handleInputChange}
-                            />
-                        </Stack.Item>
-                    </Stack>
-                    <Stack className="login-form" horizontal>
-                        <Stack.Item>
-                            <Label>{intl.get("service.password")}</Label>
-                        </Stack.Item>
-                        <Stack.Item grow>
-                            <TextField
-                                type="password"
-                                placeholder={
-                                    this.state.existing
-                                        ? intl.get("service.unchanged")
-                                        : ""
-                                }
-                                onGetErrorMessage={this.checkNotEmpty}
-                                validateOnLoad={false}
-                                name="password"
-                                value={this.state.password}
-                                onChange={this.handleInputChange}
-                            />
-                        </Stack.Item>
-                    </Stack>
-                    <Stack className="login-form" horizontal>
-                        <Stack.Item>
-                            <Label>{intl.get("service.fetchLimit")}</Label>
-                        </Stack.Item>
-                        <Stack.Item grow>
-                            <Dropdown
-                                options={this.fetchLimitOptions()}
-                                selectedKey={this.state.fetchLimit}
-                                onChange={this.onFetchLimitOptionChange}
-                            />
-                        </Stack.Item>
-                    </Stack>
-                    {!this.state.existing && (
-                        <Checkbox
-                            label={intl.get("service.importGroups")}
-                            checked={this.state.importGroups}
-                            onChange={(_, c) =>
-                                this.setState({ importGroups: c })
+                )}
+                <Stack horizontal style={{ marginTop: 32 }}>
+                    <Stack.Item>
+                        <PrimaryButton
+                            disabled={!validateForm()}
+                            onClick={save}
+                            text={
+                                state.existing
+                                    ? intl.get("edit")
+                                    : intl.get("confirm")
                             }
                         />
-                    )}
-                    <Stack horizontal style={{ marginTop: 32 }}>
-                        <Stack.Item>
-                            <PrimaryButton
-                                disabled={!this.validateForm()}
-                                onClick={this.save}
-                                text={
-                                    this.state.existing
-                                        ? intl.get("edit")
-                                        : intl.get("confirm")
-                                }
+                    </Stack.Item>
+                    <Stack.Item>
+                        {state.existing ? (
+                            <DangerButton
+                                onClick={remove}
+                                text={intl.get("delete")}
                             />
-                        </Stack.Item>
-                        <Stack.Item>
-                            {this.state.existing ? (
-                                <DangerButton
-                                    onClick={this.remove}
-                                    text={intl.get("delete")}
-                                />
-                            ) : (
-                                <DefaultButton
-                                    onClick={this.props.exit}
-                                    text={intl.get("cancel")}
-                                />
-                            )}
-                        </Stack.Item>
-                    </Stack>
-                    {this.state.existing && (
-                        <LiteExporter serviceConfigs={this.props.configs} />
-                    )}
+                        ) : (
+                            <DefaultButton
+                                onClick={props.exit}
+                                text={intl.get("cancel")}
+                            />
+                        )}
+                    </Stack.Item>
                 </Stack>
-            </>
-        )
-    }
+                {state.existing && (
+                    <LiteExporter serviceConfigs={props.configs} />
+                )}
+            </Stack>
+        </>
+    )
 }
 
 export default FeverConfigsTab

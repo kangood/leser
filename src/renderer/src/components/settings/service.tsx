@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useState } from "react"
 import intl from "react-intl-universal"
 import { ServiceConfigs, SyncService } from "../../schema-types"
 import { Stack, Icon, Link, Dropdown, IDropdownOption } from "@fluentui/react"
@@ -27,18 +27,11 @@ type ServiceTabState = {
     type: SyncService
 }
 
-export class ServiceTab extends React.Component<
-    ServiceTabProps,
-    ServiceTabState
-> {
-    constructor(props: ServiceTabProps) {
-        super(props)
-        this.state = {
-            type: props.configs.type,
-        }
-    }
+const ServiceTab: React.FC<ServiceTabProps> = (props) => {
 
-    serviceOptions = (): IDropdownOption[] => [
+    const [state, setState] = useState<ServiceTabState>({ type: props.configs.type });
+
+    const serviceOptions = (): IDropdownOption[] => [
         { key: SyncService.Fever, text: "Fever API" },
         { key: SyncService.Feedbin, text: "Feedbin" },
         { key: SyncService.GReader, text: "Google Reader API (Beta)" },
@@ -46,64 +39,64 @@ export class ServiceTab extends React.Component<
         { key: SyncService.Miniflux, text: "Miniflux" },
         { key: SyncService.Nextcloud, text: "Nextcloud News API" },
         { key: -1, text: intl.get("service.suggest") },
-    ]
+    ];
 
-    onServiceOptionChange = (_, option: IDropdownOption) => {
+    const onServiceOptionChange = (_, option: IDropdownOption) => {
         if (option.key === -1) {
             window.utils.openExternal(
                 "https://github.com/yang991178/fluent-reader/issues/23"
-            )
+            );
         } else {
-            this.setState({ type: option.key as number })
+            setState({ type: option.key as number })
         }
     }
 
-    exitConfigsTab = () => {
-        this.setState({ type: SyncService.None })
+    const exitConfigsTab = () => {
+        setState({ type: SyncService.None })
     }
 
-    getConfigsTab = () => {
-        switch (this.state.type) {
+    const getConfigsTab = () => {
+        switch (state.type) {
             case SyncService.Fever:
                 return (
                     <FeverConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             case SyncService.Feedbin:
                 return (
                     <FeedbinConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             case SyncService.GReader:
                 return (
                     <GReaderConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             case SyncService.Inoreader:
                 return (
                     <InoreaderConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             case SyncService.Miniflux:
                 return (
                     <MinifluxConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             case SyncService.Nextcloud:
                 return (
                     <NextcloudConfigsTab
-                        {...this.props}
-                        exit={this.exitConfigsTab}
+                        {...props}
+                        exit={exitConfigsTab}
                     />
                 )
             default:
@@ -111,9 +104,9 @@ export class ServiceTab extends React.Component<
         }
     }
 
-    render = () => (
+    return (
         <div className="tab-body">
-            {this.state.type === SyncService.None ? (
+            {state.type === SyncService.None ? (
                 <Stack horizontalAlign="center" style={{ marginTop: 64 }}>
                     <Stack
                         className="settings-rules-icons"
@@ -137,15 +130,17 @@ export class ServiceTab extends React.Component<
                     </span>
                     <Dropdown
                         placeHolder={intl.get("service.select")}
-                        options={this.serviceOptions()}
+                        options={serviceOptions()}
                         selectedKey={null}
-                        onChange={this.onServiceOptionChange}
+                        onChange={onServiceOptionChange}
                         style={{ marginTop: 32, width: 180 }}
                     />
                 </Stack>
             ) : (
-                this.getConfigsTab()
+                getConfigsTab()
             )}
         </div>
     )
 }
+
+export default ServiceTab;

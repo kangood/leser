@@ -1,7 +1,7 @@
 import { connect } from "react-redux"
 import { createSelector } from "reselect"
 import { RootState } from "../../scripts/reducer"
-import { ServiceTab } from "../../components/settings/service"
+import ServiceTab from "../../components/settings/service"
 import { AppDispatch } from "../../scripts/utils"
 import { ServiceConfigs } from "../../schema-types"
 import {

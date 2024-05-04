@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useState } from "react"
 import intl from "react-intl-universal"
 import { SourceState, RSSSource } from "../../scripts/models/source"
 import {
@@ -58,81 +58,75 @@ type RulesTabState = {
     mockResult: string
 }
 
-class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
-    rulesSelection: Selection
-    rulesDragDropEvents: IDragDropEvents
-    rulesDraggedItem: SourceRule
-    rulesDraggedIndex = -1
+const RulesTab: React.FC<RulesTabProps> = (props) => {
+    const [rulesDraggedItem, setRulesDraggedItem] = useState<SourceRule>();
+    const [rulesDraggedIndex, setRulesDraggedIndex] = useState<number>(-1);
 
-    constructor(props) {
-        super(props)
-        this.state = {
-            sid: null,
-            selectedRules: [],
-            editIndex: -1,
-            regex: "",
-            searchType: 0,
-            caseSensitive: false,
-            match: true,
-            actionKeys: [],
-            mockTitle: "",
-            mockCreator: "",
-            mockContent: "",
-            mockResult: "",
-        }
-        this.rulesSelection = new Selection({
-            getKey: (_, i) => i,
-            onSelectionChanged: () => {
-                this.setState({
-                    selectedRules: this.rulesSelection.getSelectedIndices(),
-                })
-            },
-        })
-        this.rulesDragDropEvents = this.getRulesDragDropEvents()
-    }
+    const [state, setState] = useState<RulesTabState>({
+        sid: null,
+        selectedRules: [],
+        editIndex: -1,
+        regex: "",
+        searchType: 0,
+        caseSensitive: false,
+        match: true,
+        actionKeys: [],
+        mockTitle: "",
+        mockCreator: "",
+        mockContent: "",
+        mockResult: "",
+    });
 
-    getRulesDragDropEvents = (): IDragDropEvents => ({
-        canDrop: () => true,
-        canDrag: () => true,
-        onDrop: (item?: SourceRule) => {
-            if (this.rulesDraggedItem) {
-                this.reorderRules(item)
-            }
-        },
-        onDragStart: (item?: SourceRule, itemIndex?: number) => {
-            this.rulesDraggedItem = item
-            this.rulesDraggedIndex = itemIndex!
-        },
-        onDragEnd: () => {
-            this.rulesDraggedItem = undefined
-            this.rulesDraggedIndex = -1
+    const rulesSelection = new Selection({
+        getKey: (_, i) => i,
+        onSelectionChanged: () => {
+            setState(prevState => ({ ...prevState, selectedRules: rulesSelection.getSelectedIndices() }))
         },
     })
 
-    reorderRules = (item: SourceRule) => {
-        let rules = this.getSourceRules()
-        let draggedItems = this.rulesSelection.isIndexSelected(
-            this.rulesDraggedIndex
+    const rulesDragDropEvents = (): IDragDropEvents => ({
+        canDrop: () => true,
+        canDrag: () => true,
+        onDrop: (item?: SourceRule) => {
+            if (rulesDraggedItem) {
+                reorderRules(item)
+            }
+        },
+        onDragStart: (item?: SourceRule, itemIndex?: number) => {
+            setRulesDraggedItem(item);
+            setRulesDraggedIndex(itemIndex!);
+        },
+        onDragEnd: () => {
+            setRulesDraggedItem(undefined);
+            setRulesDraggedIndex(-1);
+        },
+    })
+
+    const reorderRules = (item: SourceRule) => {
+        let rules = getSourceRules()
+        let draggedItems = rulesSelection.isIndexSelected(
+            rulesDraggedIndex
         )
-            ? (this.rulesSelection.getSelection() as SourceRule[])
-            : [this.rulesDraggedItem]
+            ? (rulesSelection.getSelection() as SourceRule[])
+            : [rulesDraggedItem]
 
         let insertIndex = rules.indexOf(item)
         let items = rules.filter(r => !draggedItems.includes(r))
 
         items.splice(insertIndex, 0, ...draggedItems)
-        this.rulesSelection.setAllSelected(false)
-        let source = this.props.sources[parseInt(this.state.sid)]
-        this.props.updateSourceRules(source, items)
+        rulesSelection.setAllSelected(false)
+        let source = props.sources[parseInt(state.sid)]
+        props.updateSourceRules(source, items)
     }
 
-    initRuleEdit = (rule: SourceRule = null) => {
+    const initRuleEdit = (rule: SourceRule = null) => {
         let searchType = 0
         if (rule) {
             if (rule.filter.type & FilterType.FullSearch) searchType = 1
             else if (rule.filter.type & FilterType.CreatorSearch) searchType = 2
         }
-        this.setState({
+        setState(prevState => ({
+            ...prevState,
             regex: rule ? rule.filter.search : "",
             searchType: searchType,
             caseSensitive: rule
@@ -140,12 +134,12 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                 : false,
             match: rule ? rule.match : true,
             actionKeys: rule ? RuleActions.toKeys(rule.actions) : [],
-        })
+        }))
     }
 
-    getSourceRules = () => this.props.sources[parseInt(this.state.sid)].rules
+    const getSourceRules = () => props.sources[parseInt(state.sid)].rules;
 
-    ruleColumns = (): IColumn[] => [
+    const ruleColumns = (): IColumn[] => [
         {
             isRowHeader: true,
             key: "regex",
@@ -165,18 +159,18 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
         },
     ]
 
-    handleInputChange = event => {
+    const handleInputChange = event => {
         const name = event.target.name as "regex"
-        this.setState({ [name]: event.target.value })
+        setState(prevState => ({ ...prevState, [name]: event.target.value }))
     }
 
-    sourceOptions = (): IDropdownOption[] =>
-        Object.entries(this.props.sources).map(([sid, s]) => ({
+    const sourceOptions = (): IDropdownOption[] =>
+        Object.entries(props.sources).map(([sid, s]) => ({
             key: sid,
             text: s.name,
             data: { icon: s.iconurl },
         }))
-    onRenderSourceOption = (option: IDropdownOption) => (
+    const onRenderSourceOption = (option: IDropdownOption) => (
         <div>
             {option.data && option.data.icon && (
                 <img src={option.data.icon} className="favicon dropdown" />
@@ -184,13 +178,14 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
             <span>{option.text}</span>
         </div>
     )
-    onRenderSourceTitle = (options: IDropdownOption[]) => {
-        return this.onRenderSourceOption(options[0])
+    const onRenderSourceTitle = (options: IDropdownOption[]) => {
+        return onRenderSourceOption(options[0])
     }
-    onSourceOptionChange = (_, item: IDropdownOption) => {
-        this.initRuleEdit()
-        this.rulesSelection.setAllSelected(false)
-        this.setState({
+    const onSourceOptionChange = (_, item: IDropdownOption) => {
+        initRuleEdit()
+        rulesSelection.setAllSelected(false)
+        setState(prevState => ({
+            ...prevState,
             sid: item.key as string,
             selectedRules: [],
             editIndex: -1,
@@ -198,27 +193,27 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
             mockCreator: "",
             mockContent: "",
             mockResult: "",
-        })
+        }))
     }
 
-    searchOptions = (): IDropdownOption[] => [
+    const searchOptions = (): IDropdownOption[] => [
         { key: 0, text: intl.get("rules.title") },
         { key: 1, text: intl.get("rules.fullSearch") },
         { key: 2, text: intl.get("rules.creator") },
     ]
-    onSearchOptionChange = (_, item: IDropdownOption) => {
-        this.setState({ searchType: item.key as number })
+    const onSearchOptionChange = (_, item: IDropdownOption) => {
+        setState(prevState => ({ ...prevState, searchType: item.key as number }))
     }
 
-    matchOptions = (): IDropdownOption[] => [
+    const matchOptions = (): IDropdownOption[] => [
         { key: 1, text: intl.get("rules.match") },
         { key: 0, text: intl.get("rules.notMatch") },
     ]
-    onMatchOptionChange = (_, item: IDropdownOption) => {
-        this.setState({ match: Boolean(item.key) })
+    const onMatchOptionChange = (_, item: IDropdownOption) => {
+        setState(prevState => ({ ...prevState, match: Boolean(item.key) }))
     }
 
-    actionOptions = (): IDropdownOption[] =>
+    const actionOptions = (): IDropdownOption[] =>
         [
             ...Object.entries(actionKeyMap).map(([k, t], i) => {
                 if (k.includes("-false")) {
@@ -236,110 +231,111 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
             }),
         ].flat(1)
 
-    onActionOptionChange = (_, item: IDropdownOption) => {
+    const onActionOptionChange = (_, item: IDropdownOption) => {
         if (item.selected) {
-            this.setState(prevState => {
+            setState(prevState => {
                 let [a, f] = (item.key as string).split("-")
                 let keys = prevState.actionKeys.filter(
                     k => !k.startsWith(`${a}-`)
                 )
                 keys.push(item.key as string)
-                return { actionKeys: keys }
+                return { ...prevState, actionKeys: keys }
             })
         } else {
-            this.setState(prevState => ({
+            setState(prevState => ({
+                ...prevState,
                 actionKeys: prevState.actionKeys.filter(k => k !== item.key),
             }))
         }
     }
 
-    validateRegexField = (value: string) => {
+    const validateRegexField = (value: string) => {
         if (value.length === 0) return intl.get("emptyField")
         else if (validateRegex(value) === null)
             return intl.get("rules.badRegex")
         else return ""
     }
 
-    saveRule = () => {
+    const saveRule = () => {
         let filterType = FilterType.Default | FilterType.ShowHidden
-        if (!this.state.caseSensitive) filterType |= FilterType.CaseInsensitive
-        if (this.state.searchType === 1) filterType |= FilterType.FullSearch
-        else if (this.state.searchType === 2)
+        if (!state.caseSensitive) filterType |= FilterType.CaseInsensitive
+        if (state.searchType === 1) filterType |= FilterType.FullSearch
+        else if (state.searchType === 2)
             filterType |= FilterType.CreatorSearch
         let rule = new SourceRule(
-            this.state.regex,
-            this.state.actionKeys,
+            state.regex,
+            state.actionKeys,
             filterType,
-            this.state.match
+            state.match
         )
-        let source = this.props.sources[parseInt(this.state.sid)]
+        let source = props.sources[parseInt(state.sid)]
         let rules = source.rules ? [...source.rules] : []
-        if (this.state.editIndex === -1) {
+        if (state.editIndex === -1) {
             rules.push(rule)
         } else {
-            rules.splice(this.state.editIndex, 1, rule)
+            rules.splice(state.editIndex, 1, rule)
         }
-        this.props.updateSourceRules(source, rules)
-        this.setState({ editIndex: -1 })
-        this.initRuleEdit()
+        props.updateSourceRules(source, rules)
+        setState(prevState => ({ ...prevState, editIndex: -1 }))
+        initRuleEdit()
     }
-    newRule = () => {
-        this.initRuleEdit()
-        this.setState({ editIndex: this.getSourceRules().length })
+    const newRule = () => {
+        initRuleEdit()
+        setState(prevState => ({ ...prevState, editIndex: getSourceRules().length }))
     }
-    editRule = (rule: SourceRule, index: number) => {
-        this.initRuleEdit(rule)
-        this.setState({ editIndex: index })
+    const editRule = (rule: SourceRule, index: number) => {
+        initRuleEdit(rule)
+        setState(prevState => ({ ...prevState, editIndex: index }))
     }
-    deleteRules = () => {
-        let rules = this.getSourceRules()
-        for (let i of this.state.selectedRules) rules[i] = null
-        let source = this.props.sources[parseInt(this.state.sid)]
-        this.props.updateSourceRules(
+    const deleteRules = () => {
+        let rules = getSourceRules()
+        for (let i of state.selectedRules) rules[i] = null
+        let source = props.sources[parseInt(state.sid)]
+        props.updateSourceRules(
             source,
             rules.filter(r => r !== null)
         )
-        this.initRuleEdit()
+        initRuleEdit()
     }
 
-    commandBarItems = (): ICommandBarItemProps[] => [
+    const commandBarItems = (): ICommandBarItemProps[] => [
         {
             key: "new",
             text: intl.get("rules.new"),
             iconProps: { iconName: "Add" },
-            onClick: this.newRule,
+            onClick: newRule,
         },
     ]
-    commandBarFarItems = (): ICommandBarItemProps[] => {
+    const commandBarFarItems = (): ICommandBarItemProps[] => {
         let items = []
-        if (this.state.selectedRules.length === 1) {
-            let index = this.state.selectedRules[0]
+        if (state.selectedRules.length === 1) {
+            let index = state.selectedRules[0]
             items.push({
                 key: "edit",
                 text: intl.get("edit"),
                 iconProps: { iconName: "Edit" },
                 onClick: () =>
-                    this.editRule(this.getSourceRules()[index], index),
+                    editRule(getSourceRules()[index], index),
             })
         }
-        if (this.state.selectedRules.length > 0) {
+        if (state.selectedRules.length > 0) {
             items.push({
                 key: "del",
                 text: intl.get("delete"),
                 iconProps: { iconName: "Delete", style: { color: "#d13438" } },
-                onClick: this.deleteRules,
+                onClick: deleteRules,
             })
         }
         return items
     }
 
-    testMockItem = () => {
-        let parsed = { title: this.state.mockTitle }
-        let source = this.props.sources[parseInt(this.state.sid)]
+    const testMockItem = () => {
+        let parsed = { title: state.mockTitle }
+        let source = props.sources[parseInt(state.sid)]
         let item = new RSSItem(parsed as MyParserItem, source)
-        item.snippet = this.state.mockContent
-        item.creator = this.state.mockCreator
-        SourceRule.applyAll(this.getSourceRules(), item)
+        item.snippet = state.mockContent
+        item.creator = state.mockCreator
+        SourceRule.applyAll(getSourceRules(), item)
         let result = []
         result.push(
             intl.get(item.hasRead ? "article.markRead" : "article.markUnread")
@@ -347,13 +343,13 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
         if (item.starred) result.push(intl.get("article.star"))
         if (item.hidden) result.push(intl.get("article.hide"))
         if (item.notify) result.push(intl.get("article.notify"))
-        this.setState({ mockResult: result.join(", ") })
+        setState(prevState => ({ ...prevState, mockResult: result.join(", ") }))
     }
 
-    toggleCaseSensitivity = () => {
-        this.setState({ caseSensitive: !this.state.caseSensitive })
+    const toggleCaseSensitivity = () => {
+        setState(prevState => ({ ...prevState, caseSensitive: !state.caseSensitive }))
     }
-    regexCaseIconProps = (): IIconProps => ({
+    const regexCaseIconProps = (): IIconProps => ({
         title: intl.get("context.caseSensitive"),
         children: "Aa",
         style: {
@@ -361,15 +357,15 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
             fontStyle: "normal",
             cursor: "pointer",
             pointerEvents: "unset",
-            color: this.state.caseSensitive
+            color: state.caseSensitive
                 ? "var(--black)"
                 : "var(--neutralTertiary)",
-            textDecoration: this.state.caseSensitive ? "underline" : "",
+            textDecoration: state.caseSensitive ? "underline" : "",
         },
-        onClick: this.toggleCaseSensitivity,
+        onClick: toggleCaseSensitivity,
     })
 
-    render = () => (
+    return (
         <div className="tab-body">
             <Stack horizontal tokens={{ childrenGap: 16 }}>
                 <Stack.Item>
@@ -378,25 +374,25 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                 <Stack.Item grow>
                     <Dropdown
                         placeholder={intl.get("rules.selectSource")}
-                        options={this.sourceOptions()}
-                        onRenderOption={this.onRenderSourceOption}
-                        onRenderTitle={this.onRenderSourceTitle}
-                        selectedKey={this.state.sid}
-                        onChange={this.onSourceOptionChange}
+                        options={sourceOptions()}
+                        onRenderOption={onRenderSourceOption}
+                        onRenderTitle={onRenderSourceTitle}
+                        selectedKey={state.sid}
+                        onChange={onSourceOptionChange}
                     />
                 </Stack.Item>
             </Stack>
 
-            {this.state.sid ? (
-                this.state.editIndex > -1 ||
-                !this.getSourceRules() ||
-                this.getSourceRules().length === 0 ? (
+            {state.sid ? (
+                state.editIndex > -1 ||
+                !getSourceRules() ||
+                getSourceRules().length === 0 ? (
                     <>
                         <Label>
                             {intl.get(
-                                this.state.editIndex >= 0 &&
-                                    this.state.editIndex <
-                                        this.getSourceRules().length
+                                state.editIndex >= 0 &&
+                                    state.editIndex <
+                                        getSourceRules().length
                                     ? "edit"
                                     : "rules.new"
                             )}
@@ -407,17 +403,17 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                             </Stack.Item>
                             <Stack.Item>
                                 <Dropdown
-                                    options={this.searchOptions()}
-                                    selectedKey={this.state.searchType}
-                                    onChange={this.onSearchOptionChange}
+                                    options={searchOptions()}
+                                    selectedKey={state.searchType}
+                                    onChange={onSearchOptionChange}
                                     style={{ width: 140 }}
                                 />
                             </Stack.Item>
                             <Stack.Item>
                                 <Dropdown
-                                    options={this.matchOptions()}
-                                    selectedKey={this.state.match ? 1 : 0}
-                                    onChange={this.onMatchOptionChange}
+                                    options={matchOptions()}
+                                    selectedKey={state.match ? 1 : 0}
+                                    onChange={onMatchOptionChange}
                                     style={{ width: 130 }}
                                 />
                             </Stack.Item>
@@ -425,11 +421,11 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                                 <TextField
                                     name="regex"
                                     placeholder={intl.get("rules.regex")}
-                                    iconProps={this.regexCaseIconProps()}
-                                    value={this.state.regex}
-                                    onGetErrorMessage={this.validateRegexField}
+                                    iconProps={regexCaseIconProps()}
+                                    value={state.regex}
+                                    onGetErrorMessage={validateRegexField}
                                     validateOnLoad={false}
-                                    onChange={this.handleInputChange}
+                                    onChange={handleInputChange}
                                 />
                             </Stack.Item>
                         </Stack>
@@ -441,9 +437,9 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                                 <Dropdown
                                     multiSelect
                                     placeholder={intl.get("rules.selectAction")}
-                                    options={this.actionOptions()}
-                                    selectedKeys={this.state.actionKeys}
-                                    onChange={this.onActionOptionChange}
+                                    options={actionOptions()}
+                                    selectedKeys={state.actionKeys}
+                                    onChange={onActionOptionChange}
                                     onRenderCaretDown={() => (
                                         <Icon iconName="CirclePlus" />
                                     )}
@@ -454,21 +450,21 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                             <Stack.Item>
                                 <PrimaryButton
                                     disabled={
-                                        this.state.regex.length == 0 ||
-                                        validateRegex(this.state.regex) ===
+                                        state.regex.length == 0 ||
+                                        validateRegex(state.regex) ===
                                             null ||
-                                        this.state.actionKeys.length == 0
+                                        state.actionKeys.length == 0
                                     }
                                     text={intl.get("confirm")}
-                                    onClick={this.saveRule}
+                                    onClick={saveRule}
                                 />
                             </Stack.Item>
-                            {this.state.editIndex > -1 && (
+                            {state.editIndex > -1 && (
                                 <Stack.Item>
                                     <DefaultButton
                                         text={intl.get("cancel")}
                                         onClick={() =>
-                                            this.setState({ editIndex: -1 })
+                                            setState(prevState => ({ ...prevState, editIndex: -1 }))
                                         }
                                     />
                                 </Stack.Item>
@@ -478,20 +474,20 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                 ) : (
                     <>
                         <CommandBar
-                            items={this.commandBarItems()}
-                            farItems={this.commandBarFarItems()}
+                            items={commandBarItems()}
+                            farItems={commandBarFarItems()}
                         />
                         <MarqueeSelection
-                            selection={this.rulesSelection}
+                            selection={rulesSelection}
                             isDraggingConstrainedToRoot>
                             <DetailsList
                                 compact
-                                columns={this.ruleColumns()}
-                                items={this.getSourceRules()}
-                                onItemInvoked={this.editRule}
-                                dragDropEvents={this.rulesDragDropEvents}
+                                columns={ruleColumns()}
+                                items={getSourceRules()}
+                                onItemInvoked={editRule}
+                                dragDropEvents={rulesDragDropEvents()}
                                 setKey="selected"
-                                selection={this.rulesSelection}
+                                selection={rulesSelection}
                                 selectionMode={SelectionMode.multiple}
                             />
                         </MarqueeSelection>
@@ -505,16 +501,16 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                                 <TextField
                                     name="mockTitle"
                                     placeholder={intl.get("rules.title")}
-                                    value={this.state.mockTitle}
-                                    onChange={this.handleInputChange}
+                                    value={state.mockTitle}
+                                    onChange={handleInputChange}
                                 />
                             </Stack.Item>
                             <Stack.Item grow>
                                 <TextField
                                     name="mockCreator"
                                     placeholder={intl.get("rules.creator")}
-                                    value={this.state.mockCreator}
-                                    onChange={this.handleInputChange}
+                                    value={state.mockCreator}
+                                    onChange={handleInputChange}
                                 />
                             </Stack.Item>
                         </Stack>
@@ -523,19 +519,19 @@ class RulesTab extends React.Component<RulesTabProps, RulesTabState> {
                                 <TextField
                                     name="mockContent"
                                     placeholder={intl.get("rules.content")}
-                                    value={this.state.mockContent}
-                                    onChange={this.handleInputChange}
+                                    value={state.mockContent}
+                                    onChange={handleInputChange}
                                 />
                             </Stack.Item>
                             <Stack.Item>
                                 <PrimaryButton
                                     text={intl.get("confirm")}
-                                    onClick={this.testMockItem}
+                                    onClick={testMockItem}
                                 />
                             </Stack.Item>
                         </Stack>
                         <span className="settings-hint up">
-                            {this.state.mockResult}
+                            {state.mockResult}
                         </span>
                     </>
                 )

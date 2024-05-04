@@ -8,6 +8,8 @@ import GReaderConfigsTab from "./services/greader"
 import InoreaderConfigsTab from "./services/inoreader"
 import MinifluxConfigsTab from "./services/miniflux"
 import NextcloudConfigsTab from "./services/nextcloud"
+import { authenticate, reauthenticate, useService, useServiceActions } from "@renderer/scripts/store/service-store"
+import { useAppActions } from "@renderer/scripts/store/app-store"
 
 type ServiceTabProps = {
     configs: ServiceConfigs
@@ -27,9 +29,23 @@ type ServiceTabState = {
     type: SyncService
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = (props) => {
+const ServiceTab: React.FC = () => {
 
-    const [state, setState] = useState<ServiceTabState>({ type: props.configs.type });
+    const service = useService();
+    const { saveServiceConfigs, syncWithService, removeService } = useServiceActions();
+    const { saveSettings } = useAppActions();
+
+    const props = {
+        configs: service,
+        save: saveServiceConfigs,
+        sync: syncWithService,
+        remove: removeService,
+        blockActions: saveSettings,
+        authenticate: authenticate,
+        reauthenticate: reauthenticate
+    }
+
+    const [state, setState] = useState<ServiceTabState>({ type: service.type });
 
     const serviceOptions = (): IDropdownOption[] => [
         { key: SyncService.Fever, text: "Fever API" },

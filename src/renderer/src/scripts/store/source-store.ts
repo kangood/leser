@@ -137,10 +137,13 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             const state = get().sources;
             delete state[source.sid];
             set({ sources: { ...state } });
+            // [otherReducer]
         },
         deleteSource: async (source: RSSSource, batch = false) => {
             return new Promise(async (_resolve, reject) => {
-                if (!batch) { useAppActions().saveSettings() };
+                if (!batch) {
+                    useAppActions().saveSettings();
+                }
                 try {
                     await db.itemsDB.delete().from(db.items).where(db.items.source.eq(source.sid)).exec();
                     await db.sourcesDB.delete().from(db.sources).where(db.sources.sid.eq(source.sid)).exec();
@@ -150,7 +153,9 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                     console.log(err);
                     reject(err);
                 } finally {
-                    if (!batch) { useAppActions().saveSettings() };
+                    if (!batch) {
+                        useAppActions().saveSettings();
+                    }
                 }
             });
         },

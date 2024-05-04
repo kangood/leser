@@ -32,14 +32,15 @@ type MinifluxConfigsTabState = {
 
 const MinifluxConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
 
+    const configs = props.configs as MinifluxConfigs;
     const [state, setState] = useState<MinifluxConfigsTabState>({
-        existing: (props.configs as MinifluxConfigs).type === SyncService.Miniflux,
-        endpoint: (props.configs as MinifluxConfigs).endpoint || "",
+        existing: configs.type === SyncService.Miniflux,
+        endpoint: configs.endpoint || "",
         apiKeyAuth: true,
         username: "",
         password: "",
         apiKey: "",
-        fetchLimit: (props.configs as MinifluxConfigs).fetchLimit || 250,
+        fetchLimit: configs.fetchLimit || 250,
         importGroups: true,
     })
 

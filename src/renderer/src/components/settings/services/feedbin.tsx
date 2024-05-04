@@ -29,13 +29,14 @@ type FeedbinConfigsTabState = {
 }
 
 const FeedbinConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
-
+    
+    const configs = props.configs as FeedbinConfigs;
     const [state, setState] = useState<FeedbinConfigsTabState>({
-        existing: (props.configs as FeedbinConfigs).type === SyncService.Feedbin,
-        endpoint: (props.configs as FeedbinConfigs).endpoint || "https://api.feedbin.me/v2/",
-        username: (props.configs as FeedbinConfigs).username || "",
+        existing: configs.type === SyncService.Feedbin,
+        endpoint: configs.endpoint || "https://api.feedbin.me/v2/",
+        username: configs.username || "",
         password: "",
-        fetchLimit: (props.configs as FeedbinConfigs).fetchLimit || 250,
+        fetchLimit: configs.fetchLimit || 250,
         importGroups: true,
     });
 

@@ -45,18 +45,19 @@ const openSupport = () => {
 
 const InoreaderConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
 
+    const configs = props.configs as GReaderConfigs;
     const [state, setState] = useState<GReaderConfigsTabState>({
-        existing: (props.configs as GReaderConfigs).type === SyncService.Inoreader,
-        endpoint: (props.configs as GReaderConfigs).endpoint || "https://www.inoreader.com",
-        username: (props.configs as GReaderConfigs).username || "",
+        existing: configs.type === SyncService.Inoreader,
+        endpoint: configs.endpoint || "https://www.inoreader.com",
+        username: configs.username || "",
         password: "",
-        apiId: (props.configs as GReaderConfigs).inoreaderId || "",
-        apiKey: (props.configs as GReaderConfigs).inoreaderKey || "",
+        apiId: configs.inoreaderId || "",
+        apiKey: configs.inoreaderKey || "",
         removeAd:
-            (props.configs as GReaderConfigs).removeInoreaderAd === undefined
+            configs.removeInoreaderAd === undefined
                 ? true
-                : (props.configs as GReaderConfigs).removeInoreaderAd,
-        fetchLimit: (props.configs as GReaderConfigs).fetchLimit || 250
+                : configs.removeInoreaderAd,
+        fetchLimit: configs.fetchLimit || 250
     })
 
     const fetchLimitOptions = (): IDropdownOption[] => [

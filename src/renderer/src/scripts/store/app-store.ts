@@ -41,6 +41,9 @@ type AppStore = {
         importAll: () => Promise<void>;
         updateSourceIcon: (source: RSSSource, iconUrl: string) => void;
         deleteSourceGroup: () => void;
+        syncWithServiceRequest: () => void;
+        syncWithServiceSuccess: () => void;
+        syncWithServiceFailure: (err: Error) => void; 
     }
 }
 
@@ -326,6 +329,30 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
         deleteSourceGroup: () => {
             set(produce((draft: AppStore) => {
                 draft.app.settings.changed = true;
+            }));
+        },
+        syncWithServiceRequest: () => {
+            set(produce((draft: AppStore) => {
+                draft.app.syncing = true;
+            }));
+        },
+        syncWithServiceSuccess: () => {
+            set(produce((draft: AppStore) => {
+                draft.app.syncing = false;
+            }));
+        },
+        syncWithServiceFailure: (err: Error) => {
+            set(produce((draft: AppStore) => {
+                draft.app.syncing = false;
+                draft.app.logMenu.notify = true;
+                draft.app.logMenu.logs = [
+                    ...draft.app.logMenu.logs,
+                    new AppLog(
+                        AppLogType.Failure,
+                        intl.get("log.syncFailure"),
+                        String(err)
+                    )
+                ];
             }));
         },
     }

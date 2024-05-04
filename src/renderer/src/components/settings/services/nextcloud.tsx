@@ -30,12 +30,13 @@ type NextcloudConfigsTabState = {
 
 const NextcloudConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
 
+    const configs = props.configs as NextcloudConfigs;
     const [state, setState] = useState<NextcloudConfigsTabState>({
-        existing: (props.configs as NextcloudConfigs).type === SyncService.Nextcloud,
-        endpoint: (props.configs as NextcloudConfigs).endpoint || "https://nextcloud.com/",
-        username: (props.configs as NextcloudConfigs).username || "",
+        existing: configs.type === SyncService.Nextcloud,
+        endpoint: configs.endpoint || "https://nextcloud.com/",
+        username: configs.username || "",
         password: "",
-        fetchLimit: (props.configs as NextcloudConfigs).fetchLimit || 250,
+        fetchLimit: configs.fetchLimit || 250,
         importGroups: true,
     })
 

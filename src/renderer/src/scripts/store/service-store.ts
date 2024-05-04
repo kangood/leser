@@ -19,11 +19,12 @@ type ServiceStore = {
         saveServiceConfigs: (configs: ServiceConfigs) => void;
         reauthenticate: (hooks: ServiceHooks) => void;
         syncLocalItems: (unread: Set<string>, starred: Set<string>) => void;
-        updateSources: (hook: ServiceHooks["updateSourcesNew"]) => void;
+        updateSources: (hook: ServiceHooks["updateSourcesNew"]) => Promise<void>;
         syncItems: (hook: ServiceHooks["syncItemsNew"]) => Promise<void>;
         syncWithService: (background?: boolean) => Promise<void>;
         fetchItems: (hook: ServiceHooks["fetchItemsNew"], background: boolean) => Promise<void>;
         importGroups: () => Promise<void>;
+        removeService: () => Promise<void>;
     },
 }
 const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
@@ -37,7 +38,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             set({ service: configs });
         },
         reauthenticate: async (hooks: ServiceHooks) => {
-            let configs = useServiceStore.getState().service;
+            let configs = get().service;
             if (!(await hooks.authenticate(configs))) {
                 configs = await hooks.reauthenticate(configs);
                 get().actions.saveServiceConfigs(configs);
@@ -115,7 +116,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                         useGroupActions().addSourceToGroup(gid, source.sid);
                     }
                 }
-                const configs = useServiceStore.getState().service;
+                const configs = get().service;
                 delete configs.importGroups;
                 get().actions.saveServiceConfigs(configs);
             }
@@ -200,17 +201,20 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             const hooks = get().actions.getServiceHooks();
             if (hooks.updateSourcesNew && hooks.fetchItems && hooks.syncItems) {
                 try {
-                    console.log('~~syncWithService.Request~~');
+                    // [appReducer]
+                    useAppActions().syncWithServiceRequest();
                     if (hooks.reauthenticate) {
                         get().actions.reauthenticate(hooks);
                     }
-                    get().actions.updateSources(hooks.updateSourcesNew);
+                    await get().actions.updateSources(hooks.updateSourcesNew);
                     await get().actions.syncItems(hooks.syncItemsNew);
                     await get().actions.fetchItems(hooks.fetchItemsNew, background);
-                    console.log('~~syncWithService.Success~~');
+                    // [appReducer]
+                    useAppActions().syncWithServiceSuccess();
                 } catch (err) {
                     console.log(err);
-                    console.log('~~syncWithService.Failure~~');
+                    // [appReducer]
+                    useAppActions().syncWithServiceFailure(err);
                 } finally {
                     if (useApp().settings.saving) {
                         useAppActions().saveSettings();
@@ -227,9 +231,43 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                 await get().actions.syncWithService();
             }
         },
+        removeService: async () => {
+            useAppActions().saveSettings();
+            const sources = useSources();
+            const promises = Object.values(sources)
+                .filter(s => s.serviceRef)
+                .map(async s => {
+                    await useSourceActions().deleteSource(s, true);
+                });
+            await Promise.all(promises);
+            get().actions.saveServiceConfigs({ type: SyncService.None });
+            useAppActions().saveSettings();
+        },
     },
 }), { name: "service" }))
 
 export const useServiceOn = () => useServiceStore(state => state.service.type !== SyncService.None);
+export const useService = () => useServiceStore(state => state.service);
 
 export const useServiceActions = () => useServiceStore(state => state.actions);
+
+export const authenticate = async (configs: ServiceConfigs) => {
+    const hooks = getServiceHooksFromType(configs.type);
+    if (hooks.authenticate) {
+        return await hooks.authenticate(configs);
+    } else {
+        return true;
+    }
+}
+
+export const reauthenticate = async (configs: ServiceConfigs) => {
+    const hooks = getServiceHooksFromType(configs.type);
+    try {
+        if (hooks.reauthenticate) {
+            return await hooks.reauthenticate(configs);
+        }
+    } catch (err) {
+        console.log(err);
+        return configs;
+    }
+}

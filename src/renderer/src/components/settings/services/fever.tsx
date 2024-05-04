@@ -31,12 +31,14 @@ type FeverConfigsTabState = {
 }
 
 const FeverConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
+
+    const configs = props.configs as FeverConfigs;
     const [state, setState] = useState<FeverConfigsTabState>({
-        existing: (props.configs as FeverConfigs).type === SyncService.Fever,
-        endpoint: (props.configs as FeverConfigs).endpoint || "",
-        username: (props.configs as FeverConfigs).username || "",
+        existing: configs.type === SyncService.Fever,
+        endpoint: configs.endpoint || "",
+        username: configs.username || "",
         password: "",
-        fetchLimit: (props.configs as FeverConfigs).fetchLimit || 250,
+        fetchLimit: configs.fetchLimit || 250,
         importGroups: true,
     });
 

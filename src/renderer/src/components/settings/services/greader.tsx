@@ -31,12 +31,13 @@ type GReaderConfigsTabState = {
 
 const GReaderConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
 
+    const configs = props.configs as GReaderConfigs;
     const [state, setState] = useState<GReaderConfigsTabState>({
-        existing: (props.configs as GReaderConfigs).type === SyncService.GReader,
-        endpoint: (props.configs as GReaderConfigs).endpoint || "",
-        username: (props.configs as GReaderConfigs).username || "",
+        existing: configs.type === SyncService.GReader,
+        endpoint: configs.endpoint || "",
+        username: configs.username || "",
         password: "",
-        fetchLimit: (props.configs as GReaderConfigs).fetchLimit || 250,
+        fetchLimit: configs.fetchLimit || 250,
         importGroups: true,
     })
 

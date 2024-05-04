@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import intl from "react-intl-universal";
 import { SourceGroup } from "../../schema-types";
-import { SourceState, RSSSource } from "../../scripts/models/source";
+import { RSSSource } from "../../scripts/models/source";
 import {
     IColumn,
     Selection,
@@ -22,21 +22,18 @@ import {
     IDragDropEvents,
 } from "@fluentui/react";
 import DangerButton from "../utils/danger-button";
+import { useSources } from '@renderer/scripts/store/source-store';
+import { useGroupActions, useGroups } from '@renderer/scripts/store/group-store';
+import { useServiceActions, useServiceOn } from '@renderer/scripts/store/service-store';
 
-type GroupsTabProps = {
-    sources: SourceState;
-    groups: SourceGroup[];
-    serviceOn: boolean;
-    createGroup: (name: string) => void;
-    updateGroup: (group: SourceGroup) => void;
-    addToGroup: (groupIndex: number, sid: number) => void;
-    deleteGroup: (groupIndex: number) => void;
-    removeFromGroup: (groupIndex: number, sids: number[]) => void;
-    reorderGroups: (groups: SourceGroup[]) => void;
-    importGroups: () => Promise<void>;
-};
+const GroupsTab: React.FC = () => {
+    // zustand store
+    const serviceOn = useServiceOn();
+    const importGroups = useServiceActions().importGroups;
+    const sources = useSources();
+    const groups = useGroups();
+    const { reorderSourceGroups, updateSourceGroup, createSourceGroup, addSourceToGroup, removeSourceFromGroup, deleteSourceGroup } = useGroupActions();
 
-const GroupsTab: React.FC<GroupsTabProps> = (props) => {
     const [editGroupName, setEditGroupName] = useState<string>("");
     const [newGroupName, setNewGroupName] = useState<string>("");
     const [selectedGroup, setSelectedGroup] = useState<SourceGroup>(null);
@@ -103,7 +100,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
             isRowHeader: true,
             onRender: (g: SourceGroup) => (
                 <>
-                    {g.isMultiple ? g.name : props.sources[g.sids[0]].name}
+                    {g.isMultiple ? g.name : sources[g.sids[0]].name}
                 </>
             ),
         },
@@ -143,7 +140,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
         canDrag: () => true,
         onDrop: (item?: SourceGroup) => {
             if (groupDraggedItem) {
-                reorderGroups(item);
+                reorderGroupsHandle(item);
             }
         },
         onDragStart: (item?: SourceGroup, itemIndex?: number) => {
@@ -174,17 +171,17 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
         },
     })
 
-    const reorderGroups = (item: SourceGroup) => {
+    const reorderGroupsHandle = (item: SourceGroup) => {
         let draggedItem = groupSelection.isIndexSelected(groupDraggedIndex)
             ? (groupSelection.getSelection()[0] as SourceGroup)
             : groupDraggedItem!
 
         let insertIndex = item.index;
-        let groups = props.groups.filter(g => g.index != draggedItem.index);
+        let groupsNew = groups.filter(g => g.index != draggedItem.index);
 
-        groups.splice(insertIndex, 0, draggedItem);
+        groupsNew.splice(insertIndex, 0, draggedItem);
         groupSelection.setAllSelected(false);
-        props.reorderGroups(groups);
+        reorderSourceGroups(groupsNew);
     }
 
     const reorderSources = (item: RSSSource) => {
@@ -202,7 +199,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
         items.splice(insertIndex, 0, ...draggedItems);
 
         let group = { ...selectedGroup, sids: items };
-        props.updateGroup(group);
+        updateSourceGroup(group);
         setSelectedGroup(group);
     }
 
@@ -215,7 +212,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
     }
 
     const dropdownOptions = () =>
-        props.groups
+        groups
             .filter(g => g.isMultiple)
             .map(g => ({
                 key: g.index,
@@ -223,7 +220,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
             }));
 
     const handleInputChange = event => {
-        const name: string = event.target.name
+        const name: string = event.target.name;
         if (name === 'newGroupName') {
             setNewGroupName(event.target.value);
         }
@@ -237,7 +234,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
         if (name.length == 0) {
             return intl.get("emptyName");
         }
-        for (let group of props.groups) {
+        for (let group of groups) {
             if (group.isMultiple && group.name === name) {
                 return intl.get("groups.exist");
             }
@@ -249,19 +246,19 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
         event.preventDefault();
         let trimmed = newGroupName.trim();
         if (validateNewGroupName(trimmed) === "") {
-            props.createGroup(trimmed);
+            createSourceGroup(trimmed);
         }
     }
 
     const addToGroup = () => {
-        props.addToGroup(
+        addSourceToGroup(
             dropdownIndex,
             selectedGroup.sids[0]
         );
     }
 
     const removeFromGroup = () => {
-        props.removeFromGroup(
+        removeSourceFromGroup(
             selectedGroup.index,
             selectedSources.map(s => s.sid)
         );
@@ -269,7 +266,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
     }
 
     const deleteGroup = () => {
-        props.deleteGroup(selectedGroup.index);
+        deleteSourceGroup(selectedGroup.index);
         groupSelection.setIndexSelected(
             selectedGroup.index,
             false,
@@ -281,7 +278,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
     const updateGroupName = () => {
         let group = selectedGroup;
         group = { ...group, name: editGroupName.trim() };
-        props.updateGroup(group);
+        updateSourceGroup(group);
     }
 
     const dropdownChange = (_, item: IDropdownOption) => {
@@ -321,7 +318,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
                         <DetailsList
                             compact={true}
                             items={selectedGroup.sids.map(
-                                sid => props.sources[sid]
+                                sid => sources[sid]
                             )}
                             columns={sourceColumns}
                             dragDropEvents={sourcesDragDropEvents()}
@@ -338,14 +335,14 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
             )}
             {!manageGroup || !selectedGroup ? (
                 <>
-                    {props.serviceOn && (
+                    {serviceOn && (
                         <MessageBar
                             messageBarType={MessageBarType.info}
                             isMultiline={false}
                             actions={
                                 <MessageBarButton
                                     text={intl.get("service.importGroups")}
-                                    onClick={props.importGroups}
+                                    onClick={importGroups}
                                 />
                             }>
                             {intl.get("service.groupsWarning")}
@@ -385,7 +382,7 @@ const GroupsTab: React.FC<GroupsTabProps> = (props) => {
 
                     <DetailsList
                         compact={true}
-                        items={props.groups}
+                        items={groups}
                         columns={groupColumns()}
                         setKey="selected"
                         onItemInvoked={manageGroupHandle}

@@ -18,7 +18,7 @@ import { RSSItem } from "../scripts/models/item";
 import { ContextReduxProps } from "../containers/context-menu-container";
 import { ViewType, ImageCallbackTypes, ViewConfigs } from "../schema-types";
 import { FilterType } from "../scripts/models/feed";
-import { usePageActions, usePageStore } from "@renderer/scripts/store/page-store";
+import { usePageActions } from "@renderer/scripts/store/page-store";
 
 export type ContextMenuProps = ContextReduxProps & {
     type: ContextMenuType;

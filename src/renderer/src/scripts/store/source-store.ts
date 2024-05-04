@@ -41,7 +41,7 @@ type SourceStore = {
 
 
 let insertPromises = Promise.resolve();
-export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
+const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     sources: {},
     actions: {
         initSourcesRequest: () => {

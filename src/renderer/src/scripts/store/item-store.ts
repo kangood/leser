@@ -5,7 +5,7 @@ import { RSSSource } from '../models/source';
 import { useApp, useAppActions } from "./app-store";
 import { useFeedActions } from "./feed-store";
 import { useServiceActions } from "./service-store";
-import { useSourceActions, useSourceStore } from './source-store';
+import { useSourceActions, useSources } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
 import { RSSFeed } from '../models/feed';
@@ -77,7 +77,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
         fetchItems: async (background = false, sids = null) => {
             let promises = new Array<Promise<RSSItem[]>>();
-            const initState = { app: useApp(), sources: useSourceStore.getState().sources };
+            const initState = { app: useApp(), sources: useSources() };
             if (!initState.app.fetchingItems && !initState.app.syncing) {
                 if (
                     sids === null ||
@@ -86,7 +86,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     await useServiceActions().syncWithService(background);
                 }
                 let timenow = new Date().getTime();
-                const sourcesState = useSourceStore.getState().sources;
+                const sourcesState = useSources();
                 let sources =
                     sids === null
                         ? Object.values(sourcesState).filter(s => {
@@ -122,7 +122,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     })
                     insertItems(items)
                         .then(inserted => {
-                            get().actions.fetchItemsSuccess(inserted.reverse(), useItemStore.getState().items);
+                            get().actions.fetchItemsSuccess(inserted.reverse(), get().items);
                             resolve();
                             if (background) {
                                 for (let item of inserted) {
@@ -139,7 +139,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                             useAppActions().setupAutoFetch();
                         })
                         .catch((err: Error) => {
-                            get().actions.fetchItemsSuccess([], useItemStore.getState().items);
+                            get().actions.fetchItemsSuccess([], get().items);
                             window.utils.showErrorBox( "A database error has occurred.", String(err) );
                             console.log(err);
                             reject(err);
@@ -174,7 +174,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             useSourceActions().markUnreadDone(item);
         },
         markRead: (item: RSSItem) => {
-            item = useItemStore.getState().items[item._id];
+            item = get().items[item._id];
             if (!item.hasRead) {
                 db.itemsDB
                     .update(db.items)
@@ -188,7 +188,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             }
         },
         markUnread: (item: RSSItem) => {
-            item = useItemStore.getState().items[item._id];
+            item = get().items[item._id];
             if (item.hasRead) {
                 db.itemsDB
                     .update(db.items)

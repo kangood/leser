@@ -9,10 +9,11 @@ import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
 import { initTouchBarWithTexts, validateFavicon } from '../utils';
-import { useSourceActions, useSourceStore } from './source-store';
+import { useSourceActions, useSources } from './source-store';
 import { useFeedActions } from './feed-store';
 import { devtools } from 'zustand/middleware';
 import { ALL } from '../models/feed';
+import { produce } from 'immer';
 
 type AppStore = {
     app: AppState;
@@ -39,6 +40,7 @@ type AppStore = {
         deleteArticles: (days: number) => Promise<void>;
         importAll: () => Promise<void>;
         updateSourceIcon: (source: RSSSource, iconUrl: string) => void;
+        deleteSourceGroup: () => void;
     }
 }
 
@@ -162,8 +164,8 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
             });
         },
         pushNotification: (item: RSSItem) => {
-            const sourceName = useSourceStore.getState().sources[item.source].name;
-            const state = { sources: useSourceStore.getState().sources, app: useAppStore.getState().app };
+            const sourceName = useSources()[item.source].name;
+            const state = { sources: useSources(), app: get().app };
             if (!window.utils.isFocused()) {
                 const options = { body: sourceName } as any;
                 if (item.thumb) options.icon = item.thumb;
@@ -203,7 +205,7 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     interval = window.settings.getFetchInterval();
                 } else {
                     fetchTimeout = setTimeout(() => {
-                        let app = useAppStore.getState().app;
+                        let app = get().app;
                         if (!app.settings.display) {
                             if (!app.fetchingItems) {
                                 useItemActions().fetchItems(true);
@@ -320,6 +322,11 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 window.utils.showErrorBox(intl.get("sources.badIcon"), "");
             }
             get().actions.saveSettings();
+        },
+        deleteSourceGroup: () => {
+            set(produce((draft: AppStore) => {
+                draft.app.settings.changed = true;
+            }));
         },
     }
 }), { name: "app" }))

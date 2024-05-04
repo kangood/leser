@@ -5,7 +5,7 @@ import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFrom
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
 import { useApp, useAppActions } from './app-store';
 import { RSSSource } from '../models/source';
-import { useSourceActions, useSourceStore } from "./source-store";
+import { useSourceActions, useSources } from "./source-store";
 import { insertItems } from "../models/item";
 import { useItemActions, useItems } from "./item-store";
 import { devtools } from "zustand/middleware";
@@ -21,11 +21,12 @@ type ServiceStore = {
         syncLocalItems: (unread: Set<string>, starred: Set<string>) => void;
         updateSources: (hook: ServiceHooks["updateSourcesNew"]) => void;
         syncItems: (hook: ServiceHooks["syncItemsNew"]) => Promise<void>;
-        syncWithService: (background: boolean) => Promise<void>;
+        syncWithService: (background?: boolean) => Promise<void>;
         fetchItems: (hook: ServiceHooks["fetchItemsNew"], background: boolean) => Promise<void>;
+        importGroups: () => Promise<void>;
     },
 }
-export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
+const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
     service: { type: SyncService.None },
     actions: {
         getServiceHooks: () => {
@@ -48,7 +49,7 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         updateSources: async (hook: ServiceHooks["updateSourcesNew"]) => {
             const [sources, groupsMap] = await hook();
             const existing = new Map<string, RSSSource>();
-            for (let source of Object.values(useSourceStore.getState().sources)) {
+            for (let source of Object.values(useSources())) {
                 if (source.serviceRef) {
                     existing.set(source.serviceRef, source);
                 }
@@ -215,6 +216,15 @@ export const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                         useAppActions().saveSettings();
                     }
                 }
+            }
+        },
+        importGroups: async () => {
+            const configs = get().service;
+            if (configs.type !== SyncService.None) {
+                useAppActions().saveSettings();
+                configs.importGroups = true;
+                get().actions.saveServiceConfigs(configs);
+                await get().actions.syncWithService();
             }
         },
     },

@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { ALL, FeedFilter, FeedState, RSSFeed } from "../models/feed";
 import { RSSItem } from "../models/item";
-import { usePageStore } from "./page-store";
 import { useItemActions, useItems } from "./item-store";
 import { produce } from "immer";
 import { devtools } from "zustand/middleware";
 import { useAppActions } from "./app-store";
 import { RSSSource } from "../models/source";
+import { usePage } from "./page-store";
 
 type FeedStore = {
     feeds: FeedState;
@@ -60,7 +60,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
         initFeeds: async (force = false) => {
             get().actions.initFeedsRequest();
             let promises = new Array<Promise<void>>();
-            for (let feed of Object.values(useFeedStore.getState().feeds)) {
+            for (let feed of Object.values(get().feeds)) {
                 if (!feed.loaded || force) {
                     let p = RSSFeed.loadFeed(feed)
                         .then(items => {
@@ -76,7 +76,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             get().actions.initFeedsSuccess();
         },
         dismissItems: () => {
-            const state = { page: usePageStore.getState().page, feeds: useFeedStore.getState().feeds, items: useItems() };
+            const state = { page: usePage(), feeds: get().feeds, items: useItems() };
             let fid = state.page.feedId;
             let filter = state.feeds[fid].filter;
             let iids = new Set<number>();

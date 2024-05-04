@@ -21,6 +21,12 @@ type GroupStore = {
         addSourceToGroup: (groupIndex: number, sid: number) => void;
         importOPML: () => void;
         exportOPML: () => void;
+        updateSourceGroupDone: (group: SourceGroup) => void;
+        updateSourceGroup: (group: SourceGroup) => void;
+        removeSourceFromGroupDone: (groupIndex: number, sids: number[]) => void;
+        removeSourceFromGroup: (groupIndex: number, sids: number[]) => void;
+        deleteSourceGroupDone: (groupIndex: number) => void;
+        deleteSourceGroup: (groupIndex: number) => void;
     }
 }
 
@@ -28,6 +34,10 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
     groups: [],
     actions: {
         reorderSourceGroups: (groups: SourceGroup[]) => {
+            set({ groups: groups });
+            // [appReducer]
+            useAppActions().deleteSourceGroup();
+            
             window.settings.saveGroups(groups);
         },
         fixBrokenGroups: (sources: SourceState) => {
@@ -89,6 +99,8 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                     }))
                     .filter(g => g.isMultiple || g.sids.length > 0)
             });
+            // [appReducer]
+            useAppActions().deleteSourceGroup();
         },
         addSourceToGroup: (groupIndex: number, sid: number) => {
             get().actions.addSourceToGroupDone(groupIndex, sid);
@@ -210,6 +222,59 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                         );
                     }
                 });
+        },
+        updateSourceGroupDone: (group: SourceGroup) => {
+            set(state => ({
+                groups: [
+                    ...state.groups.slice(0, group.index),
+                    group,
+                    ...state.groups.slice(group.index + 1),
+                ]
+            }))
+            // [appReducer]
+            useAppActions().deleteSourceGroup();
+        },
+        updateSourceGroup: (group: SourceGroup) => {
+            get().actions.updateSourceGroupDone(group);
+            window.settings.saveGroups(get().groups);
+        },
+        removeSourceFromGroupDone: (groupIndex: number, sids: number[]) => {
+            set(state => ({
+                groups: [
+                    ...state.groups.slice(0, groupIndex),
+                    {
+                        ...state.groups[groupIndex],
+                        sids: state.groups[groupIndex].sids.filter(
+                            sid => !sids.includes(sid)
+                        ),
+                    },
+                    ...sids.map(sid => new SourceGroup([sid])),
+                    ...state.groups.slice(groupIndex + 1),
+                ]
+            }))
+            // [appReducer]
+            useAppActions().deleteSourceGroup();
+        },
+        removeSourceFromGroup: (groupIndex: number, sids: number[]) => {
+            get().actions.removeSourceFromGroupDone(groupIndex, sids);
+            window.settings.saveGroups(get().groups);
+        },
+        deleteSourceGroupDone: (groupIndex: number) => {
+            set(state => ({
+                groups: [
+                    ...state.groups.slice(0, groupIndex),
+                    ...state.groups[groupIndex].sids.map(
+                        sid => new SourceGroup([sid])
+                    ),
+                    ...state.groups.slice(groupIndex + 1),
+                ]
+            }))
+            // [appReducer]
+            useAppActions().deleteSourceGroup();
+        },
+        deleteSourceGroup: (groupIndex: number) => {
+            get().actions.deleteSourceGroupDone(groupIndex);
+            window.settings.saveGroups(get().groups);
         },
     }
 }), { name: "group" }))

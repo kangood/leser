@@ -4,10 +4,10 @@ import { RSSItem } from '../models/item';
 import { PageState } from '../models/page';
 import { ALL, FeedFilter, FilterType } from '../models/feed';
 import { getWindowBreakpoint } from '../utils';
-import { useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { useAppActions } from './app-store';
 import { useFeedActions, useFeeds } from './feed-store';
+import { useSources } from './source-store';
 
 export type PageInTypes = {
     keepMenu: boolean;
@@ -30,7 +30,7 @@ type PageStore = {
     }
 }
 
-export const usePageStore = create<PageStore>()(devtools((set, get) => ({
+const usePageStore = create<PageStore>()(devtools((set, get) => ({
     page: new PageState(),
     actions: {
         checkedFilter: (filterType: FilterType) => {
@@ -80,7 +80,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             // [feedReducer]
         },
         showItem: (feedId: string, item: RSSItem) => {
-            const state = { items: useItems(), sources: useSourceStore.getState().sources };
+            const state = { items: useItems(), sources: useSources() };
             if (
                 state.items.hasOwnProperty(item._id) &&
                 state.sources.hasOwnProperty(item.source)
@@ -175,6 +175,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
     },
 }), { name: "page" }))
 
+export const usePage = () => usePageStore(state => state.page);
 export const usePageFilter = () => usePageStore(state => state.page.filter);
 export const usePageViewType = () => usePageStore(state => state.page.viewType);
 export const usePageCurrentItem = () => usePageStore(state => state.page.itemId);

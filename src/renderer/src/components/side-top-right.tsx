@@ -3,15 +3,15 @@ import { Icon } from '@fluentui/react';
 import intl from 'react-intl-universal';
 
 export const SideTopRight = ({
-  markAllRead,
-  logs,
-  viewsWrapper,
-  settings,
-  minimize,
-  maximize,
-  maximized,
-  close,
-  appState,
+    markAllRead,
+    logs,
+    viewsWrapper,
+    settings,
+    minimize,
+    maximize,
+    maximized,
+    close,
+    appState,
 }) => {
     return (
         <div className="side-top-right dragging">

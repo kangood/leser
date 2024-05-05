@@ -4,7 +4,7 @@ import { RSSItem } from "../../scripts/models/item"
 import { platformCtrl } from "../../scripts/utils"
 import { FeedFilter } from "../../scripts/models/feed"
 import { ViewConfigs } from "../../schema-types"
-import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
+import { useMenuActions } from "@renderer/scripts/store/menu-store"
 
 export type CardProps = {
     feedId: string
@@ -35,7 +35,7 @@ export const Card: React.FC<CardProps> = (props) => {
 
 export const bindCardEventsToProps = (props: CardProps) => {
     
-    const toggleMenu = useToggleMenuStore.getState().toggleMenu;
+    const { toggleMenu } = useMenuActions();
 
     const openInBrowser = (e: React.MouseEvent) => {
         props.markRead(props.item)

@@ -27,6 +27,7 @@ type GroupStore = {
         removeSourceFromGroup: (groupIndex: number, sids: number[]) => void;
         deleteSourceGroupDone: (groupIndex: number) => void;
         deleteSourceGroup: (groupIndex: number) => void;
+        toggleGroupExpansion: (groupIndex: number) => void;
     }
 }
 
@@ -276,12 +277,28 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
             get().actions.deleteSourceGroupDone(groupIndex);
             window.settings.saveGroups(get().groups);
         },
+        toggleGroupExpansion: (groupIndex: number) => {
+            set(state => {
+                const nextState = state.groups.map((g, i) => 
+                                    i == groupIndex
+                                    ? {
+                                        ...g,
+                                        expanded: !g.expanded,
+                                    }
+                                    : g )
+                        
+                return { groups: nextState };
+            });
+            window.settings.saveGroups(get().groups);
+        },
     }
 }), { name: "group" }))
 
 export const useGroups = () => useGroupStore(state => state.groups);
+export const useGroupsByMenu = () => useGroupStore(state => state.groups.map((g, i) => ({ ...g, index: i })));
 
 export const useGroupActions = () => useGroupStore(state => state.actions);
+
 
 const addSource = useSourceActions().addSource;
 

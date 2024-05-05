@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useRef } from "react"
 import intl from "react-intl-universal"
 import { Icon } from "@fluentui/react/lib/Icon"
 import { AnimationClassNames } from "@fluentui/react/lib/Styling"
@@ -10,21 +10,20 @@ import SourcesTab from "./settings/sources"
 import GroupsTab from "./settings/groups"
 import RulesTab from "./settings/rules"
 import ServiceTab from "./settings/service"
+import { useAppActions, useAppSettingsBlocked, useAppSettingsDisplay, useAppSettingsSaving } from "@renderer/scripts/store/app-store"
 
-type SettingsProps = {
-    display: boolean
-    blocked: boolean
-    exitting: boolean
-    close: () => void
-}
+const Settings: React.FC = () => {
 
-const Settings: React.FC<SettingsProps> = (props) => {
+    const appSettingsDisplay = useAppSettingsDisplay();
+    const appSettingsSaving = useAppSettingsSaving();
+    const appSettingsBlocked = useAppSettingsBlocked();
+    const { exitSettings } = useAppActions();
 
-    const prevProps = React.useRef<SettingsProps>(props);
+    const prevDisplay = useRef<boolean>(appSettingsDisplay);
 
     useEffect(() => {
-        if (props.display !== prevProps.current.display) {
-            if (props.display) {
+        if (appSettingsDisplay !== prevDisplay.current) {
+            if (appSettingsDisplay) {
                 if (window.utils.platform === "darwin") {
                     window.utils.destroyTouchBar();
                 }
@@ -36,16 +35,17 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 document.body.removeEventListener("keydown", onKeyDown);
             }
         }
-    }, [props.display]);
+        prevDisplay.current = appSettingsDisplay;
+    }, [appSettingsDisplay]);
 
     const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && !props.exitting) {
-            props.close();
+        if (event.key === "Escape" && !appSettingsSaving) {
+            exitSettings();
         }
     }
 
     return (
-        props.display && (
+        appSettingsDisplay && (
             <div className="settings-container">
                 <div
                     className="btn-group"
@@ -56,15 +56,15 @@ const Settings: React.FC<SettingsProps> = (props) => {
                     }}>
                     <a
                         className={
-                            "btn" + (props.exitting ? " disabled" : "")
+                            "btn" + (appSettingsSaving ? " disabled" : "")
                         }
                         title={intl.get("settings.exit")}
-                        onClick={props.close}>
+                        onClick={exitSettings}>
                         <Icon iconName="Back" />
                     </a>
                 </div>
                 <div className={"settings " + AnimationClassNames.slideUpIn20}>
-                    {props.blocked && (
+                    {appSettingsBlocked && (
                         <FocusTrapZone
                             isClickableOutsideFocusTrap={true}
                             className="loading">

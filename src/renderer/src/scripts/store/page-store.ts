@@ -2,10 +2,10 @@ import { create } from 'zustand'
 import { useItemActions, useItems } from './item-store';
 import { RSSItem } from '../models/item';
 import { PageState } from '../models/page';
-import { ALL, FeedFilter, FilterType } from '../models/feed';
+import { ALL, FeedFilter, FilterType, SOURCE } from '../models/feed';
 import { getWindowBreakpoint } from '../utils';
 import { devtools } from 'zustand/middleware';
-import { useAppActions } from './app-store';
+import { useApp, useAppActions } from './app-store';
 import { useFeedActions, useFeeds } from './feed-store';
 import { useSources } from './source-store';
 import { ViewConfigs, ViewType } from '@renderer/schema-types';
@@ -30,10 +30,11 @@ type PageStore = {
         toggleSearch: () => void;
         setViewConfigs: (configs: ViewConfigs) => void;
         switchView: (viewType: ViewType) => void;
+        selectSources: (sids: number[], menuKey: string, title: string) => void;
     }
 }
 
-const usePageStore = create<PageStore>()(devtools((set, get) => ({
+export const usePageStore = create<PageStore>()(devtools((set, get) => ({
     page: new PageState(),
     actions: {
         checkedFilter: (filterType: FilterType) => {
@@ -195,6 +196,21 @@ const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 }
             }));
         },
+        selectSources: (sids: number[], menuKey: string, title: string) => {
+            if (useApp().menuKey !== menuKey) {
+                set(state => ({
+                    page: {
+                        ...state.page,
+                        feedId: SOURCE,
+                        itemId: null,
+                    }
+                }))
+                // [feedReducer]
+                useFeedActions().selectSources(sids);
+                // [appReducer]
+                useAppActions().selectSources(menuKey, title);
+            }
+        },
     },
 }), { name: "page" }))
 
@@ -205,5 +221,6 @@ export const usePageCurrentItem = () => usePageStore(state => state.page.itemId)
 export const usePageViewConfigs = () => usePageStore(state => state.page.viewConfigs);
 export const usePageFeeds = () => usePageStore(state => [state.page.feedId]);
 export const usePageItemFromFeed = () => usePageStore(state => state.page.itemFromFeed);
+export const usePageItemShown = () => usePageStore(state => state.page.itemId && state.page.viewType !== ViewType.List);
 
 export const usePageActions = () => usePageStore(state => state.actions);

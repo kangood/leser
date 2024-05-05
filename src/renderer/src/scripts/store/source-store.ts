@@ -36,7 +36,7 @@ type SourceStore = {
         markUnreadDone: (item: RSSItem) => void;
         toggleStarredDone: (item: RSSItem) => void;
         toggleSourceHidden: (source: RSSSource) => void;
-        markAllReadDone(sids: number[], time: number): void;
+        markAllReadDone: (sids: number[], time: number) => void;
     }
 }
 

@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import { ALL, FeedFilter, FeedState, RSSFeed } from "../models/feed";
+import { ALL, FeedFilter, FeedState, RSSFeed, SOURCE } from "../models/feed";
 import { RSSItem, applyItemReduction } from "../models/item";
 import { useItemActions, useItems } from "./item-store";
 import { produce } from "immer";
 import { devtools } from "zustand/middleware";
 import { useAppActions } from "./app-store";
 import { RSSSource } from "../models/source";
-import { usePage } from "./page-store";
+import { usePage, usePageFilter } from "./page-store";
 
 type FeedStore = {
     feeds: FeedState;
@@ -23,7 +23,8 @@ type FeedStore = {
         loadMore: (feed: RSSFeed) => Promise<void>;
         hideSource: (source: RSSSource) => void;
         unhideSource: (source: RSSSource) => void;
-        toggleHiddenDone(item: RSSItem, type: string): void;
+        toggleHiddenDone: (item: RSSItem, type: string) => void;
+        selectSources: (sids: number[]) => void;
     }
 };
 
@@ -208,6 +209,18 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                 }
             });
         },
+        selectSources: (sids: number[]) => {
+            set(state => ({
+                feeds: {
+                    ...state.feeds,
+                    [SOURCE]: new RSSFeed(
+                        SOURCE,
+                        sids,
+                        usePageFilter()
+                    ),
+                }
+            }));
+        }
     }
 }), { name: "feed" }))
 

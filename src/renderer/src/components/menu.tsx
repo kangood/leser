@@ -1,55 +1,31 @@
+import React from "react"
 import intl from "react-intl-universal"
 import { Icon } from "@fluentui/react/lib/Icon"
 import { Nav, INavLink, INavLinkGroup } from "@fluentui/react"
-import { SourceGroup } from "../schema-types"
-import { SourceState, RSSSource } from "../scripts/models/source"
+import { RSSSource } from "../scripts/models/source"
 import { ALL, FilterType } from "../scripts/models/feed"
 import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
 import { useEffect, useState } from "react"
-import React from "react"
-import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
-import { AppState } from "../scripts/models/app"
+import { usePageFilter, usePageItemShown } from "@renderer/scripts/store/page-store"
+import { useApp, useAppActions } from "@renderer/scripts/store/app-store"
+import { useItemActions } from "@renderer/scripts/store/item-store"
+import { useGroupsByMenu } from "@renderer/scripts/store/group-store"
+import { useSources } from "@renderer/scripts/store/source-store"
+import { useMenuActions, useMenuDisplay } from "@renderer/scripts/store/menu-store"
 
-type MenuProps = {
-    state: AppState
-    status: boolean
-    display: boolean
-    selected: string
-    sources: SourceState
-    groups: SourceGroup[]
-    itemOn: boolean
-    filterType: FilterType
-    allArticles: (init?: boolean) => void
-    selectSourceGroup: (group: SourceGroup, menuKey: string) => void
-    selectSource: (source: RSSSource) => void
-    groupContextMenu: (sids: number[], event: React.MouseEvent) => void
-    updateGroupExpansion: (
-        event: React.MouseEvent<HTMLElement>,
-        key: string,
-        selected: string
-    ) => void
-    fetch: () => void
-}
+const Menu: React.FC = () => {
+    // zustand store
+    const menuDisplayZ = useMenuDisplay();
+    const { toggleMenu, selectSourceGroup, allArticles, selectSource, updateGroupExpansion } = useMenuActions();
+    const appState = useApp();
+    const { openGroupMenu } = useAppActions();
+    const filterType = usePageFilter().type;
+    const pageItemShown = usePageItemShown();
+    const { fetchItems } = useItemActions();
+    const groupsZ = useGroupsByMenu();
+    const sourcesZ = useSources();
+    const selected = appState.menuKey;
 
-const Menu: React.FC<MenuProps> = ({
-    state,
-    status,
-    display,
-    selected,
-    sources: sourcesData,
-    groups,
-    itemOn,
-    filterType,
-    allArticles,
-    selectSourceGroup,
-    selectSource,
-    groupContextMenu,
-    updateGroupExpansion,
-    fetch,
-}) => {
-
-    const toggleMenuDisplay = useToggleMenuStore(state => state.display);
-    const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
     // 选中【未读、星标】时的标识
     const isUnreadOnly = (filterType & ~FilterType.Toggles) == FilterType.UnreadOnly;
     const isStarredOnly = (filterType & ~FilterType.Toggles) == FilterType.StarredOnly;
@@ -72,7 +48,7 @@ const Menu: React.FC<MenuProps> = ({
         // 当组件首次加载时，就不走 handleResize 的判断了，立即检查窗口的宽度，并设置状态
         if (menuDisplay) {
             toggleMenu(true);
-            window.settings.setDefaultMenu(toggleMenuDisplay)
+            window.settings.setDefaultMenu(menuDisplayZ)
         }
         return () => {
             window.removeEventListener("resize", handleResize)
@@ -81,62 +57,64 @@ const Menu: React.FC<MenuProps> = ({
     
     // 刷新前的状态检查
     const canFetch = () =>
-        state.sourceInit &&
-        state.feedInit &&
-        !state.syncing &&
-        !state.fetchingItems
+        appState.sourceInit &&
+        appState.feedInit &&
+        !appState.syncing &&
+        !appState.fetchingItems
     const fetching = () => (!canFetch() ? " fetching" : "")
     // 刷新包装器
     const fetchWrapper = () => {
-        if (canFetch()) fetch()
+        if (canFetch()) {
+            fetchItems();
+        }
     }
 
     const countOverflow = (count: number) => count >= 1000 ? " 999+" : ` ${count}`
 
     const getLinkGroups = (): INavLinkGroup[] => {
         const singleSourceFilter = [];
-        const groupsSources = groups
-                                .filter(g => g.sids.length > 0)
-                                .map(g => {
-                                    if (g.isMultiple) {
-                                        let sources = g.sids.map(sid => sourcesData[sid])
-                                        if (isUnreadOnly) {
-                                            // 当前选中未读，就过滤掉未读为0的数据
-                                            sources = sources.filter((item) => item.unreadCount !== 0);
-                                        } else if (isStarredOnly) {
-                                            // 当前选中星标，就过滤掉非星标数据
-                                            sources = sources.filter((item) => item.starredCount > 0);
-                                        }
-                                        return {
-                                            name: g.name,
-                                            ariaLabel:
-                                                g.name +
-                                                countOverflow(
-                                                    sources
-                                                        .map(s => isStarredOnly ? s.starredCount : s.unreadCount)
-                                                        .reduce((a, b) => a + b, 0)
-                                                ),
-                                            key: "g-" + g.index,
-                                            url: null,
-                                            isExpanded: g.expanded,
-                                            onClick: () => selectSourceGroup(g, "g-" + g.index),
-                                            links: sources.map(getSource),
-                                        }
-                                    } else {
-                                        // 单独订阅源的【未读、星标】过滤处理
-                                        const rssSource = sourcesData[g.sids[0]];
-                                        if (isUnreadOnly && rssSource.unreadCount === 0) {
-                                            singleSourceFilter.push('s-' + rssSource.sid);
-                                        } else if (isStarredOnly && rssSource.starredCount === 0) {
-                                            singleSourceFilter.push('s-' + rssSource.sid);
-                                        }
-                                        return getSource(rssSource);
-                                    }
-                                })
-                                // 二次过滤，去掉组别中没有子节点的数据（如果 g.links 存在说明有分组，则过滤掉分组内零元素的数据）
-                                .filter(g => g.links ? g.links.length > 0 : true)
-                                // 三次过滤，去掉单独一个订阅源的不用展示的数据
-                                .filter(g => !singleSourceFilter.includes(g.key))
+        const groups = groupsZ
+                .filter(g => g.sids.length > 0)
+                .map(g => {
+                    if (g.isMultiple) {
+                        let sources = g.sids.map(sid => sourcesZ[sid])
+                        if (isUnreadOnly) {
+                            // 当前选中未读，就过滤掉未读为0的数据
+                            sources = sources.filter((item) => item.unreadCount !== 0);
+                        } else if (isStarredOnly) {
+                            // 当前选中星标，就过滤掉非星标数据
+                            sources = sources.filter((item) => item.starredCount > 0);
+                        }
+                        return {
+                            name: g.name,
+                            ariaLabel:
+                                g.name +
+                                countOverflow(
+                                    sources
+                                        .map(s => isStarredOnly ? s.starredCount : s.unreadCount)
+                                        .reduce((a, b) => a + b, 0)
+                                ),
+                            key: "g-" + g.index,
+                            url: null,
+                            isExpanded: g.expanded,
+                            onClick: () => selectSourceGroup(g, "g-" + g.index),
+                            links: sources.map(getSource),
+                        }
+                    } else {
+                        // 单独订阅源的【未读、星标】过滤处理
+                        const rssSource = sourcesZ[g.sids[0]];
+                        if (isUnreadOnly && rssSource.unreadCount === 0) {
+                            singleSourceFilter.push('s-' + rssSource.sid);
+                        } else if (isStarredOnly && rssSource.starredCount === 0) {
+                            singleSourceFilter.push('s-' + rssSource.sid);
+                        }
+                        return getSource(rssSource);
+                    }
+                })
+                // 二次过滤，去掉组别中没有子节点的数据（如果 g.links 存在说明有分组，则过滤掉分组内零元素的数据）
+                .filter(g => g.links ? g.links.length > 0 : true)
+                // 三次过滤，去掉单独一个订阅源的不用展示的数据
+                .filter(g => !singleSourceFilter.includes(g.key))
 
         return [
             // 订阅源上面的渲染
@@ -147,7 +125,7 @@ const Menu: React.FC<MenuProps> = ({
                         ariaLabel:
                             intl.get("allArticles") +
                             countOverflow(
-                                Object.values(sourcesData)
+                                Object.values(sourcesZ)
                                     .filter(s => !s.hidden)
                                     .map(s => isStarredOnly ? s.starredCount : s.unreadCount)
                                     .reduce((a, b) => a + b, 0)
@@ -168,7 +146,7 @@ const Menu: React.FC<MenuProps> = ({
             // 订阅源及下面的渲染
             {
                 name: intl.get("menu.subscriptions"),
-                links: groupsSources
+                links: groups
             },
         ]
     }
@@ -197,16 +175,16 @@ const Menu: React.FC<MenuProps> = ({
     })
 
     const onContext = (item: INavLink, event: React.MouseEvent) => {
-        let sids: number[]
-        let [type, index] = item.key.split("-")
+        let sids: number[];
+        let [type, index] = item.key.split("-");
         if (type === "s") {
-            sids = [parseInt(index)]
+            sids = [parseInt(index)];
         } else if (type === "g") {
-            sids = groups[parseInt(index)].sids
+            sids = groupsZ[parseInt(index)].sids;
         } else {
-            return
+            return;
         }
-        groupContextMenu(sids, event)
+        openGroupMenu(sids, event);
     }
 
     const _onRenderLink = (link: INavLink): JSX.Element => {
@@ -236,10 +214,10 @@ const Menu: React.FC<MenuProps> = ({
     return (
         status && (
             <div
-                className={"menu-container" + (toggleMenuDisplay ? " show" : "")}
+                className={"menu-container" + (menuDisplayZ ? " show" : "")}
                 onClick={() => toggleMenu()}>
                 <div
-                    className={"menu" + (itemOn ? " item-on" : "")}
+                    className={"menu" + (pageItemShown ? " item-on" : "")}
                     onClick={e => e.stopPropagation()}>
                     <div className="btn-group dragging">
                         <a
@@ -252,7 +230,7 @@ const Menu: React.FC<MenuProps> = ({
                     </div>
                     <FocusZone
                         as="div"
-                        disabled={!display}
+                        disabled={!appState.menu}
                         className="nav-wrapper">
                         <Nav
                             // 订阅源头部样式

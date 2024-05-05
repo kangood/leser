@@ -46,6 +46,7 @@ type ItemStore = {
         loadMoreSuccess: (items: RSSItem[]) => void;
         markAllReadDone: (sids: number[], time?: number, before?: boolean) => void;
         markAllRead: (sids?: number[], date?: Date, before?: boolean) => void;
+        freeMemory: (iids: Set<number>) => void;
     }
 }
 
@@ -348,6 +349,17 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             } else {
                 get().actions.markAllReadDone(sids);
             }
+        },
+        freeMemory: (iids: Set<number>) => {
+            set(state => {
+                const nextState: ItemState = {};
+                for (let item of Object.values(state.items)) {
+                    if (iids.has(item._id)) {
+                        nextState[item._id] = item;
+                    }
+                }
+                return { items: nextState };
+            })
         },
     }
 }), { name: "item" }))

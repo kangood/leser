@@ -33,7 +33,7 @@ export const renderShareQR = (item: IContextualMenuItem) => (
 
 type ContextMenuProps = {
     type: ContextMenuType;
-    event?: MouseEvent | string;
+    event?: MouseEvent;
     position?: [number, number];
     item?: RSSItem;
     feedId?: string;
@@ -53,7 +53,7 @@ const getAppContextMenuSelector:
         case ContextMenuType.Item:
             return {
                 type: context.type,
-                event: context.event,
+                event: context.event as MouseEvent,
                 viewConfigs: viewConfigs,
                 item: context.target[0] as RSSItem,
                 feedId: context.target[1] as string,
@@ -68,14 +68,14 @@ const getAppContextMenuSelector:
         case ContextMenuType.View:
             return {
                 type: context.type,
-                event: context.event,
+                event: context.event as MouseEvent,
                 viewType: viewType,
                 filter: filter.type,
             }
         case ContextMenuType.Group:
             return {
                 type: context.type,
-                event: context.event,
+                event: context.event as MouseEvent,
                 sids: context.target as number[],
             }
         case ContextMenuType.Image:
@@ -86,7 +86,7 @@ const getAppContextMenuSelector:
         case ContextMenuType.MarkRead:
             return {
                 type: context.type,
-                event: context.event,
+                event: context.event as MouseEvent,
             }
         default:
             return {

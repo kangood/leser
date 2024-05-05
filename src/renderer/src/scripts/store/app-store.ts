@@ -8,13 +8,12 @@ import { ItemInTypes, useItemActions } from './item-store';
 import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
-import { initTouchBarWithTexts, validateFavicon } from '../utils';
+import { getWindowBreakpoint, initTouchBarWithTexts, validateFavicon } from '../utils';
 import { useSourceActions, useSources } from './source-store';
-import { useFeedActions } from './feed-store';
+import { useFeedActions, useFeeds } from './feed-store';
 import { devtools } from 'zustand/middleware';
-import { ALL, FeedFilter, FilterType } from '../models/feed';
+import { ALL } from '../models/feed';
 import { produce } from 'immer';
-import { ViewConfigs, ViewType } from '@renderer/schema-types';
 
 type AppStore = {
     app: AppState;
@@ -24,7 +23,7 @@ type AppStore = {
         fetchItemsRequest: (itemInTypes: ItemInTypes) => void;
         fetchItemsFailure: (itemInTypes: ItemInTypes) => void;
         fetchItemsIntermediate: () => void;
-        fetchItemsSuccess:(itemInTypes: ItemInTypes) => void;
+        fetchItemsSuccess: (itemInTypes: ItemInTypes) => void;
         selectAllArticles: (pageInTypes: PageInTypes) => void;
         initIntlDone: (locale: string) => void;
         initIntl: () => Promise<void>;
@@ -47,12 +46,16 @@ type AppStore = {
         syncWithServiceFailure: (err: Error) => void;
         openImageMenu: (position: [number, number]) => void;
         closeContextMenu: () => void;
+        freeMemory: () => void;
+        exitSettings: () => Promise<void>;
+        selectSources: (menuKey: string, title: string) => void;
+        openGroupMenu: (sids: number[], event: React.MouseEvent) => void;
     }
 }
 
 let fetchTimeout: NodeJS.Timeout;
 
-const useAppStore = create<AppStore>()(devtools((set, get) => ({
+export const useAppStore = create<AppStore>()(devtools((set, get) => ({
     app: new AppState(),
     actions: {
         initSourcesSuccess: () => {
@@ -381,6 +384,50 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 }))
             }
         },
+        freeMemory: () => {
+            const iids = new Set<number>();
+            for (let feed of Object.values(useFeeds().feeds)) {
+                if (feed.loaded) {
+                    feed.iids.forEach(iids.add, iids);
+                }
+            }
+            useItemActions().freeMemory(iids);
+        },
+        exitSettings: async () => {
+            if (!get().app.settings.saving) {
+                if (get().app.settings.changed) {
+                    get().actions.saveSettings();
+                    usePageActions().selectAllArticles(true);
+                    await useFeedActions().initFeeds(true);
+                    get().actions.toggleSettings(false);
+                    get().actions.freeMemory();
+                } else {
+                    get().actions.toggleSettings(false);
+                }
+            }
+        },
+        selectSources: (menuKey: string, title: string) => {
+            set(state => ({
+                app: {
+                    ...state.app,
+                    menu: state.app.menu && getWindowBreakpoint(),
+                    menuKey: menuKey,
+                    title: title,
+                }
+            }));
+        },
+        openGroupMenu: (sids, event) => {
+            set(state => ({
+                app: {
+                    ...state.app,
+                    contextMenu: {
+                        type: ContextMenuType.Group,
+                        event: event,
+                        target: sids,
+                    },
+                }
+            }));
+        }
     }
 }), { name: "app" }))
 
@@ -391,5 +438,12 @@ export const useAppSettingsDisplay = () => useAppStore(state => state.app.settin
 export const useAppContextMenu = () => useAppStore(state => state.app.contextMenu);
 export const useAppContextMenuOn = () => useAppStore(state => state.app.contextMenu.type != ContextMenuType.Hidden);
 export const useAppLogMenu = () => useAppStore(state => state.app.logMenu);
+export const useAppSettingsSaving = () => useAppStore(state => state.app.settings.saving);
+export const useAppSettingsBlocked = () => useAppStore(state => 
+    !state.app.sourceInit ||
+    state.app.syncing ||
+    state.app.fetchingItems ||
+    state.app.settings.saving
+);
 
 export const useAppActions = () => useAppStore(state => state.actions);

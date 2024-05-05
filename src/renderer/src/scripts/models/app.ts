@@ -100,7 +100,7 @@ export class AppState {
 
     contextMenu: {
         type: ContextMenuType
-        event?: MouseEvent | string
+        event?: MouseEvent | string | React.MouseEvent
         position?: [number, number]
         target?: [RSSItem, string] | number[] | [string, string]
     }

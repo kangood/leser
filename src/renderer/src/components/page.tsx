@@ -1,8 +1,7 @@
-import * as React from "react"
+import React, { useEffect } from "react"
 import { Icon, FocusTrapZone } from "@fluentui/react"
-import { ViewType } from "../schema-types"
+import { ViewType, WindowStateListenerType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
-import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
 import { SideTopRight } from "./side-top-right"
 import { ContentFilter } from "./utils/content-filter"
 import { FeedTop } from "./feeds/feed-top"
@@ -10,6 +9,7 @@ import { Feed } from "./feeds/feed"
 import { usePageActions, usePageCurrentItem, usePageFeeds, usePageFilter, usePageItemFromFeed, usePageViewType } from "@renderer/scripts/store/page-store"
 import { useApp, useAppActions, useAppContextMenuOn, useAppSettingsDisplay } from "@renderer/scripts/store/app-store"
 import Article from "./article"
+import { useMenuActions, useMenuDisplay } from "@renderer/scripts/store/menu-store"
 
 const Page: React.FC = () => {
     // zustand store
@@ -23,8 +23,8 @@ const Page: React.FC = () => {
     const appContextMenuOn = useAppContextMenuOn();
     const { openViewMenu, openMarkAllMenu, toggleLogMenu, toggleSettings } = useAppActions();
     const viewType = usePageViewType();
-    const toggleMenuDisplay = useToggleMenuStore(state => state.display);
-    const toggleMenu = useToggleMenuStore(state => state.toggleMenu);
+    const menuDisplay = useMenuDisplay();
+    const { toggleMenu } = useMenuActions();
 
     const [maximized, setMaximized] = React.useState<boolean>(window.utils.isMaximized());
     
@@ -54,6 +54,18 @@ const Page: React.FC = () => {
         window.utils.closeWindow()
     }
 
+    useEffect(() => {
+        window.utils.addWindowStateListener(windowStateListener);
+    }, [])
+
+    const windowStateListener = (type: WindowStateListenerType, state: boolean) => {
+        switch (type) {
+            case WindowStateListenerType.Maximized:
+                setMaximized(state)
+                break
+        }
+    }
+
     return (
         viewType !== ViewType.List ? (
             // 视图类型!=列表时的内容模块
@@ -62,7 +74,7 @@ const Page: React.FC = () => {
                     <div
                         key="card"
                         className={
-                            "main" + (toggleMenuDisplay ? " menu-on" : "")
+                            "main" + (menuDisplay ? " menu-on" : "")
                         }>
                         <ArticleSearch />
                         <div className="wide-side-wrapper dragging">
@@ -126,7 +138,7 @@ const Page: React.FC = () => {
                     <div
                         key="list"
                         className={
-                            "list-main" + (toggleMenuDisplay ? " menu-on" : "")
+                            "list-main" + (menuDisplay ? " menu-on" : "")
                         }>
                         <ArticleSearch />
                         <div className="list-feed-container">

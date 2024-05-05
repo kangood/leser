@@ -6,7 +6,7 @@ import {
     closeContextMenu,
     toggleSettings,
 } from "../scripts/models/app"
-import { ContextMenu } from "../components/context-menu"
+import ContextMenu from "../components/context-menu"
 import {
     RSSItem,
     markRead,

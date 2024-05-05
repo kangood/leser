@@ -28,14 +28,15 @@ function getLogIcon(log: AppLog) {
     }
 }
 
-class LogMenu extends React.Component<LogMenuProps> {
-    activityItems = () =>
-        this.props.logs
+const LogMenu: React.FC<LogMenuProps> = (props) => {
+
+    const activityItems = () => {
+        return props.logs
             .map((l, i) => ({
                 key: i,
                 activityDescription: l.iid ? (
                     <b>
-                        <Link onClick={() => this.handleArticleClick(l)}>
+                        <Link onClick={() => handleArticleClick(l)}>
                             {l.title}
                         </Link>
                     </b>
@@ -46,40 +47,38 @@ class LogMenu extends React.Component<LogMenuProps> {
                 activityIcon: <Icon iconName={getLogIcon(l)} />,
                 timeStamp: <Time date={l.time} />,
             }))
-            .reverse()
-
-    handleArticleClick = (log: AppLog) => {
-        this.props.close()
-        this.props.showItem(log.iid)
+            .reverse();
+    }
+    const handleArticleClick = (log: AppLog) => {
+        props.close()
+        props.showItem(log.iid)
     }
 
-    render() {
-        return (
-            this.props.display && (
-                <Callout
-                    target="#log-toggle"
-                    role="log-menu"
-                    directionalHint={DirectionalHint.bottomCenter}
-                    calloutWidth={320}
-                    calloutMaxHeight={240}
-                    onDismiss={this.props.close}>
-                    {this.props.logs.length == 0 ? (
-                        <p style={{ textAlign: "center" }}>
-                            {intl.get("log.empty")}
-                        </p>
-                    ) : (
-                        this.activityItems().map(item => (
-                            <ActivityItem
-                                {...item}
-                                key={item.key}
-                                style={{ margin: 12 }}
-                            />
-                        ))
-                    )}
-                </Callout>
-            )
+    return (
+        props.display && (
+            <Callout
+                target="#log-toggle"
+                role="log-menu"
+                directionalHint={DirectionalHint.bottomCenter}
+                calloutWidth={320}
+                calloutMaxHeight={240}
+                onDismiss={props.close}>
+                {props.logs.length == 0 ? (
+                    <p style={{ textAlign: "center" }}>
+                        {intl.get("log.empty")}
+                    </p>
+                ) : (
+                    activityItems().map(item => (
+                        <ActivityItem
+                            {...item}
+                            key={item.key}
+                            style={{ margin: 12 }}
+                        />
+                    ))
+                )}
+            </Callout>
         )
-    }
+    )
 }
 
 export default LogMenu

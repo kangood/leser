@@ -68,7 +68,7 @@ const getSearchItem = (text: string): IContextualMenuItem => {
     };
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = (props) => {
+const ContextMenu: React.FC<ContextMenuProps> = (props) => {
     const { toggleFilter, checkedFilter } = usePageActions();
 
     const getItems = (): IContextualMenuItem[] => {
@@ -502,3 +502,4 @@ export const ContextMenu: React.FC<ContextMenuProps> = (props) => {
     );
 };
 
+export default ContextMenu;

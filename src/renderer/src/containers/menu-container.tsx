@@ -1,7 +1,7 @@
 import { connect } from "react-redux"
 import { createSelector } from "reselect"
 import { RootState } from "../scripts/reducer"
-import { Menu } from "../components/menu"
+import Menu from "../components/menu"
 import { openGroupMenu } from "../scripts/models/app"
 import { toggleGroupExpansion } from "../scripts/models/group"
 import { SourceGroup } from "../schema-types"

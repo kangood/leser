@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useEffect } from "react"
 import intl from "react-intl-universal"
 import { Icon } from "@fluentui/react/lib/Icon"
 import { AnimationClassNames } from "@fluentui/react/lib/Styling"
@@ -18,30 +18,34 @@ type SettingsProps = {
     close: () => void
 }
 
-class Settings extends React.Component<SettingsProps> {
-    constructor(props) {
-        super(props)
-    }
+const Settings: React.FC<SettingsProps> = (props) => {
 
-    onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && !this.props.exitting) this.props.close()
-    }
+    const prevProps = React.useRef<SettingsProps>(props);
 
-    componentDidUpdate = (prevProps: SettingsProps) => {
-        if (this.props.display !== prevProps.display) {
-            if (this.props.display) {
-                if (window.utils.platform === "darwin")
-                    window.utils.destroyTouchBar()
-                document.body.addEventListener("keydown", this.onKeyDown)
+    useEffect(() => {
+        if (props.display !== prevProps.current.display) {
+            if (props.display) {
+                if (window.utils.platform === "darwin") {
+                    window.utils.destroyTouchBar();
+                }
+                document.body.addEventListener("keydown", onKeyDown);
             } else {
-                if (window.utils.platform === "darwin") initTouchBarWithTexts()
-                document.body.removeEventListener("keydown", this.onKeyDown)
+                if (window.utils.platform === "darwin") {
+                    initTouchBarWithTexts();
+                }
+                document.body.removeEventListener("keydown", onKeyDown);
             }
+        }
+    }, [props.display]);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && !props.exitting) {
+            props.close();
         }
     }
 
-    render = () =>
-        this.props.display && (
+    return (
+        props.display && (
             <div className="settings-container">
                 <div
                     className="btn-group"
@@ -52,15 +56,15 @@ class Settings extends React.Component<SettingsProps> {
                     }}>
                     <a
                         className={
-                            "btn" + (this.props.exitting ? " disabled" : "")
+                            "btn" + (props.exitting ? " disabled" : "")
                         }
                         title={intl.get("settings.exit")}
-                        onClick={this.props.close}>
+                        onClick={props.close}>
                         <Icon iconName="Back" />
                     </a>
                 </div>
                 <div className={"settings " + AnimationClassNames.slideUpIn20}>
-                    {this.props.blocked && (
+                    {props.blocked && (
                         <FocusTrapZone
                             isClickableOutsideFocusTrap={true}
                             className="loading">
@@ -105,6 +109,7 @@ class Settings extends React.Component<SettingsProps> {
                 </div>
             </div>
         )
+    )
 }
 
-export default Settings
+export default Settings;

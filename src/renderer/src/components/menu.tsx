@@ -31,7 +31,7 @@ type MenuProps = {
     fetch: () => void
 }
 
-export const Menu: React.FC<MenuProps> = ({
+const Menu: React.FC<MenuProps> = ({
     state,
     status,
     display,
@@ -276,3 +276,5 @@ export const Menu: React.FC<MenuProps> = ({
         )
     )
 }
+
+export default Menu;

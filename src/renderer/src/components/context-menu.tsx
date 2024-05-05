@@ -13,37 +13,13 @@ import {
     ContextualMenuItemType,
     DirectionalHint,
 } from "@fluentui/react";
-import { ContextMenuType } from "../scripts/models/app";
+import { AppState, ContextMenuType } from "../scripts/models/app";
 import { RSSItem } from "../scripts/models/item";
-import { ContextReduxProps } from "../containers/context-menu-container";
 import { ViewType, ImageCallbackTypes, ViewConfigs } from "../schema-types";
-import { FilterType } from "../scripts/models/feed";
-import { usePageActions } from "@renderer/scripts/store/page-store";
-
-export type ContextMenuProps = ContextReduxProps & {
-    type: ContextMenuType;
-    event?: MouseEvent | string;
-    position?: [number, number];
-    item?: RSSItem;
-    feedId?: string;
-    text?: string;
-    url?: string;
-    viewType?: ViewType;
-    viewConfigs?: ViewConfigs;
-    filter?: FilterType;
-    sids?: number[];
-    showItem: (feedId: string, item: RSSItem) => void;
-    markRead: (item: RSSItem) => void;
-    markUnread: (item: RSSItem) => void;
-    toggleStarred: (item: RSSItem) => void;
-    toggleHidden: (item: RSSItem) => void;
-    switchView: (viewType: ViewType) => void;
-    setViewConfigs: (configs: ViewConfigs) => void;
-    markAllRead: (sids?: number[], date?: Date, before?: boolean) => void;
-    fetchItems: (sids: number[]) => void;
-    settings: (sids: number[]) => void;
-    close: () => void;
-};
+import { FeedFilter, FilterType } from "../scripts/models/feed";
+import { usePageActions, usePageFilter, usePageViewConfigs, usePageViewType } from "@renderer/scripts/store/page-store";
+import { useAppActions, useAppContextMenu } from "@renderer/scripts/store/app-store";
+import { useItemActions } from "@renderer/scripts/store/item-store";
 
 export const shareSubmenu = (item: RSSItem): IContextualMenuItem[] => [
     { key: "qr", url: item.link, onRender: renderShareQR },
@@ -55,24 +31,97 @@ export const renderShareQR = (item: IContextualMenuItem) => (
     </div>
 );
 
-const getSearchItem = (text: string): IContextualMenuItem => {
-    const engine = window.settings.getSearchEngine();
-    return {
-        key: "searchText",
-        text: intl.get("context.search", {
-            text: cutText(text, 15),
-            engine: getSearchEngineName(engine),
-        }),
-        iconProps: { iconName: "Search" },
-        onClick: () => webSearch(text, engine),
-    };
+type ContextMenuProps = {
+    type: ContextMenuType;
+    event?: MouseEvent | string;
+    position?: [number, number];
+    item?: RSSItem;
+    feedId?: string;
+    text?: string;
+    url?: string;
+    viewType?: ViewType;
+    viewConfigs?: ViewConfigs;
+    filter?: FilterType;
+    sids?: number[];
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = (props) => {
-    const { toggleFilter, checkedFilter } = usePageActions();
+const getAppContextMenuSelector: 
+    (context: AppState["contextMenu"], viewType: ViewType, filter: FeedFilter, viewConfigs: ViewConfigs) => ContextMenuProps = 
+    (context, viewType, filter, viewConfigs) => {
+
+    switch (context.type) {
+        case ContextMenuType.Item:
+            return {
+                type: context.type,
+                event: context.event,
+                viewConfigs: viewConfigs,
+                item: context.target[0] as RSSItem,
+                feedId: context.target[1] as string,
+            }
+        case ContextMenuType.Text:
+            return {
+                type: context.type,
+                position: context.position,
+                text: context.target[0] as string,
+                url: context.target[1] as string,
+            }
+        case ContextMenuType.View:
+            return {
+                type: context.type,
+                event: context.event,
+                viewType: viewType,
+                filter: filter.type,
+            }
+        case ContextMenuType.Group:
+            return {
+                type: context.type,
+                event: context.event,
+                sids: context.target as number[],
+            }
+        case ContextMenuType.Image:
+            return {
+                type: context.type,
+                position: context.position,
+            }
+        case ContextMenuType.MarkRead:
+            return {
+                type: context.type,
+                event: context.event,
+            }
+        default:
+            return {
+                type: ContextMenuType.Hidden
+            }
+    }
+}
+
+const ContextMenu: React.FC = () => {
+    // zustand store
+    const { toggleSettings, closeContextMenu } = useAppActions();
+    const { toggleFilter, checkedFilter, showItem, setViewConfigs, switchView } = usePageActions();
+    const { markRead, markUnread, markAllRead, toggleStarred, contextMenuToggleHidden, fetchItems } = useItemActions();
+    const appContextMenuSelector = getAppContextMenuSelector(
+        useAppContextMenu(),
+        usePageViewType(),
+        usePageFilter(),
+        usePageViewConfigs()
+    )
+
+    const getSearchItem = (text: string): IContextualMenuItem => {
+        const engine = window.settings.getSearchEngine();
+        return {
+            key: "searchText",
+            text: intl.get("context.search", {
+                text: cutText(text, 15),
+                engine: getSearchEngineName(engine),
+            }),
+            iconProps: { iconName: "Search" },
+            onClick: () => webSearch(text, engine),
+        };
+    }
 
     const getItems = (): IContextualMenuItem[] => {
-        switch (props.type) {
+        switch (appContextMenuSelector.type) {
             case ContextMenuType.Item:
                 return [
                     {
@@ -80,8 +129,8 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                         text: intl.get("context.read"),
                         iconProps: { iconName: "TextDocument" },
                         onClick: () => {
-                            props.markRead(props.item);
-                            props.showItem(props.feedId, props.item);
+                            markRead(appContextMenuSelector.item);
+                            showItem(appContextMenuSelector.feedId, appContextMenuSelector.item);
                         },
                     },
                     {
@@ -89,24 +138,27 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                         text: intl.get("openExternal"),
                         iconProps: { iconName: "NavigateExternalInline" },
                         onClick: (e) => {
-                            props.markRead(props.item);
-                            window.utils.openExternal(props.item.link, platformCtrl(e));
+                            markRead(appContextMenuSelector.item);
+                            window.utils.openExternal(appContextMenuSelector.item.link, platformCtrl(e));
                         },
                     },
                     {
                         key: "markAsRead",
-                        text: props.item.hasRead
+                        text: appContextMenuSelector.item.hasRead
                             ? intl.get("article.markUnread")
                             : intl.get("article.markRead"),
-                        iconProps: props.item.hasRead
+                        iconProps: appContextMenuSelector.item.hasRead
                             ? {
                                     iconName: "RadioBtnOn",
                                     style: { fontSize: 14, textAlign: "center" },
                                 }
                             : { iconName: "StatusCircleRing" },
                         onClick: () => {
-                            if (props.item.hasRead) { props.markUnread(props.item) }
-                            else { props.markRead(props.item)};
+                            if (appContextMenuSelector.item.hasRead) {
+                                markUnread(appContextMenuSelector.item);
+                            } else {
+                                markRead(appContextMenuSelector.item);
+                            }
                         },
                         split: true,
                         subMenuProps: {
@@ -119,7 +171,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                         style: { fontSize: 14 },
                                     },
                                     onClick: () =>
-                                        props.markAllRead(null, props.item.date),
+                                        markAllRead(null, appContextMenuSelector.item.date),
                                 },
                                 {
                                     key: "markAbove",
@@ -129,35 +181,35 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                         style: { fontSize: 14 },
                                     },
                                     onClick: () =>
-                                        props.markAllRead(null, props.item.date, false),
+                                        markAllRead(null, appContextMenuSelector.item.date, false),
                                 },
                             ],
                         },
                     },
                     {
                         key: "toggleStarred",
-                        text: props.item.starred
+                        text: appContextMenuSelector.item.starred
                             ? intl.get("article.unstar")
                             : intl.get("article.star"),
                         iconProps: {
-                            iconName: props.item.starred
+                            iconName: appContextMenuSelector.item.starred
                                 ? "FavoriteStar"
                                 : "FavoriteStarFill",
                         },
                         onClick: () => {
-                            props.toggleStarred(props.item);
+                            toggleStarred(appContextMenuSelector.item);
                         },
                     },
                     {
                         key: "toggleHidden",
-                        text: props.item.hidden
+                        text: appContextMenuSelector.item.hidden
                             ? intl.get("article.unhide")
                             : intl.get("article.hide"),
                         iconProps: {
-                            iconName: props.item.hidden ? "View" : "Hide3",
+                            iconName: appContextMenuSelector.item.hidden ? "View" : "Hide3",
                         },
                         onClick: () => {
-                            props.toggleHidden(props.item);
+                            contextMenuToggleHidden(appContextMenuSelector.item);
                         },
                     },
                     {
@@ -169,24 +221,24 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                         text: intl.get("context.share"),
                         iconProps: { iconName: "Share" },
                         subMenuProps: {
-                            items: shareSubmenu(props.item),
+                            items: shareSubmenu(appContextMenuSelector.item),
                         },
                     },
                     {
                         key: "copyTitle",
                         text: intl.get("context.copyTitle"),
                         onClick: () => {
-                            window.utils.writeClipboard(props.item.title);
+                            window.utils.writeClipboard(appContextMenuSelector.item.title);
                         },
                     },
                     {
                         key: "copyURL",
                         text: intl.get("context.copyURL"),
                         onClick: () => {
-                            window.utils.writeClipboard(props.item.link);
+                            window.utils.writeClipboard(appContextMenuSelector.item.link);
                         },
                     },
-                    ...(props.viewConfigs !== undefined
+                    ...(appContextMenuSelector.viewConfigs !== undefined
                         ? [
                                 {
                                     key: "divider_2",
@@ -202,11 +254,11 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                                 text: intl.get("context.showCover"),
                                                 canCheck: true,
                                                 checked: Boolean(
-                                                    props.viewConfigs & ViewConfigs.ShowCover
+                                                    appContextMenuSelector.viewConfigs & ViewConfigs.ShowCover
                                                 ),
                                                 onClick: () =>
-                                                    props.setViewConfigs(
-                                                        props.viewConfigs ^ ViewConfigs.ShowCover
+                                                    setViewConfigs(
+                                                        appContextMenuSelector.viewConfigs ^ ViewConfigs.ShowCover
                                                     ),
                                             },
                                             {
@@ -214,11 +266,11 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                                 text: intl.get("context.showSnippet"),
                                                 canCheck: true,
                                                 checked: Boolean(
-                                                    props.viewConfigs & ViewConfigs.ShowSnippet
+                                                    appContextMenuSelector.viewConfigs & ViewConfigs.ShowSnippet
                                                 ),
                                                 onClick: () =>
-                                                    props.setViewConfigs(
-                                                        props.viewConfigs ^ ViewConfigs.ShowSnippet
+                                                    setViewConfigs(
+                                                        appContextMenuSelector.viewConfigs ^ ViewConfigs.ShowSnippet
                                                     ),
                                             },
                                             {
@@ -226,11 +278,11 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                                 text: intl.get("context.fadeRead"),
                                                 canCheck: true,
                                                 checked: Boolean(
-                                                    props.viewConfigs & ViewConfigs.FadeRead
+                                                    appContextMenuSelector.viewConfigs & ViewConfigs.FadeRead
                                                 ),
                                                 onClick: () =>
-                                                    props.setViewConfigs(
-                                                        props.viewConfigs ^ ViewConfigs.FadeRead
+                                                    setViewConfigs(
+                                                        appContextMenuSelector.viewConfigs ^ ViewConfigs.FadeRead
                                                     ),
                                             },
                                         ],
@@ -240,20 +292,20 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                         : []),
                 ];
             case ContextMenuType.Text: {
-                const items: IContextualMenuItem[] = props.text
+                const items: IContextualMenuItem[] = appContextMenuSelector.text
                     ? [
                             {
                                 key: "copyText",
                                 text: intl.get("context.copy"),
                                 iconProps: { iconName: "Copy" },
                                 onClick: () => {
-                                    window.utils.writeClipboard(props.text);
+                                    window.utils.writeClipboard(appContextMenuSelector.text);
                                 },
                             },
-                            getSearchItem(props.text),
+                            getSearchItem(appContextMenuSelector.text),
                         ]
                     : [];
-                if (props.url) {
+                if (appContextMenuSelector.url) {
                     items.push({
                         key: "urlSection",
                         itemType: ContextualMenuItemType.Section,
@@ -268,7 +320,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     },
                                     onClick: (e) => {
                                         window.utils.openExternal(
-                                            props.url,
+                                            appContextMenuSelector.url,
                                             platformCtrl(e)
                                         );
                                     },
@@ -278,7 +330,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     text: intl.get("context.copyURL"),
                                     iconProps: { iconName: "Link" },
                                     onClick: () => {
-                                        window.utils.writeClipboard(props.url);
+                                        window.utils.writeClipboard(appContextMenuSelector.url);
                                     },
                                 },
                             ],
@@ -344,32 +396,32 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     text: intl.get("context.cardView"),
                                     iconProps: { iconName: "GridViewMedium" },
                                     canCheck: true,
-                                    checked: props.viewType === ViewType.Cards,
-                                    onClick: () => props.switchView(ViewType.Cards),
+                                    checked: appContextMenuSelector.viewType === ViewType.Cards,
+                                    onClick: () => switchView(ViewType.Cards),
                                 },
                                 {
                                     key: "listView",
                                     text: intl.get("context.listView"),
                                     iconProps: { iconName: "BacklogList" },
                                     canCheck: true,
-                                    checked: props.viewType === ViewType.List,
-                                    onClick: () => props.switchView(ViewType.List),
+                                    checked: appContextMenuSelector.viewType === ViewType.List,
+                                    onClick: () => switchView(ViewType.List),
                                 },
                                 {
                                     key: "magazineView",
                                     text: intl.get("context.magazineView"),
                                     iconProps: { iconName: "Articles" },
                                     canCheck: true,
-                                    checked: props.viewType === ViewType.Magazine,
-                                    onClick: () => props.switchView(ViewType.Magazine),
+                                    checked: appContextMenuSelector.viewType === ViewType.Magazine,
+                                    onClick: () => switchView(ViewType.Magazine),
                                 },
                                 {
                                     key: "compactView",
                                     text: intl.get("context.compactView"),
                                     iconProps: { iconName: "BulletedList" },
                                     canCheck: true,
-                                    checked: props.viewType === ViewType.Compact,
-                                    onClick: () => props.switchView(ViewType.Compact),
+                                    checked: appContextMenuSelector.viewType === ViewType.Compact,
+                                    onClick: () => switchView(ViewType.Compact),
                                 },
                             ],
                         },
@@ -421,19 +473,19 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                         key: "markAllRead",
                         text: intl.get("nav.markAllRead"),
                         iconProps: { iconName: "CheckMark" },
-                        onClick: () => props.markAllRead(props.sids),
+                        onClick: () => markAllRead(appContextMenuSelector.sids),
                     },
                     {
                         key: "refresh",
                         text: intl.get("nav.refresh"),
                         iconProps: { iconName: "Sync" },
-                        onClick: () => props.fetchItems(props.sids),
+                        onClick: () => fetchItems(false, appContextMenuSelector.sids),
                     },
                     {
                         key: "manage",
                         text: intl.get("context.manageSources"),
                         iconProps: { iconName: "Settings" },
-                        onClick: () => props.settings(props.sids),
+                        onClick: () => toggleSettings(true, appContextMenuSelector.sids),
                     },
                 ];
             case ContextMenuType.MarkRead:
@@ -448,7 +500,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     key: "all",
                                     text: intl.get("allArticles"),
                                     iconProps: { iconName: "ReceiptCheck" },
-                                    onClick: () => props.markAllRead(),
+                                    onClick: () => markAllRead(),
                                 },
                                 {
                                     key: "1d",
@@ -456,7 +508,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     onClick: () => {
                                         let date = new Date();
                                         date.setTime(date.getTime() - 86400000);
-                                        props.markAllRead(null, date);
+                                        markAllRead(null, date);
                                     },
                                 },
                                 {
@@ -465,7 +517,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     onClick: () => {
                                         let date = new Date();
                                         date.setTime(date.getTime() - 3 * 86400000);
-                                        props.markAllRead(null, date);
+                                        markAllRead(null, date);
                                     },
                                 },
                                 {
@@ -474,7 +526,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
                                     onClick: () => {
                                         let date = new Date();
                                         date.setTime(date.getTime() - 7 * 86400000);
-                                        props.markAllRead(null, date);
+                                        markAllRead(null, date);
                                     },
                                 },
                             ],
@@ -486,18 +538,18 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
         }
     };
 
-    return props.type == ContextMenuType.Hidden ? null : (
+    return appContextMenuSelector.type == ContextMenuType.Hidden ? null : (
         <ContextualMenu
             directionalHint={DirectionalHint.bottomLeftEdge}
             items={getItems()}
             target={
-                props.event ||
-                (props.position && {
-                    left: props.position[0],
-                    top: props.position[1],
+                appContextMenuSelector.event ||
+                (appContextMenuSelector.position && {
+                    left: appContextMenuSelector.position[0],
+                    top: appContextMenuSelector.position[1],
                 })
             }
-            onDismiss={props.close}
+            onDismiss={closeContextMenu}
         />
     );
 };

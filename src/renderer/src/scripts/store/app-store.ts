@@ -12,8 +12,9 @@ import { initTouchBarWithTexts, validateFavicon } from '../utils';
 import { useSourceActions, useSources } from './source-store';
 import { useFeedActions } from './feed-store';
 import { devtools } from 'zustand/middleware';
-import { ALL } from '../models/feed';
+import { ALL, FeedFilter, FilterType } from '../models/feed';
 import { produce } from 'immer';
+import { ViewConfigs, ViewType } from '@renderer/schema-types';
 
 type AppStore = {
     app: AppState;
@@ -43,7 +44,9 @@ type AppStore = {
         deleteSourceGroup: () => void;
         syncWithServiceRequest: () => void;
         syncWithServiceSuccess: () => void;
-        syncWithServiceFailure: (err: Error) => void; 
+        syncWithServiceFailure: (err: Error) => void;
+        openImageMenu: (position: [number, number]) => void;
+        closeContextMenu: () => void;
     }
 }
 
@@ -355,12 +358,38 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 ];
             }));
         },
+        openImageMenu: (position: [number, number]) => {
+            set(state => ({
+                app: {
+                    ...state.app,
+                    contextMenu: {
+                        type: ContextMenuType.Image,
+                        position: position
+                    }
+                }
+            }))
+        },
+        closeContextMenu: () => {
+            if (get().app.contextMenu.type !== ContextMenuType.Hidden) {
+                set(state => ({
+                    app: {
+                        ...state.app,
+                        contextMenu: {
+                            type: ContextMenuType.Hidden,
+                        },
+                    }
+                }))
+            }
+        },
     }
 }), { name: "app" }))
 
 export const useApp = () => useAppStore(state => state.app);
+export const useAppLocale = () => useAppStore(state => state.app.locale);
 export const useAppSettingsSids = () => useAppStore(state => state.app.settings.sids);
 export const useAppSettingsDisplay = () => useAppStore(state => state.app.settings.display);
+export const useAppContextMenu = () => useAppStore(state => state.app.contextMenu);
 export const useAppContextMenuOn = () => useAppStore(state => state.app.contextMenu.type != ContextMenuType.Hidden);
+export const useAppLogMenu = () => useAppStore(state => state.app.logMenu);
 
 export const useAppActions = () => useAppStore(state => state.actions);

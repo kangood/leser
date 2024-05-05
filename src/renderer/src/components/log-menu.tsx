@@ -1,4 +1,4 @@
-import * as React from "react"
+import React from "react"
 import intl from "react-intl-universal"
 import {
     Callout,
@@ -9,29 +9,28 @@ import {
 } from "@fluentui/react"
 import { AppLog, AppLogType } from "../scripts/models/app"
 import Time from "./utils/time"
+import { useAppActions, useAppLogMenu } from "@renderer/scripts/store/app-store"
+import { usePageActions } from "@renderer/scripts/store/page-store"
 
-type LogMenuProps = {
-    display: boolean
-    logs: AppLog[]
-    close: () => void
-    showItem: (iid: number) => void
-}
+const LogMenu: React.FC = () => {
 
-function getLogIcon(log: AppLog) {
-    switch (log.type) {
-        case AppLogType.Info:
-            return "Info"
-        case AppLogType.Article:
-            return "KnowledgeArticle"
-        default:
-            return "Warning"
+    const appLogMenu = useAppLogMenu();
+    const { toggleLogMenu } = useAppActions();
+    const { showItemFromId } = usePageActions();
+
+    const getLogIcon = (log: AppLog) => {
+        switch (log.type) {
+            case AppLogType.Info:
+                return "Info"
+            case AppLogType.Article:
+                return "KnowledgeArticle"
+            default:
+                return "Warning"
+        }
     }
-}
-
-const LogMenu: React.FC<LogMenuProps> = (props) => {
 
     const activityItems = () => {
-        return props.logs
+        return appLogMenu.logs
             .map((l, i) => ({
                 key: i,
                 activityDescription: l.iid ? (
@@ -50,20 +49,20 @@ const LogMenu: React.FC<LogMenuProps> = (props) => {
             .reverse();
     }
     const handleArticleClick = (log: AppLog) => {
-        props.close()
-        props.showItem(log.iid)
+        toggleLogMenu();
+        showItemFromId(log.iid);
     }
 
     return (
-        props.display && (
+        appLogMenu.display && (
             <Callout
                 target="#log-toggle"
                 role="log-menu"
                 directionalHint={DirectionalHint.bottomCenter}
                 calloutWidth={320}
                 calloutMaxHeight={240}
-                onDismiss={props.close}>
-                {props.logs.length == 0 ? (
+                onDismiss={toggleLogMenu}>
+                {appLogMenu.logs.length == 0 ? (
                     <p style={{ textAlign: "center" }}>
                         {intl.get("log.empty")}
                     </p>

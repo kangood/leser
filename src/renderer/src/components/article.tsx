@@ -13,33 +13,17 @@ import {
     Link,
 } from "@fluentui/react"
 import {
-    RSSSource,
     SourceOpenTarget,
     SourceTextDirection,
 } from "../scripts/models/source"
 import { shareSubmenu } from "./context-menu"
 import { platformCtrl, decodeFetchResponse } from "../scripts/utils"
+import { useItemActions, useItems } from "@renderer/scripts/store/item-store"
+import { useSourceActions, useSources } from "@renderer/scripts/store/source-store"
+import { useAppActions, useAppLocale } from "@renderer/scripts/store/app-store"
+import { usePageActions } from "@renderer/scripts/store/page-store"
 
-const FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 17, 18, 19, 20]
-
-type ArticleProps = {
-    item: RSSItem
-    source: RSSSource
-    locale: string
-    shortcuts: (item: RSSItem, e: KeyboardEvent) => void
-    dismiss: () => void
-    offsetItem: (offset: number) => void
-    toggleHasRead: (item: RSSItem) => void
-    toggleStarred: (item: RSSItem) => void
-    toggleHidden: (item: RSSItem) => void
-    textMenu: (position: [number, number], text: string, url: string) => void
-    imageMenu: (position: [number, number]) => void
-    dismissContextMenu: () => void
-    updateSourceTextDirection: (
-        source: RSSSource,
-        direction: SourceTextDirection
-    ) => void
-}
+const FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 17, 18, 19, 20];
 
 type ArticleState = {
     fontFamily: string
@@ -52,16 +36,27 @@ type ArticleState = {
     errorDescription: string
 }
 
-const Article: React.FC<ArticleProps> = (props) => {
+type ArticleContainerProps = {
+    itemId: number
+}
 
-    let webview: Electron.WebviewTag;
-    const prevItemRef = React.useRef<RSSItem>(props.item);
+const Article: React.FC<ArticleContainerProps> = (props) => {
+    // zustand store
+    const items = useItems();
+    const item = items[props.itemId];
+    const source = useSources()[items[props.itemId].source];
+    const prevItemRef = React.useRef<RSSItem>(item);
+    const { updateSource } = useSourceActions();
+    const { dismissItem, showOffsetItem } = usePageActions();
+    const { articleToggleHidden, itemShortcuts, markRead, markUnread, toggleStarred } = useItemActions();
+    const locale = useAppLocale();
+    const { openTextMenu, openImageMenu, closeContextMenu } = useAppActions();
 
     const [state, setState] = useState<ArticleState>({
         fontFamily: window.settings.getFont(),
         fontSize: window.settings.getFontSize(),
-        loadWebpage: props.source.openTarget === SourceOpenTarget.Webpage,
-        loadFull: props.source.openTarget === SourceOpenTarget.FullContent,
+        loadWebpage: source.openTarget === SourceOpenTarget.Webpage,
+        loadFull: source.openTarget === SourceOpenTarget.FullContent,
         fullContent: "",
         loaded: false,
         error: false,
@@ -73,26 +68,27 @@ const Article: React.FC<ArticleProps> = (props) => {
         window.utils.addWebviewContextListener(contextMenuHandler);
         window.utils.addWebviewKeydownListener(keyDownHandler);
         window.utils.addWebviewErrorListener(webviewError);
-        if (props.source.openTarget === SourceOpenTarget.FullContent) {
+        if (source.openTarget === SourceOpenTarget.FullContent) {
             loadFull();
         }
     }, []);
 
     // 项目改变时加载
     useEffect(() => {
-        if (prevItemRef.current._id !== props.item._id) {
+        if (prevItemRef.current._id !== item._id) {
             setState(prevState => ({
                 ...prevState,
-                loadWebpage: props.source.openTarget === SourceOpenTarget.Webpage,
-                loadFull: props.source.openTarget === SourceOpenTarget.FullContent
+                loadWebpage: source.openTarget === SourceOpenTarget.Webpage,
+                loadFull: source.openTarget === SourceOpenTarget.FullContent
             }));
-            if (props.source.openTarget === SourceOpenTarget.FullContent) {
+            if (source.openTarget === SourceOpenTarget.FullContent) {
                 loadFull();
             }
         }
-        prevItemRef.current = props.item;
-    }, [props.item]);
+        prevItemRef.current = item;
+    }, [item]);
 
+    let webview: Electron.WebviewTag;
     useEffect(() => {
         // 加载
         const webviewIn = document.getElementById('article') as Electron.WebviewTag;
@@ -103,20 +99,24 @@ const Article: React.FC<ArticleProps> = (props) => {
                 setState(prevState => ({ ...prevState, loaded: false, error: false }));
                 webviewIn.addEventListener('did-stop-loading', webviewLoaded);
                 let card = document.querySelector(
-                    `#refocus div[data-iid="${props.item._id}"]`
+                    `#refocus div[data-iid="${item._id}"]`
                 ) as HTMLElement
-                // @ts-ignore
-                if (card) card.scrollIntoViewIfNeeded()
+                if (card) {
+                    // @ts-ignore
+                    card.scrollIntoViewIfNeeded()
+                }
             }
         }
         // 卸载
         return () => {
             let refocus = document.querySelector(
-                `#refocus div[data-iid="${props.item._id}"]`
+                `#refocus div[data-iid="${item._id}"]`
             ) as HTMLElement
-            if (refocus) refocus.focus()
+            if (refocus) {
+                refocus.focus();
+            }
         };
-    }, [props.item._id, state.loadWebpage, state.loadFull]);
+    }, [item._id, state.loadWebpage, state.loadFull]);
 
     const webviewLoaded = () => {
         setState(prevState => ({ ...prevState, loaded: true }));
@@ -129,16 +129,16 @@ const Article: React.FC<ArticleProps> = (props) => {
             setState(prevState => ({ ...prevState, loaded: false, error: false }));
             webview.reload();
         } else if (state.loadFull) {
-            loadFull()
+            loadFull();
         }
     }
 
     const setFontSize = (size: number) => {
-        window.settings.setFontSize(size)
+        window.settings.setFontSize(size);
         setState(prevState => ({ ...prevState, fontSize: size }));
     }
     const setFont = (font: string) => {
-        window.settings.setFont(font)
+        window.settings.setFont(font);
         setState(prevState => ({ ...prevState, fontFamily: font }));
     }
 
@@ -163,7 +163,7 @@ const Article: React.FC<ArticleProps> = (props) => {
     })
 
     const updateTextDirection = (direction: SourceTextDirection) => {
-        props.updateSourceTextDirection(props.source, direction)
+        updateSource({ ...source, textDir: direction });
     }
 
     const directionMenuProps = (): IContextualMenuProps => ({
@@ -173,28 +173,24 @@ const Article: React.FC<ArticleProps> = (props) => {
                 text: intl.get("article.LTR"),
                 iconProps: { iconName: "Forward" },
                 canCheck: true,
-                checked: props.source.textDir === SourceTextDirection.LTR,
-                onClick: () =>
-                    updateTextDirection(SourceTextDirection.LTR),
+                checked: source.textDir === SourceTextDirection.LTR,
+                onClick: () => updateTextDirection(SourceTextDirection.LTR),
             },
             {
                 key: "RTL",
                 text: intl.get("article.RTL"),
                 iconProps: { iconName: "Back" },
                 canCheck: true,
-                checked: props.source.textDir === SourceTextDirection.RTL,
-                onClick: () =>
-                    updateTextDirection(SourceTextDirection.RTL),
+                checked: source.textDir === SourceTextDirection.RTL,
+                onClick: () => updateTextDirection(SourceTextDirection.RTL),
             },
             {
                 key: "Vertical",
                 text: intl.get("article.Vertical"),
                 iconProps: { iconName: "Down" },
                 canCheck: true,
-                checked:
-                    props.source.textDir === SourceTextDirection.Vertical,
-                onClick: () =>
-                    updateTextDirection(SourceTextDirection.Vertical),
+                checked: source.textDir === SourceTextDirection.Vertical,
+                onClick: () => updateTextDirection(SourceTextDirection.Vertical),
             },
         ],
     })
@@ -207,7 +203,7 @@ const Article: React.FC<ArticleProps> = (props) => {
                 iconProps: { iconName: "NavigateExternalInline" },
                 onClick: e => {
                     window.utils.openExternal(
-                        props.item.link,
+                        item.link,
                         platformCtrl(e)
                     )
                 },
@@ -216,21 +212,17 @@ const Article: React.FC<ArticleProps> = (props) => {
                 key: "copyURL",
                 text: intl.get("context.copyURL"),
                 iconProps: { iconName: "Link" },
-                onClick: () => {
-                    window.utils.writeClipboard(props.item.link)
-                },
+                onClick: () => window.utils.writeClipboard(item.link)
             },
             {
                 key: "toggleHidden",
-                text: props.item.hidden
+                text: item.hidden
                     ? intl.get("article.unhide")
                     : intl.get("article.hide"),
                 iconProps: {
-                    iconName: props.item.hidden ? "View" : "Hide3",
+                    iconName: item.hidden ? "View" : "Hide3",
                 },
-                onClick: () => {
-                    props.toggleHidden(props.item)
-                },
+                onClick: () => articleToggleHidden(item)
             },
             {
                 key: "fontMenu",
@@ -257,16 +249,19 @@ const Article: React.FC<ArticleProps> = (props) => {
                 key: "divider_1",
                 itemType: ContextualMenuItemType.Divider,
             },
-            ...shareSubmenu(props.item),
+            ...shareSubmenu(item),
         ],
     })
 
     const contextMenuHandler = (pos: [number, number], text: string, url: string) => {
         if (pos) {
-            if (text || url) props.textMenu(pos, text, url)
-            else props.imageMenu(pos)
+            if (text || url) {
+                openTextMenu(pos, text, url);
+            } else {
+                openImageMenu(pos);
+            }
         } else {
-            props.dismissContextMenu()
+            closeContextMenu();
         }
     }
 
@@ -274,24 +269,26 @@ const Article: React.FC<ArticleProps> = (props) => {
         if (input.type === "keyDown") {
             switch (input.key) {
                 case "Escape":
-                    props.dismiss()
-                    break
+                    dismissItem();
+                    break;
                 case "ArrowLeft":
                 case "ArrowRight":
-                    props.offsetItem(input.key === "ArrowLeft" ? -1 : 1)
-                    break
+                    showOffsetItem(input.key === "ArrowLeft" ? -1 : 1);
+                    break;
                 case "l":
                 case "L":
-                    toggleWebpage()
-                    break
+                    toggleWebpage();
+                    break;
                 case "w":
                 case "W":
-                    toggleFull()
-                    break
+                    toggleFull();
+                    break;
                 case "H":
                 case "h":
-                    if (!input.meta) props.toggleHidden(props.item)
-                    break
+                    if (!input.meta) {
+                        articleToggleHidden(item);
+                    }
+                    break;
                 default:
                     const keyboardEvent = new KeyboardEvent("keydown", {
                         code: input.code,
@@ -302,10 +299,10 @@ const Article: React.FC<ArticleProps> = (props) => {
                         metaKey: input.meta,
                         repeat: input.isAutoRepeat,
                         bubbles: true,
-                    })
-                    props.shortcuts(props.item, keyboardEvent)
-                    document.dispatchEvent(keyboardEvent)
-                    break
+                    });
+                    itemShortcuts(item, keyboardEvent);
+                    document.dispatchEvent(keyboardEvent);
+                    break;
             }
         }
     }
@@ -314,8 +311,8 @@ const Article: React.FC<ArticleProps> = (props) => {
         if (state.loadWebpage) {
             setState(prevState => ({ ...prevState, loadWebpage: false }));
         } else if (
-            props.item.link.startsWith("https://") ||
-            props.item.link.startsWith("http://")
+            item.link.startsWith("https://") ||
+            item.link.startsWith("http://")
         ) {
             setState(prevState => ({ ...prevState, loadWebpage: true, loadFull: false }));
         }
@@ -325,8 +322,8 @@ const Article: React.FC<ArticleProps> = (props) => {
         if (state.loadFull) {
             setState(prevState => ({ ...prevState, loadFull: false }));
         } else if (
-            props.item.link.startsWith("https://") ||
-            props.item.link.startsWith("http://")
+            item.link.startsWith("https://") ||
+            item.link.startsWith("http://")
         ) {
             setState(prevState => ({ ...prevState, loadFull: true, loadWebpage: false }));
             loadFull()
@@ -334,18 +331,18 @@ const Article: React.FC<ArticleProps> = (props) => {
     }
     const loadFull = async () => {
         setState(prevState => ({ ...prevState, fullContent: "", loaded: false, error: false }));
-        const link = props.item.link;
+        const link = item.link;
         try {
             const result = await fetch(link);
             if (!result || !result.ok) {
                 throw new Error();
             }
             const html = await decodeFetchResponse(result, true);
-            if (link === props.item.link) {
+            if (link === item.link) {
                 setState(prevState => ({ ...prevState, fullContent: html }));
             }
         } catch {
-            if (link === props.item.link) {
+            if (link === item.link) {
                 setState(prevState => ({
                     ...prevState,
                     loaded: true,
@@ -360,16 +357,16 @@ const Article: React.FC<ArticleProps> = (props) => {
         const a = encodeURIComponent(
             state.loadFull
                 ? state.fullContent
-                : props.item.content
+                : item.content
         )
         const h = encodeURIComponent(
             renderToString(
                 <>
-                    <p className="title">{props.item.title}</p>
+                    <p className="title">{item.title}</p>
                     <p className="date">
-                        {props.item.date.toLocaleString(
-                            props.locale,
-                            { hour12: !props.locale.startsWith("zh") }
+                        {item.date.toLocaleString(
+                            locale,
+                            { hour12: !locale.startsWith("zh") }
                         )}
                     </p>
                     <article></article>
@@ -378,8 +375,8 @@ const Article: React.FC<ArticleProps> = (props) => {
         )
         return `article/article.html?a=${a}&h=${h}&f=${encodeURIComponent(
             state.fontFamily
-        )}&s=${state.fontSize}&d=${props.source.textDir}&u=${
-            props.item.link
+        )}&s=${state.fontSize}&d=${source.textDir}&u=${
+            item.link
         }&m=${state.loadFull ? 1 : 0}`
     }
 
@@ -395,31 +392,31 @@ const Article: React.FC<ArticleProps> = (props) => {
                     <Stack.Item grow>
                         <span className="source-name">
                             {state.loaded ? (
-                                props.source.iconurl && (
+                                source.iconurl && (
                                     <img
                                         className="favicon"
-                                        src={props.source.iconurl}
+                                        src={source.iconurl}
                                     />
                                 )
                             ) : (
                                 <Spinner size={1} />
                             )}
-                            {props.source.name}
-                            {props.item.creator && (
+                            {source.name}
+                            {item.creator && (
                                 <span className="creator">
-                                    {props.item.creator}
+                                    {item.creator}
                                 </span>
                             )}
                         </span>
                     </Stack.Item>
                     <CommandBarButton
                         title={
-                            props.item.hasRead
+                            item.hasRead
                                 ? intl.get("article.markUnread")
                                 : intl.get("article.markRead")
                         }
                         iconProps={
-                            props.item.hasRead
+                            item.hasRead
                                 ? { iconName: "StatusCircleRing" }
                                 : {
                                       iconName: "RadioBtnOn",
@@ -430,22 +427,22 @@ const Article: React.FC<ArticleProps> = (props) => {
                                   }
                         }
                         onClick={() =>
-                            props.toggleHasRead(props.item)
+                            item.hasRead ? markUnread(item) : markRead(item)
                         }
                     />
                     <CommandBarButton
                         title={
-                            props.item.starred
+                            item.starred
                                 ? intl.get("article.unstar")
                                 : intl.get("article.star")
                         }
                         iconProps={{
-                            iconName: props.item.starred
+                            iconName: item.starred
                                 ? "FavoriteStarFill"
                                 : "FavoriteStar",
                         }}
                         onClick={() =>
-                            props.toggleStarred(props.item)
+                            toggleStarred(item)
                         }
                     />
                     <CommandBarButton
@@ -471,7 +468,7 @@ const Article: React.FC<ArticleProps> = (props) => {
                     <CommandBarButton
                         title={intl.get("close")}
                         iconProps={{ iconName: "BackToWindow" }}
-                        onClick={props.dismiss}
+                        onClick={dismissItem}
                     />
                 </Stack>
             </Stack>
@@ -480,13 +477,13 @@ const Article: React.FC<ArticleProps> = (props) => {
                     id="article"
                     className={state.error ? "error" : ""}
                     key={
-                        props.item._id +
+                        item._id +
                         (state.loadWebpage ? "_" : "") +
                         (state.loadFull ? "__" : "")
                     }
                     src={
                         state.loadWebpage
-                            ? props.item.link
+                            ? item.link
                             : articleView()
                     }
                     allowpopups={"true" as unknown as boolean}
@@ -521,4 +518,4 @@ const Article: React.FC<ArticleProps> = (props) => {
     )
 }
 
-export default Article
+export default Article;

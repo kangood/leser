@@ -3,12 +3,14 @@ import { create } from 'zustand'
 import { ItemState, MARK_READ, MARK_UNREAD, RSSItem, TOGGLE_HIDDEN, TOGGLE_STARRED, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
 import { useApp, useAppActions } from "./app-store";
-import { useFeedActions } from "./feed-store";
+import { useFeedActions, useFeeds } from "./feed-store";
 import { useServiceActions } from "./service-store";
 import { useSourceActions, useSources } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
 import { RSSFeed } from '../models/feed';
+import { usePage, usePageActions } from './page-store';
+import lf from 'lovefield';
 
 export type ItemInTypes = {
     fetchingItems?: boolean;
@@ -37,9 +39,13 @@ type ItemStore = {
         markUnread: (item: RSSItem) => void;
         toggleStarred: (item: RSSItem) => void;
         toggleHidden: (item: RSSItem) => void;
+        articleToggleHidden: (item: RSSItem) => void;
+        contextMenuToggleHidden: (item: RSSItem) => void;
         itemShortcuts: (item: RSSItem, e: KeyboardEvent) => void;
         initFeedSuccess: (items: RSSItem[]) => void;
         loadMoreSuccess: (items: RSSItem[]) => void;
+        markAllReadDone: (sids: number[], time?: number, before?: boolean) => void;
+        markAllRead: (sids?: number[], date?: Date, before?: boolean) => void;
     }
 }
 
@@ -157,6 +163,8 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     )
                 }
             }))
+            // [feedReducer]
+            useFeedActions().toggleHiddenDone(item, type);
         },
         toggleStarredDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, TOGGLE_STARRED);
@@ -225,6 +233,22 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 .exec();
             get().actions.toggleHiddenDone(item);
         },
+        articleToggleHidden: (item: RSSItem) => {
+            if (!item.hidden) {
+                usePageActions().dismissItem();
+            }
+            if (!item.hasRead && !item.hidden) {
+                get().actions.markRead(item);
+            }
+            get().actions.toggleHidden(item);
+        },
+        contextMenuToggleHidden: (item: RSSItem) => {
+            if (!item.hasRead) {
+                get().actions.markRead(item);
+                item.hasRead = true;
+            }
+            get().actions.toggleHidden(item);
+        },
         itemShortcuts: (item: RSSItem, e: KeyboardEvent) => {
             if (e.metaKey) return
             switch (e.key) {
@@ -267,7 +291,64 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
         loadMoreSuccess: (items: RSSItem[]) => {
             get().actions.initFeedSuccess(items);
-        }
+        },
+        markAllReadDone: (sids: number[], time: number, before: boolean) => {
+            set(state => {
+                let nextState = { ...state.items };
+                const sidsLocal = new Set(sids);
+                for (let item of Object.values(state.items)) {
+                    if (sidsLocal.has(item.source) && !item.hasRead) {
+                        if (
+                            !time ||
+                            (before
+                                ? item.date.getTime() <= time
+                                : item.date.getTime() >= time)
+                        ) {
+                            nextState[item._id] = {
+                                ...item,
+                                hasRead: true,
+                            }
+                        }
+                    }
+                }
+                return { items: nextState };
+            });
+            // [sourceReducer]
+            useSourceActions().markAllReadDone(sids, time);
+        },
+        markAllRead: async (sids: number[] = null, date: Date = null, before = true) => {
+            let state = { feeds: useFeeds(), page: usePage() };
+            if (sids === null) {
+                let feed = state.feeds[state.page.feedId];
+                sids = feed.sids;
+            }
+            const action = useServiceActions().getServiceHooks().markAllReadNew?.(sids, date, before);
+            if (action) {
+                await action
+            }
+            const predicates: lf.Predicate[] = [
+                db.items.source.in(sids),
+                db.items.hasRead.eq(false),
+            ]
+            if (date) {
+                predicates.push(
+                    before ? db.items.date.lte(date) : db.items.date.gte(date)
+                )
+            }
+            const query = lf.op.and.apply(null, predicates)
+            await db.itemsDB
+                .update(db.items)
+                .set(db.items.hasRead, true)
+                .where(query)
+                .exec()
+            if (date) {
+                get().actions.markAllReadDone(sids, date.getTime(), before);
+                useSourceActions().updateUnreadCounts();
+                useSourceActions().updateStarredCounts();
+            } else {
+                get().actions.markAllReadDone(sids);
+            }
+        },
     }
 }), { name: "item" }))
 

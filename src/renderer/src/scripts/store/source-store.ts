@@ -36,6 +36,7 @@ type SourceStore = {
         markUnreadDone: (item: RSSItem) => void;
         toggleStarredDone: (item: RSSItem) => void;
         toggleSourceHidden: (source: RSSSource) => void;
+        markAllReadDone(sids: number[], time: number): void;
     }
 }
 
@@ -257,6 +258,18 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                 ? useFeedActions().hideSource(sourceCopy)
                 : useFeedActions().unhideSource(sourceCopy);
             await get().actions.updateSource(sourceCopy);
+        },
+        markAllReadDone: (sids: number[], time: number) => {
+            set(state => {
+                let nextState = { ...state.sources };
+                sids.forEach(sid => {
+                    nextState[sid] = {
+                        ...state.sources[sid],
+                        unreadCount: time ? state.sources[sid].unreadCount : 0,
+                    }
+                })
+                return { sources: nextState };
+            })
         },
     },
 }), { name: "source" }))

@@ -38,6 +38,11 @@ export interface ServiceHooks {
         date?: Date,
         before?: boolean
     ) => AppThunk<Promise<void>>
+    markAllReadNew?: (
+        sids?: number[],
+        date?: Date,
+        before?: boolean
+    ) => Promise<void>
     star?: (item: RSSItem) => AppThunk
     unstar?: (item: RSSItem) => AppThunk
 }

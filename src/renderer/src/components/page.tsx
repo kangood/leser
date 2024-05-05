@@ -1,6 +1,5 @@
 import * as React from "react"
 import { Icon, FocusTrapZone } from "@fluentui/react"
-import ArticleContainer from "../containers/article-container"
 import { ViewType } from "../schema-types"
 import ArticleSearch from "./utils/article-search"
 import { useToggleMenuStore } from "@renderer/scripts/store/menu-store"
@@ -10,6 +9,7 @@ import { FeedTop } from "./feeds/feed-top"
 import { Feed } from "./feeds/feed"
 import { usePageActions, usePageCurrentItem, usePageFeeds, usePageFilter, usePageItemFromFeed, usePageViewType } from "@renderer/scripts/store/page-store"
 import { useApp, useAppActions, useAppContextMenuOn, useAppSettingsDisplay } from "@renderer/scripts/store/app-store"
+import Article from "./article"
 
 const Page: React.FC = () => {
     // zustand store
@@ -99,7 +99,7 @@ const Page: React.FC = () => {
                         <div
                             className="article-wrapper"
                             onClick={e => e.stopPropagation()}>
-                            <ArticleContainer itemId={currentItem} />
+                            <Article itemId={currentItem} />
                         </div>
                         {pageItemFromFeed && (
                             <>
@@ -154,7 +154,7 @@ const Page: React.FC = () => {
                             />
                             {currentItem ? (
                                 <div className="side-article-wrapper">
-                                    <ArticleContainer itemId={currentItem} />
+                                    <Article itemId={currentItem} />
                                 </div>
                             ) : (
                                 <div className="side-logo-wrapper">

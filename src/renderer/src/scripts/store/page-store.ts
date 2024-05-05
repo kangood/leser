@@ -8,6 +8,7 @@ import { devtools } from 'zustand/middleware';
 import { useAppActions } from './app-store';
 import { useFeedActions, useFeeds } from './feed-store';
 import { useSources } from './source-store';
+import { ViewConfigs, ViewType } from '@renderer/schema-types';
 
 export type PageInTypes = {
     keepMenu: boolean;
@@ -27,6 +28,8 @@ type PageStore = {
         dismissItem: () => void;
         showOffsetItem: (offset: number) => void;
         toggleSearch: () => void;
+        setViewConfigs: (configs: ViewConfigs) => void;
+        switchView: (viewType: ViewType) => void;
     }
 }
 
@@ -171,6 +174,26 @@ const usePageStore = create<PageStore>()(devtools((set, get) => ({
                     search: "",
                 })
             }
+        },
+        setViewConfigs: (configs: ViewConfigs) => {
+            window.settings.setViewConfigs(get().page.viewType, configs);
+            set(state => ({
+                page: {
+                    ...state.page,
+                    viewConfigs: configs,
+                }
+            }));
+        },
+        switchView: (viewType: ViewType) => {
+            window.settings.setDefaultView(viewType);
+            set(state => ({
+                page: {
+                    ...state.page,
+                    viewType: viewType,
+                    viewConfigs: window.settings.getViewConfigs(viewType),
+                    itemId: null
+                }
+            }));
         },
     },
 }), { name: "page" }))

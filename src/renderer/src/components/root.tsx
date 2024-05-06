@@ -1,20 +1,21 @@
 import * as React from "react"
-import { connect } from "react-redux"
-import { closeContextMenu } from "../scripts/models/app"
-import { RootState } from "../scripts/reducer"
 import Page from "./page"
 import ContextMenu from "./context-menu"
 import LogMenu from "./log-menu"
 import Nav from "./nav"
 import Settings from "./settings"
 import Menu from "./menu"
+import { useAppActions, useAppLocale } from "@renderer/scripts/store/app-store"
 
-const Root = ({ locale, dispatch }) =>
-    locale && (
+const Root = () => {
+    const appLocale = useAppLocale();
+    const { closeContextMenu } = useAppActions();
+
+    return appLocale && (
         <div
             id="root"
-            key={locale}
-            onMouseDown={() => dispatch(closeContextMenu())}>
+            key={appLocale}
+            onMouseDown={closeContextMenu}>
             <Nav />
             <Page />
             <LogMenu />
@@ -23,6 +24,6 @@ const Root = ({ locale, dispatch }) =>
             <ContextMenu />
         </div>
     )
+}
 
-const getLocale = (state: RootState) => ({ locale: state.app.locale })
-export default connect(getLocale)(Root)
+export default Root;

@@ -31,6 +31,7 @@ type PageStore = {
         setViewConfigs: (configs: ViewConfigs) => void;
         switchView: (viewType: ViewType) => void;
         selectSources: (sids: number[], menuKey: string, title: string) => void;
+        performSearch: (query: string) => void;
     }
 }
 
@@ -211,6 +212,17 @@ const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 appActions.selectSources(menuKey, title);
             }
         },
+        performSearch: (query: string) => {
+            set(state => {
+                if (state.page.searchOn) {
+                    pageActions.applyFilter({
+                        ...state.page.filter,
+                        search: query,
+                    })
+                } 
+                return { ...state };
+            });
+        },
     },
 }), { name: "page" }))
 
@@ -218,6 +230,7 @@ export const page = usePageStore.getState().page;
 export const pageActions = usePageStore.getState().actions;
 
 export const usePageFilter = () => usePageStore(state => state.page.filter);
+export const usePageSearchOn = () => usePageStore(state => state.page.searchOn);
 export const usePageViewType = () => usePageStore(state => state.page.viewType);
 export const usePageCurrentItem = () => usePageStore(state => state.page.itemId);
 export const usePageViewConfigs = () => usePageStore(state => state.page.viewConfigs);

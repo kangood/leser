@@ -7,7 +7,7 @@ import { ALL, FilterType } from "../scripts/models/feed"
 import { AnimationClassNames, Stack, FocusZone } from "@fluentui/react"
 import { useEffect, useState } from "react"
 import { usePageFilter, usePageItemShown } from "@renderer/scripts/store/page-store"
-import { useApp, useAppActions } from "@renderer/scripts/store/app-store"
+import { useApp, useAppActions, useAppStatusByMenu } from "@renderer/scripts/store/app-store"
 import { useItemActions } from "@renderer/scripts/store/item-store"
 import { useGroupsByMenu } from "@renderer/scripts/store/group-store"
 import { useSources } from "@renderer/scripts/store/source-store"
@@ -18,6 +18,7 @@ const Menu: React.FC = () => {
     const menuDisplayZ = useMenuDisplay();
     const { toggleMenu, selectSourceGroup, allArticles, selectSource, updateGroupExpansion } = useMenuActions();
     const appState = useApp();
+    const appStatusByMenu = useAppStatusByMenu();
     const { openGroupMenu } = useAppActions();
     const filterType = usePageFilter().type;
     const pageItemShown = usePageItemShown();
@@ -30,15 +31,15 @@ const Menu: React.FC = () => {
     const isUnreadOnly = (filterType & ~FilterType.Toggles) == FilterType.UnreadOnly;
     const isStarredOnly = (filterType & ~FilterType.Toggles) == FilterType.StarredOnly;
 
-    const [menuDisplay, setMenuDisplay] = useState<boolean>(
+    const [menuDisplayS, setMenuDisplayS] = useState<boolean>(
         window.innerWidth >= 1200 // 初始化时设置菜单状态
     )
     // 宽度在经过 1200 断点时，调用一次 toggleMenu
     const handleResize = () => {
         const shouldDisplayMenu = window.innerWidth >= 1200
         // 两个状态不一样才执行开关，不然会一直进入判断
-        if (shouldDisplayMenu !== menuDisplay) {
-            setMenuDisplay(shouldDisplayMenu)
+        if (shouldDisplayMenu !== menuDisplayS) {
+            setMenuDisplayS(shouldDisplayMenu)
             toggleMenu(shouldDisplayMenu)
             window.settings.setDefaultMenu(shouldDisplayMenu)
         }
@@ -46,14 +47,14 @@ const Menu: React.FC = () => {
     useEffect(() => {
         window.addEventListener("resize", handleResize)
         // 当组件首次加载时，就不走 handleResize 的判断了，立即检查窗口的宽度，并设置状态
-        if (menuDisplay) {
+        if (menuDisplayS) {
             toggleMenu(true);
             window.settings.setDefaultMenu(menuDisplayZ)
         }
         return () => {
             window.removeEventListener("resize", handleResize)
         }
-    }, [menuDisplay])
+    }, [menuDisplayS])
     
     // 刷新前的状态检查
     const canFetch = () =>
@@ -134,7 +135,7 @@ const Menu: React.FC = () => {
                         icon: "TextDocument",
                         onClick: () => {
                             // 在菜单需要隐藏时关闭
-                            if (!menuDisplay) {
+                            if (!menuDisplayS) {
                                 toggleMenu(false)
                             }
                             allArticles(selected !== ALL)
@@ -158,7 +159,7 @@ const Menu: React.FC = () => {
         onClick: () => {
             selectSource(s)
             // 在菜单需要隐藏时关闭
-            if (!menuDisplay) {
+            if (!menuDisplayS) {
                 toggleMenu(false)
             }
         },
@@ -212,7 +213,7 @@ const Menu: React.FC = () => {
     }
 
     return (
-        status && (
+        appStatusByMenu && (
             <div
                 className={"menu-container" + (menuDisplayZ ? " show" : "")}
                 onClick={() => toggleMenu()}>

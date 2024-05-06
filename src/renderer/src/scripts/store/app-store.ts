@@ -439,6 +439,7 @@ export const useApp = () => useAppStore(state => state.app);
 export const useAppActions = () => useAppStore(state => state.actions);
 
 export const useAppLocale = () => useAppStore(state => state.app.locale);
+export const useAppStatusByMenu = () => useAppStore(state => state.app.sourceInit && !state.app.settings.display);
 export const useAppSettingsSids = () => useAppStore(state => state.app.settings.sids);
 export const useAppSettingsDisplay = () => useAppStore(state => state.app.settings.display);
 export const useAppContextMenu = () => useAppStore(state => state.app.contextMenu);

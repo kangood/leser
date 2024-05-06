@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { ALL, FeedFilter, FeedState, RSSFeed, SOURCE } from "../models/feed";
 import { RSSItem, applyItemReduction } from "../models/item";
-import { useItemActions, useItems } from "./item-store";
+import { itemActions, items } from "./item-store";
 import { produce } from "immer";
 import { devtools } from "zustand/middleware";
-import { useAppActions } from "./app-store";
 import { RSSSource } from "../models/source";
-import { usePage, usePageFilter } from "./page-store";
+import { page } from "./page-store";
+import { appActions } from "./app-store";
 
 type FeedStore = {
     feeds: FeedState;
@@ -49,7 +49,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                 }
             });
             // [itemReducer]
-            useItemActions().initFeedSuccess(items);
+            itemActions.initFeedSuccess(items);
             // [pageReducer]
         },
         initFeedFailure: (err: Error) => {
@@ -57,7 +57,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
         },
         initFeedsSuccess: () => {
             console.log('~~initFeedsSuccess~~');
-            useAppActions().initFeedsSuccess();
+            appActions.initFeedsSuccess();
         },
         initFeeds: async (force = false) => {
             get().actions.initFeedsRequest();
@@ -78,7 +78,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             get().actions.initFeedsSuccess();
         },
         dismissItems: () => {
-            const state = { page: usePage(), feeds: get().feeds, items: useItems() };
+            const state = { page: page, feeds: get().feeds, items: items };
             let fid = state.page.feedId;
             let filter = state.feeds[fid].filter;
             let iids = new Set<number>();
@@ -131,7 +131,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                 }
             }));
             // [itemReducer]
-            useItemActions().loadMoreSuccess(items);
+            itemActions.loadMoreSuccess(items);
         },
         loadMoreFailure: (feed: RSSFeed, _err: Error) => {
             set(state => ({
@@ -148,7 +148,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             if (feed.loaded && !feed.loading && !feed.allLoaded) {
                 get().actions.loadMoreRequest(feed);
                 const skipNum = feed.iids.filter(i =>
-                    FeedFilter.testItem(feed.filter, useItems()[i])
+                    FeedFilter.testItem(feed.filter, items[i])
                 ).length;
                 return RSSFeed.loadFeed(feed, skipNum)
                     .then(items => {
@@ -216,7 +216,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                     [SOURCE]: new RSSFeed(
                         SOURCE,
                         sids,
-                        usePageFilter()
+                        page.filter
                     ),
                 }
             }));
@@ -224,7 +224,8 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
     }
 }), { name: "feed" }))
 
-export const useFeeds = () => useFeedStore(state => state.feeds);
-export const useFeedById = (feedId: string) => useFeedStore(state => state.feeds[feedId]);
+export const feeds = useFeedStore.getState().feeds;
+export const feedActions = useFeedStore.getState().actions;
 
+export const useFeedById = (feedId: string) => useFeedStore(state => state.feeds[feedId]);
 export const useFeedActions = () => useFeedStore(state => state.actions);

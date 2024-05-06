@@ -1,10 +1,10 @@
 import { SourceGroup } from "@renderer/schema-types";
 import { create } from "zustand"
 import { devtools } from "zustand/middleware"
-import { usePageActions } from "./page-store";
-import { useFeedActions } from "./feed-store";
 import { RSSSource } from "../models/source";
-import { useGroupActions } from "./group-store";
+import { feedActions } from "./feed-store";
+import { groupActions } from "./group-store";
+import { pageActions } from "./page-store";
 
 type MenuStore = {
     display: boolean;
@@ -27,22 +27,22 @@ const useMenuStore = create<MenuStore>()(devtools(set => ({
             }))
         },
         selectSourceGroup: (group: SourceGroup, menuKey: string) => {
-            usePageActions().selectSources(group.sids, menuKey, group.name);
-            useFeedActions().initFeeds();
+            pageActions.selectSources(group.sids, menuKey, group.name);
+            feedActions.initFeeds();
         },
         allArticles: (init = false) => {
-            usePageActions().selectAllArticles(init);
-            useFeedActions().initFeeds();
+            pageActions.selectAllArticles(init);
+            feedActions.initFeeds();
         },
         selectSource: (source: RSSSource) => {
-            usePageActions().selectSources([source.sid], "s-" + source.sid, source.name);
-            useFeedActions().initFeeds();
+            pageActions.selectSources([source.sid], "s-" + source.sid, source.name);
+            feedActions.initFeeds();
         },
         updateGroupExpansion: (event: React.MouseEvent, key: string, selected: string) => {
             if ((event.target as HTMLElement).tagName === "I" || key === selected) {
                 let [type, index] = key.split("-");
                 if (type === "g") {
-                    useGroupActions().toggleGroupExpansion(parseInt(index));
+                    groupActions.toggleGroupExpansion(parseInt(index));
                 }
             }
         },
@@ -50,5 +50,4 @@ const useMenuStore = create<MenuStore>()(devtools(set => ({
 }), { name: "menu" }))
 
 export const useMenuDisplay = () => useMenuStore(state => state.display);
-
 export const useMenuActions = () => useMenuStore(state => state.actions);

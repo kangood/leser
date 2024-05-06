@@ -2,15 +2,15 @@ import * as db from '../db';
 import { create } from 'zustand'
 import { ItemState, MARK_READ, MARK_UNREAD, RSSItem, TOGGLE_HIDDEN, TOGGLE_STARRED, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
-import { useApp, useAppActions } from "./app-store";
-import { useFeedActions, useFeeds } from "./feed-store";
-import { useServiceActions } from "./service-store";
-import { useSourceActions, useSources } from './source-store';
+import { appActions, appState } from "./app-store";
+import { feedActions, feeds } from "./feed-store";
+import { sourceActions, sourcesZ } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
 import { RSSFeed } from '../models/feed';
-import { usePage, usePageActions } from './page-store';
+import { page, pageActions } from './page-store';
 import lf from 'lovefield';
+import { serviceActions } from './service-store';
 
 export type ItemInTypes = {
     fetchingItems?: boolean;
@@ -59,7 +59,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 fetchingProgress: 0,
                 fetchingTotal: fetchCount
             };
-            useAppActions().fetchItemsRequest(itemInTypes);
+            appActions.fetchItemsRequest(itemInTypes);
         },
         fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => {
             let newMap = {};
@@ -69,7 +69,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             set((state) => ({ items: { ...state.items, ...newMap } }));
             // [appReducer]
             const itemInTypes: ItemInTypes = { items: items, itemState: itemState };
-            useAppActions().fetchItemsSuccess(itemInTypes);
+            appActions.fetchItemsSuccess(itemInTypes);
             // [feedReducer、sourceReducer]
         },
         fetchItemsFailure: (source: RSSSource, err: Error) => {
@@ -77,23 +77,23 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 errSource: source,
                 err: err
             };
-            useAppActions().fetchItemsFailure(itemInTypes);
+            appActions.fetchItemsFailure(itemInTypes);
         },
         fetchItemsIntermediate: () => {
-            useAppActions().fetchItemsIntermediate();
+            appActions.fetchItemsIntermediate();
         },
         fetchItems: async (background = false, sids = null) => {
             let promises = new Array<Promise<RSSItem[]>>();
-            const initState = { app: useApp(), sources: useSources() };
+            const initState = { app: appState, sources: sourcesZ };
             if (!initState.app.fetchingItems && !initState.app.syncing) {
                 if (
                     sids === null ||
                     sids.filter(sid => initState.sources[sid].serviceRef !== undefined).length > 0
                 ) {
-                    await useServiceActions().syncWithService(background);
+                    await serviceActions.syncWithService(background);
                 }
                 let timenow = new Date().getTime();
-                const sourcesState = useSources();
+                const sourcesState = sourcesZ;
                 let sources =
                     sids === null
                         ? Object.values(sourcesState).filter(s => {
@@ -110,7 +110,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 for (let source of sources) {
                     let promise = RSSSource.fetchItems(source);
                     promise.then(() => {
-                        useSourceActions().updateSource({ ...source, lastFetched: new Date() });
+                        sourceActions.updateSource({ ...source, lastFetched: new Date() });
                     })
                     promise.finally(() => get().actions.fetchItemsIntermediate());
                     promises.push(promise);
@@ -134,16 +134,16 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                             if (background) {
                                 for (let item of inserted) {
                                     if (item.notify) {
-                                        useAppActions().pushNotification(item);
+                                        appActions.pushNotification(item);
                                     }
                                 }
                                 if (inserted.length > 0) {
                                     window.utils.requestAttention();
                                 }
                             } else {
-                                useFeedActions().dismissItems();
+                                feedActions.dismissItems();
                             }
-                            useAppActions().setupAutoFetch();
+                            appActions.setupAutoFetch();
                         })
                         .catch((err: Error) => {
                             get().actions.fetchItemsSuccess([], get().items);
@@ -165,22 +165,22 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 }
             }))
             // [feedReducer]
-            useFeedActions().toggleHiddenDone(item, type);
+            feedActions.toggleHiddenDone(item, type);
         },
         toggleStarredDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, TOGGLE_STARRED);
             // [sourceReducer]
-            useSourceActions().toggleStarredDone(item);
+            sourceActions.toggleStarredDone(item);
         },
         markReadDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, MARK_READ);
             // [sourceReducer]
-            useSourceActions().markReadDone(item);
+            sourceActions.markReadDone(item);
         },
         markUnreadDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, MARK_UNREAD);
             // [sourceReducer]
-            useSourceActions().markUnreadDone(item);
+            sourceActions.markUnreadDone(item);
         },
         markRead: (item: RSSItem) => {
             item = get().items[item._id];
@@ -192,7 +192,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markReadDone(item);
                 if (item.serviceRef) {
-                    useServiceActions().getServiceHooks().markRead?.(item);
+                    serviceActions.getServiceHooks().markRead?.(item);
                 }
             }
         },
@@ -206,7 +206,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markUnreadDone(item);
                 if (item.serviceRef) {
-                    useServiceActions().getServiceHooks().markUnread?.(item);
+                    serviceActions.getServiceHooks().markUnread?.(item);
                 }
             }
         },
@@ -218,7 +218,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 .exec();
             get().actions.toggleStarredDone(item);
             if (item.serviceRef) {
-                const hooks = useServiceActions().getServiceHooks();
+                const hooks = serviceActions.getServiceHooks();
                 if (item.starred) {
                     hooks.unstar?.(item);
                 } else {
@@ -236,7 +236,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
         articleToggleHidden: (item: RSSItem) => {
             if (!item.hidden) {
-                usePageActions().dismissItem();
+                pageActions.dismissItem();
             }
             if (!item.hasRead && !item.hidden) {
                 get().actions.markRead(item);
@@ -315,15 +315,15 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 return { items: nextState };
             });
             // [sourceReducer]
-            useSourceActions().markAllReadDone(sids, time);
+            sourceActions.markAllReadDone(sids, time);
         },
         markAllRead: async (sids: number[] = null, date: Date = null, before = true) => {
-            let state = { feeds: useFeeds(), page: usePage() };
+            let state = { feeds: feeds, page: page };
             if (sids === null) {
                 let feed = state.feeds[state.page.feedId];
                 sids = feed.sids;
             }
-            const action = useServiceActions().getServiceHooks().markAllReadNew?.(sids, date, before);
+            const action = serviceActions.getServiceHooks().markAllReadNew?.(sids, date, before);
             if (action) {
                 await action
             }
@@ -344,8 +344,8 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                 .exec()
             if (date) {
                 get().actions.markAllReadDone(sids, date.getTime(), before);
-                useSourceActions().updateUnreadCounts();
-                useSourceActions().updateStarredCounts();
+                sourceActions.updateUnreadCounts();
+                sourceActions.updateStarredCounts();
             } else {
                 get().actions.markAllReadDone(sids);
             }
@@ -363,6 +363,9 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
     }
 }), { name: "item" }))
+
+export const items = useItemStore.getState().items;
+export const itemActions = useItemStore.getState().actions;
 
 export const useItems = () => useItemStore(state => state.items);
 export const useItemsByFeed = (feed: RSSFeed) => useItemStore(state => feed.iids.map(iid => state.items[iid]));

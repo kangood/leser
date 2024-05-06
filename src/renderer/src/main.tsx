@@ -9,7 +9,7 @@ import Root from "./components/root"
 import { AppDispatch } from "./scripts/utils"
 import { applyThemeSettings } from "./scripts/settings"
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import { useAppActions } from "./scripts/store/app-store";
+import { appActions, useAppActions } from "./scripts/store/app-store";
 
 window.settings.setProxy()
 
@@ -25,7 +25,7 @@ const store = createStore(
 )
 
 // store.dispatch(initApp())
-useAppActions().initApp();
+appActions.initApp();
 
 window.utils.addMainContextListener((pos, text) => {
     // store.dispatch(openTextMenu(pos, text))

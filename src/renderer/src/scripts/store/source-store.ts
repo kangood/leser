@@ -3,11 +3,11 @@ import intl from "react-intl-universal"
 import { create } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
-import { useApp, useAppActions } from "./app-store";
+import { appActions, appState } from "./app-store";
 import { MARK_READ, MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { devtools } from "zustand/middleware";
-import { useFeedActions } from "./feed-store";
-import { useGroupActions, useGroups } from "./group-store";
+import { groupActions, groups } from "./group-store";
+import { feedActions } from "./feed-store";
 
 type SourceInTypes = {
     batch: boolean;
@@ -51,7 +51,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
         initSourcesSuccess: (sources: SourceState) => {
             set({ sources: sources });
             // [appReducer]
-            useAppActions().initSourcesSuccess();
+            appActions.initSourcesSuccess();
             // [feedReducer]
         },
         initSources: async () => {
@@ -68,7 +68,8 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             await unreadCount(state);
             await starredCount(state);
             // 订阅源分组
-            useGroupActions().fixBrokenGroups(state);
+            groupActions.fixBrokenGroups(state);
+            // useGroupActions().fixBrokenGroups(state);
             get().actions.initSourcesSuccess(state);
         },
         insertSource: (source: RSSSource) => {
@@ -143,29 +144,29 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
         deleteSource: async (source: RSSSource, batch = false) => {
             return new Promise(async (_resolve, reject) => {
                 if (!batch) {
-                    useAppActions().saveSettings();
+                    appActions.saveSettings();
                 }
                 try {
                     await db.itemsDB.delete().from(db.items).where(db.items.source.eq(source.sid)).exec();
                     await db.sourcesDB.delete().from(db.sources).where(db.sources.sid.eq(source.sid)).exec();
                     get().actions.deleteSourceDone(source);
-                    window.settings.saveGroups(useGroups());
+                    window.settings.saveGroups(groups);
                 } catch (err) {
                     console.log(err);
                     reject(err);
                 } finally {
                     if (!batch) {
-                        useAppActions().saveSettings();
+                        appActions.saveSettings();
                     }
                 }
             });
         },
         deleteSources: async (sources: RSSSource[]) => {
-            useAppActions().saveSettings();
+            appActions.saveSettings();
             for (let source of sources) {
                 await get().actions.deleteSource(source, true);
             }
-            useAppActions().saveSettings();
+            appActions.saveSettings();
         },
         updateUnreadCounts: async () => {
             const sources: SourceState = {};
@@ -195,7 +196,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             set({ sourceInTypes: { batch: batch } });
         },
         addSource: async (url: string, name: string = null, batch = false) => {
-            const app = useApp();
+            const app = appState;
             console.log('addSource~~', app);
             if (app.sourceInit) {
                 get().actions.addSourceRequest(batch);
@@ -207,7 +208,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                     inserted.unreadCount = feed.items.length;
                     inserted.starredCount = 0;
                     get().actions.addSourceSuccess(inserted, batch);
-                    window.settings.saveGroups(useGroups());
+                    window.settings.saveGroups(groups);
                     get().actions.updateFavicon([inserted.sid]);
                     const items = await RSSSource.checkItems(inserted, feed.items);
                     await insertItems(items);
@@ -255,8 +256,8 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             const sourceCopy: RSSSource = { ...get().sources[source.sid] };
             sourceCopy.hidden = !sourceCopy.hidden;
             sourceCopy.hidden
-                ? useFeedActions().hideSource(sourceCopy)
-                : useFeedActions().unhideSource(sourceCopy);
+                ? feedActions.hideSource(sourceCopy)
+                : feedActions.unhideSource(sourceCopy);
             await get().actions.updateSource(sourceCopy);
         },
         markAllReadDone: (sids: number[], time: number) => {
@@ -274,17 +275,17 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     },
 }), { name: "source" }))
 
+export const sourcesZ = useSourceStore.getState().sources;
+export const sourceActions = useSourceStore.getState().actions;
+
 export const useSources = () => useSourceStore(state => state.sources);
-
 export const useSourceActions = () => useSourceStore(state => state.actions);
-
-
 
 export const outlineToSource = (outline: Element): [Promise<number>, string] => {
     let url = outline.getAttribute("xmlUrl");
     let name = outline.getAttribute("text") || outline.getAttribute("title");
     if (url) {
-        return [useSourceActions().addSource(url.trim(), name, true), url];
+        return [useSourceStore.getState().actions.addSource(url.trim(), name, true), url];
     } else {
         return null;
     }

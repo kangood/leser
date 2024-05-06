@@ -4,10 +4,10 @@ import { SourceGroupActionTypes } from '../models/group';
 import { SourceState } from '../models/source';
 import { devtools } from 'zustand/middleware';
 import intl from 'react-intl-universal';
-import { useAppActions } from './app-store';
 import { domParser } from '../utils';
-import { outlineToSource, sourceToOutline, useSourceActions, useSources } from './source-store';
-import { useItemActions } from './item-store';
+import { outlineToSource, sourceActions, sourceToOutline, sourcesZ } from './source-store';
+import { appActions } from './app-store';
+import { itemActions } from './item-store';
 
 type GroupStore = {
     groups: SourceGroup[];
@@ -37,7 +37,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
         reorderSourceGroups: (groups: SourceGroup[]) => {
             set({ groups: groups });
             // [appReducer]
-            useAppActions().deleteSourceGroup();
+            appActions.deleteSourceGroup();
             
             window.settings.saveGroups(groups);
         },
@@ -101,7 +101,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                     .filter(g => g.isMultiple || g.sids.length > 0)
             });
             // [appReducer]
-            useAppActions().deleteSourceGroup();
+            appActions.deleteSourceGroup();
         },
         addSourceToGroup: (groupIndex: number, sid: number) => {
             get().actions.addSourceToGroupDone(groupIndex, sid);
@@ -111,22 +111,22 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
             const filters = [ { name: intl.get("sources.opmlFile"), extensions: ["xml", "opml"] } ];
             window.utils.showOpenDialog(filters).then(data => {
                 if (data) {
-                    useAppActions().saveSettings();
+                    appActions.saveSettings();
                     let doc = domParser
                         .parseFromString(data, "text/xml")
                         .getElementsByTagName("body");
                     if (doc.length == 0) {
-                        return useAppActions().saveSettings();
+                        return appActions.saveSettings();
                     }
                     let parseError = doc[0].getElementsByTagName("parsererror");
                     if (parseError.length > 0) {
-                        useAppActions().saveSettings();
+                        appActions.saveSettings();
                         return window.utils.showErrorBox(
                             intl.get("sources.errorParse"),
                             intl.get("sources.errorParseHint")
                         );
                     }
-                    const addSource = useSourceActions().addSource;
+                    const addSource = sourceActions.addSource;
                     let sources: [ReturnType<typeof addSource>, number, string][] = [];
                     let errors: [string, any][] = [];
                     for (let el of doc[0].children) {
@@ -149,7 +149,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                             }
                         }
                     }
-                    useItemActions().fetchItemsRequest(sources.length);
+                    itemActions.fetchItemsRequest(sources.length);
                     let promises = sources.map(async ([s, gid, url]) => {
                         return (s)
                             .then(sid => {
@@ -161,12 +161,12 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                                 errors.push([url, err]);
                             })
                             .finally(() => {
-                                useItemActions().fetchItemsIntermediate();
+                                itemActions.fetchItemsIntermediate();
                             })
                     })
                     Promise.allSettled(promises).then(() => {
-                        useItemActions().fetchItemsSuccess([], {});
-                        useAppActions().saveSettings();
+                        itemActions.fetchItemsSuccess([], {});
+                        appActions.saveSettings();
                         if (errors.length > 0) {
                             window.utils.showErrorBox(
                                 intl.get("sources.errorImport", {
@@ -190,7 +190,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                 .showSaveDialog(filters, "*/Fluent_Reader_Export.opml")
                 .then(write => {
                     if (write) {
-                        let state = { groups: get().groups, sources: useSources() };
+                        let state = { groups: get().groups, sources: sourcesZ };
                         let xml = domParser.parseFromString(
                             '<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Fluent Reader Export</title></head><body></body></opml>',
                             "text/xml"
@@ -233,7 +233,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                 ]
             }))
             // [appReducer]
-            useAppActions().deleteSourceGroup();
+            appActions.deleteSourceGroup();
         },
         updateSourceGroup: (group: SourceGroup) => {
             get().actions.updateSourceGroupDone(group);
@@ -254,7 +254,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                 ]
             }))
             // [appReducer]
-            useAppActions().deleteSourceGroup();
+            appActions.deleteSourceGroup();
         },
         removeSourceFromGroup: (groupIndex: number, sids: number[]) => {
             get().actions.removeSourceFromGroupDone(groupIndex, sids);
@@ -271,7 +271,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                 ]
             }))
             // [appReducer]
-            useAppActions().deleteSourceGroup();
+            appActions.deleteSourceGroup();
         },
         deleteSourceGroup: (groupIndex: number) => {
             get().actions.deleteSourceGroupDone(groupIndex);
@@ -293,6 +293,9 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
         },
     }
 }), { name: "group" }))
+
+export const groups = useGroupStore.getState().groups;
+export const groupActions = useGroupStore.getState().actions;
 
 export const useGroups = () => useGroupStore(state => state.groups);
 export const useGroupsByMenu = () => useGroupStore(state => state.groups.map((g, i) => ({ ...g, index: i })));

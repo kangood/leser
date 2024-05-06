@@ -1,14 +1,14 @@
 import { create } from 'zustand'
-import { useItemActions, useItems } from './item-store';
+import { itemActions, items } from './item-store';
 import { RSSItem } from '../models/item';
 import { PageState } from '../models/page';
 import { ALL, FeedFilter, FilterType, SOURCE } from '../models/feed';
 import { getWindowBreakpoint } from '../utils';
 import { devtools } from 'zustand/middleware';
-import { useApp, useAppActions } from './app-store';
-import { useFeedActions, useFeeds } from './feed-store';
-import { useSources } from './source-store';
+import { appActions, appState } from './app-store';
+import { feedActions, feeds } from './feed-store';
 import { ViewConfigs, ViewType } from '@renderer/schema-types';
+import { sourcesZ } from './source-store';
 
 export type PageInTypes = {
     keepMenu: boolean;
@@ -34,7 +34,7 @@ type PageStore = {
     }
 }
 
-export const usePageStore = create<PageStore>()(devtools((set, get) => ({
+const usePageStore = create<PageStore>()(devtools((set, get) => ({
     page: new PageState(),
     actions: {
         checkedFilter: (filterType: FilterType) => {
@@ -56,7 +56,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 set((state) => ({ page: { ...state.page, filter: feedFilter } }));
                 // [feedReducer]...
                 // 调用 initFeeds
-                useFeedActions().initFeeds(true);
+                feedActions.initFeeds(true);
             }
         },
         switchFilter: (filterType: FilterType) => {
@@ -80,11 +80,11 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 },
             }));
             // [appReducer]
-            useAppActions().selectAllArticles(pageInTypes);
+            appActions.selectAllArticles(pageInTypes);
             // [feedReducer]
         },
         showItem: (feedId: string, item: RSSItem) => {
-            const state = { items: useItems(), sources: useSources() };
+            const state = { items: items, sources: sourcesZ };
             if (
                 state.items.hasOwnProperty(item._id) &&
                 state.sources.hasOwnProperty(item.source)
@@ -99,9 +99,9 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             }
         },
         showItemFromId: (iid: number) => {
-            const item = useItems()[iid];
+            const item = items[iid];
             if (!item.hasRead) {
-                useItemActions().markRead(item);
+                itemActions.markRead(item);
             }
             if (item) {
                 get().actions.showItem(null, item);
@@ -116,7 +116,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             }));
         },
         showOffsetItem: (offset: number) => {
-            let state = { page: get().page, feeds: useFeeds(), items: useItems() };
+            let state = { page: get().page, feeds: feeds, items: items };
             if (!state.page.itemFromFeed) {
                 return;
             }
@@ -145,11 +145,11 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             if (newIndex >= 0) {
                 if (newIndex < iids.length) {
                     let item = state.items[iids[newIndex]];
-                    useItemActions().markRead(item);
+                    itemActions.markRead(item);
                     get().actions.showItem(feedId, item);
                     return;
                 } else if (!feed.allLoaded) {
-                    useFeedActions().loadMore(feed)
+                    feedActions.loadMore(feed)
                         .then(() => {
                             get().actions.showOffsetItem(offset);
                         })
@@ -197,7 +197,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             }));
         },
         selectSources: (sids: number[], menuKey: string, title: string) => {
-            if (useApp().menuKey !== menuKey) {
+            if (appState.menuKey !== menuKey) {
                 set(state => ({
                     page: {
                         ...state.page,
@@ -206,15 +206,17 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
                     }
                 }))
                 // [feedReducer]
-                useFeedActions().selectSources(sids);
+                feedActions.selectSources(sids);
                 // [appReducer]
-                useAppActions().selectSources(menuKey, title);
+                appActions.selectSources(menuKey, title);
             }
         },
     },
 }), { name: "page" }))
 
-export const usePage = () => usePageStore(state => state.page);
+export const page = usePageStore.getState().page;
+export const pageActions = usePageStore.getState().actions;
+
 export const usePageFilter = () => usePageStore(state => state.page.filter);
 export const usePageViewType = () => usePageStore(state => state.page.viewType);
 export const usePageCurrentItem = () => usePageStore(state => state.page.itemId);

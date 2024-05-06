@@ -3,14 +3,14 @@ import { create } from 'zustand'
 import { AppLog, AppLogType, AppState, ContextMenuType } from '../models/app';
 import { RSSItem } from '../models/item';
 import { RSSSource, SourceOpenTarget } from '../models/source';
-import { PageInTypes, usePageActions } from './page-store';
-import { ItemInTypes, useItemActions } from './item-store';
+import { PageInTypes, pageActions } from './page-store';
+import { ItemInTypes, itemActions } from './item-store';
 import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
 import { getWindowBreakpoint, initTouchBarWithTexts, validateFavicon } from '../utils';
-import { useSourceActions, useSources } from './source-store';
-import { useFeedActions, useFeeds } from './feed-store';
+import { sourceActions, sourcesZ } from './source-store';
+import { feedActions, feeds } from './feed-store';
 import { devtools } from 'zustand/middleware';
 import { ALL } from '../models/feed';
 import { produce } from 'immer';
@@ -55,7 +55,7 @@ type AppStore = {
 
 let fetchTimeout: NodeJS.Timeout;
 
-export const useAppStore = create<AppStore>()(devtools((set, get) => ({
+const useAppStore = create<AppStore>()(devtools((set, get) => ({
     app: new AppState(),
     actions: {
         initSourcesSuccess: () => {
@@ -138,23 +138,24 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 })
         },
         initApp: () => {
+            console.log('initApp');
             document.body.classList.add(window.utils.platform);
             get().actions.initIntl()
                 .then(async () => {
                     if (window.utils.platform === "darwin") {
                         initTouchBarWithTexts();
                     }
-                    await useSourceActions().initSources();
+                    await sourceActions.initSources();
                 })
                 .then(() => {
-                    useFeedActions().initFeeds();
+                    feedActions.initFeeds();
                 })
                 .then(async () => {
-                    usePageActions().selectAllArticles();
-                    await useItemActions().fetchItems();
+                    pageActions.selectAllArticles();
+                    await itemActions.fetchItems();
                 })
                 .then(() => {
-                    useSourceActions().updateFavicon();
+                    sourceActions.updateFavicon();
                 }).catch(error => {
                     console.log('An error occurred:', error);
                 });
@@ -173,8 +174,8 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
             });
         },
         pushNotification: (item: RSSItem) => {
-            const sourceName = useSources()[item.source].name;
-            const state = { sources: useSources(), app: get().app };
+            const sourceName = sourcesZ[item.source].name;
+            const state = { sources: sourcesZ, app: get().app };
             if (!window.utils.isFocused()) {
                 const options = { body: sourceName } as any;
                 if (item.thumb) options.icon = item.thumb;
@@ -184,7 +185,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                         window.utils.openExternal(item.link);
                     } else if (!state.app.settings.display) {
                         window.utils.focus();
-                        usePageActions().showItemFromId(item._id);
+                        pageActions.showItemFromId(item._id);
                     }
                 }
             }
@@ -217,7 +218,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                         let app = get().app;
                         if (!app.settings.display) {
                             if (!app.fetchingItems) {
-                                useItemActions().fetchItems(true);
+                                itemActions.fetchItems(true);
                             }
                         } else {
                             setupTimeout(1);
@@ -312,8 +313,8 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 .from(db.items)
                 .where(db.items.date.lt(date))
                 .exec();
-            await useSourceActions().updateUnreadCounts();
-            await useSourceActions().updateStarredCounts();
+            await sourceActions.updateUnreadCounts();
+            await sourceActions.updateStarredCounts();
             get().actions.saveSettings();
         },
         importAll: async () => {
@@ -326,7 +327,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         updateSourceIcon: async (source: RSSSource, iconUrl: string) => {
             get().actions.saveSettings();
             if (await validateFavicon(iconUrl)) {
-                useSourceActions().updateSource({ ...source, iconurl: iconUrl });
+                sourceActions.updateSource({ ...source, iconurl: iconUrl });
             } else {
                 window.utils.showErrorBox(intl.get("sources.badIcon"), "");
             }
@@ -386,19 +387,19 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         },
         freeMemory: () => {
             const iids = new Set<number>();
-            for (let feed of Object.values(useFeeds().feeds)) {
+            for (let feed of Object.values(feeds.feeds)) {
                 if (feed.loaded) {
                     feed.iids.forEach(iids.add, iids);
                 }
             }
-            useItemActions().freeMemory(iids);
+            itemActions.freeMemory(iids);
         },
         exitSettings: async () => {
             if (!get().app.settings.saving) {
                 if (get().app.settings.changed) {
                     get().actions.saveSettings();
-                    usePageActions().selectAllArticles(true);
-                    await useFeedActions().initFeeds(true);
+                    pageActions.selectAllArticles(true);
+                    await feedActions.initFeeds(true);
                     get().actions.toggleSettings(false);
                     get().actions.freeMemory();
                 } else {
@@ -431,7 +432,12 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
     }
 }), { name: "app" }))
 
+export const appState = useAppStore.getState().app;
+export const appActions = useAppStore.getState().actions;
+
 export const useApp = () => useAppStore(state => state.app);
+export const useAppActions = () => useAppStore(state => state.actions);
+
 export const useAppLocale = () => useAppStore(state => state.app.locale);
 export const useAppSettingsSids = () => useAppStore(state => state.app.settings.sids);
 export const useAppSettingsDisplay = () => useAppStore(state => state.app.settings.display);
@@ -445,5 +451,3 @@ export const useAppSettingsBlocked = () => useAppStore(state =>
     state.app.fetchingItems ||
     state.app.settings.saving
 );
-
-export const useAppActions = () => useAppStore(state => state.actions);

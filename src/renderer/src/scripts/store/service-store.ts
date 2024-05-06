@@ -3,16 +3,16 @@ import lf from "lovefield";
 import { create } from 'zustand';
 import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
-import { useApp, useAppActions } from './app-store';
+import { appActions, appState } from './app-store';
 import { RSSSource } from '../models/source';
-import { useSourceActions, useSources } from "./source-store";
+import { sourceActions, sourcesZ } from "./source-store";
 import { insertItems } from "../models/item";
-import { useItemActions, useItems } from "./item-store";
 import { devtools } from "zustand/middleware";
-import { useGroupActions, useGroups } from "./group-store";
+import { groupActions, groups } from "./group-store";
+import { itemActions } from "./item-store";
 
 type ServiceStore = {
-    service?: ServiceConfigs;
+    service: ServiceConfigs;
     serviceActionTypes?: ServiceActionTypes;
     actions: {
         getServiceHooks: () => ServiceHooks;
@@ -50,14 +50,14 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         updateSources: async (hook: ServiceHooks["updateSourcesNew"]) => {
             const [sources, groupsMap] = await hook();
             const existing = new Map<string, RSSSource>();
-            for (let source of Object.values(useSources())) {
+            for (let source of Object.values(sourcesZ)) {
                 if (source.serviceRef) {
                     existing.set(source.serviceRef, source);
                 }
             }
             const forceSettings = () => {
-                if (!useApp().settings.saving) {
-                    useAppActions().saveSettings();
+                if (!appState.settings.saving) {
+                    appActions.saveSettings();
                 }
             }
             let promises = sources.map(async s => {
@@ -76,12 +76,12 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                     if (docs.length === 0) {
                         forceSettings();
                         // 添加数据源
-                        const inserted = await useSourceActions().insertSource(s);
+                        const inserted = await sourceActions.insertSource(s);
                         inserted.unreadCount = 0;
-                        useSourceActions().addSourceSuccess(inserted, true);
-                        window.settings.saveGroups(useGroups());
+                        sourceActions.addSourceSuccess(inserted, true);
+                        window.settings.saveGroups(groups);
                         // 更新网站图标
-                        useSourceActions().updateFavicon([inserted.sid]);
+                        sourceActions.updateFavicon([inserted.sid]);
                         return inserted;
                     } else if (docs[0].serviceRef !== s.serviceRef) {
                         // 将现有来源标记为远程，并删除所有项目
@@ -89,7 +89,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                         forceSettings();
                         doc.serviceRef = s.serviceRef;
                         doc.unreadCount = 0;
-                        useSourceActions().updateSource(doc);
+                        sourceActions.updateSource(doc);
                         await db.itemsDB
                             .delete()
                             .from(db.items)
@@ -104,7 +104,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             for (let [_, source] of existing) {
                 // 删除服务端同步过来的数据源
                 forceSettings();
-                promises.push(useSourceActions().deleteSource(source, true).then(() => null));
+                promises.push(sourceActions.deleteSource(source, true).then(() => null));
             }
             let sourcesResults = (await Promise.all(promises)).filter(s => s);
             if (groupsMap) {
@@ -112,8 +112,8 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                 forceSettings();
                 for (let source of sourcesResults) {
                     if (groupsMap.has(source.serviceRef)) {
-                        const gid = useGroupActions().createSourceGroup(groupsMap.get(source.serviceRef));
-                        useGroupActions().addSourceToGroup(gid, source.sid);
+                        const gid = groupActions.createSourceGroup(groupsMap.get(source.serviceRef));
+                        groupActions.addSourceToGroup(gid, source.sid);
                     }
                 }
                 const configs = get().service;
@@ -176,8 +176,8 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             }
             if (updates.length > 0) {
                 await db.itemsDB.createTransaction().exec(updates);
-                await useSourceActions().updateUnreadCounts();
-                await useSourceActions().updateStarredCounts();
+                await sourceActions.updateUnreadCounts();
+                await sourceActions.updateStarredCounts();
                 get().actions.syncLocalItems(unreadCopy, starredCopy);
             }
         },
@@ -185,11 +185,11 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             const [items, configs] = await hook();
             if (items.length > 0) {
                 const inserted = await insertItems(items);
-                useItemActions().fetchItemsSuccess(inserted.reverse(), useItems());
+                itemActions.fetchItemsSuccess(inserted.reverse(), items);
                 if (background) {
                     for (let item of inserted) {
                         if (item.notify) {
-                            useAppActions().pushNotification(item);
+                            appActions.pushNotification(item);
                         }
                     }
                     if (inserted.length > 0) window.utils.requestAttention();
@@ -202,7 +202,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
             if (hooks.updateSourcesNew && hooks.fetchItems && hooks.syncItems) {
                 try {
                     // [appReducer]
-                    useAppActions().syncWithServiceRequest();
+                    appActions.syncWithServiceRequest();
                     if (hooks.reauthenticate) {
                         get().actions.reauthenticate(hooks);
                     }
@@ -210,14 +210,14 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                     await get().actions.syncItems(hooks.syncItemsNew);
                     await get().actions.fetchItems(hooks.fetchItemsNew, background);
                     // [appReducer]
-                    useAppActions().syncWithServiceSuccess();
+                    appActions.syncWithServiceSuccess();
                 } catch (err) {
                     console.log(err);
                     // [appReducer]
-                    useAppActions().syncWithServiceFailure(err);
+                    appActions.syncWithServiceFailure(err);
                 } finally {
-                    if (useApp().settings.saving) {
-                        useAppActions().saveSettings();
+                    if (appState.settings.saving) {
+                        appActions.saveSettings();
                     }
                 }
             }
@@ -225,30 +225,31 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         importGroups: async () => {
             const configs = get().service;
             if (configs.type !== SyncService.None) {
-                useAppActions().saveSettings();
+                appActions.saveSettings();
                 configs.importGroups = true;
                 get().actions.saveServiceConfigs(configs);
                 await get().actions.syncWithService();
             }
         },
         removeService: async () => {
-            useAppActions().saveSettings();
-            const sources = useSources();
+            appActions.saveSettings();
+            const sources = sourcesZ;
             const promises = Object.values(sources)
                 .filter(s => s.serviceRef)
                 .map(async s => {
-                    await useSourceActions().deleteSource(s, true);
+                    await sourceActions.deleteSource(s, true);
                 });
             await Promise.all(promises);
             get().actions.saveServiceConfigs({ type: SyncService.None });
-            useAppActions().saveSettings();
+            appActions.saveSettings();
         },
     },
 }), { name: "service" }))
 
-export const useServiceOn = () => useServiceStore(state => state.service.type !== SyncService.None);
-export const useService = () => useServiceStore(state => state.service);
+export const serviceActions = useServiceStore.getState().actions;
 
+export const useService = () => useServiceStore(state => state.service);
+export const useServiceOn = () => useServiceStore(state => state.service.type !== SyncService.None);
 export const useServiceActions = () => useServiceStore(state => state.actions);
 
 export const authenticate = async (configs: ServiceConfigs) => {

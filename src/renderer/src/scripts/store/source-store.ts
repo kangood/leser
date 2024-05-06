@@ -277,3 +277,24 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
 export const useSources = () => useSourceStore(state => state.sources);
 
 export const useSourceActions = () => useSourceStore(state => state.actions);
+
+
+
+export const outlineToSource = (outline: Element): [Promise<number>, string] => {
+    let url = outline.getAttribute("xmlUrl");
+    let name = outline.getAttribute("text") || outline.getAttribute("title");
+    if (url) {
+        return [useSourceActions().addSource(url.trim(), name, true), url];
+    } else {
+        return null;
+    }
+}
+
+export const sourceToOutline = (source: RSSSource, xml: Document) => {
+    let outline = xml.createElement("outline");
+    outline.setAttribute("text", source.name);
+    outline.setAttribute("title", source.name);
+    outline.setAttribute("type", "rss");
+    outline.setAttribute("xmlUrl", source.url);
+    return outline;
+}

@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { SourceGroup } from '@renderer/schema-types';
 import { SourceGroupActionTypes } from '../models/group';
-import { RSSSource, SourceState } from '../models/source';
+import { SourceState } from '../models/source';
 import { devtools } from 'zustand/middleware';
 import intl from 'react-intl-universal';
 import { useAppActions } from './app-store';
 import { domParser } from '../utils';
-import { useSourceActions, useSources } from './source-store';
+import { outlineToSource, sourceToOutline, useSourceActions, useSources } from './source-store';
 import { useItemActions } from './item-store';
 
 type GroupStore = {
@@ -298,25 +298,3 @@ export const useGroups = () => useGroupStore(state => state.groups);
 export const useGroupsByMenu = () => useGroupStore(state => state.groups.map((g, i) => ({ ...g, index: i })));
 
 export const useGroupActions = () => useGroupStore(state => state.actions);
-
-
-const addSource = useSourceActions().addSource;
-
-const outlineToSource = (outline: Element): [ReturnType<typeof addSource>, string] => {
-    let url = outline.getAttribute("xmlUrl");
-    let name = outline.getAttribute("text") || outline.getAttribute("title");
-    if (url) {
-        return [addSource(url.trim(), name, true), url];
-    } else {
-        return null;
-    }
-}
-
-const sourceToOutline = (source: RSSSource, xml: Document) => {
-    let outline = xml.createElement("outline");
-    outline.setAttribute("text", source.name);
-    outline.setAttribute("title", source.name);
-    outline.setAttribute("type", "rss");
-    outline.setAttribute("xmlUrl", source.url);
-    return outline;
-}

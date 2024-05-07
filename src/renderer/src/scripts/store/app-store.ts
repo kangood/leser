@@ -9,8 +9,8 @@ import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
 import { getWindowBreakpoint, initTouchBarWithTexts, validateFavicon } from '../utils';
-import { sourceActions, sourcesZ } from './source-store';
-import { feedActions, feeds } from './feed-store';
+import { sourceActions, useSourceStore } from './source-store';
+import { feedActions, useFeedStore } from './feed-store';
 import { devtools } from 'zustand/middleware';
 import { ALL } from '../models/feed';
 import { produce } from 'immer';
@@ -55,7 +55,7 @@ type AppStore = {
 
 let fetchTimeout: NodeJS.Timeout;
 
-const useAppStore = create<AppStore>()(devtools((set, get) => ({
+export const useAppStore = create<AppStore>()(devtools((set, get) => ({
     app: new AppState(),
     actions: {
         initSourcesSuccess: () => {
@@ -174,6 +174,7 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
             });
         },
         pushNotification: (item: RSSItem) => {
+            const sourcesZ = useSourceStore.getState().sources;
             const sourceName = sourcesZ[item.source].name;
             const state = { sources: sourcesZ, app: get().app };
             if (!window.utils.isFocused()) {
@@ -387,7 +388,7 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
         },
         freeMemory: () => {
             const iids = new Set<number>();
-            for (let feed of Object.values(feeds.feeds)) {
+            for (let feed of Object.values(useFeedStore.getState().feeds.feeds)) {
                 if (feed.loaded) {
                     feed.iids.forEach(iids.add, iids);
                 }
@@ -432,7 +433,6 @@ const useAppStore = create<AppStore>()(devtools((set, get) => ({
     }
 }), { name: "app" }))
 
-export const appState = useAppStore.getState().app;
 export const appActions = useAppStore.getState().actions;
 
 export const useApp = () => useAppStore(state => state.app);

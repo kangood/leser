@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { ALL, FeedFilter, FeedState, RSSFeed, SOURCE } from "../models/feed";
 import { RSSItem, applyItemReduction } from "../models/item";
-import { itemActions, items } from "./item-store";
+import { itemActions, useItemStore } from "./item-store";
 import { produce } from "immer";
 import { devtools } from "zustand/middleware";
 import { RSSSource } from "../models/source";
-import { page } from "./page-store";
 import { appActions } from "./app-store";
+import { usePageStore } from "./page-store";
 
 type FeedStore = {
     feeds: FeedState;
@@ -30,7 +30,7 @@ type FeedStore = {
 
 const LOAD_QUANTITY = 50;
 
-const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
+export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
     // 初始值差个 `groups:[]`
     feeds: { [ALL]: new RSSFeed(ALL) },
     actions: {
@@ -78,7 +78,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             get().actions.initFeedsSuccess();
         },
         dismissItems: () => {
-            const state = { page: page, feeds: get().feeds, items: items };
+            const state = { page: usePageStore.getState().page, feeds: get().feeds, items: useItemStore.getState().items };
             let fid = state.page.feedId;
             let filter = state.feeds[fid].filter;
             let iids = new Set<number>();
@@ -93,16 +93,6 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             set(produce((draft: FeedStore) => {
                 draft.feeds[fid].iids = feed.iids.filter(iid => !iids.has(iid));
             }));
-            // let nextState = { ...get().feeds };
-            // set({
-            //     feeds: {
-            //         ...nextState,
-            //         [fid]: {
-            //             ...feed,
-            //             iids: feed.iids.filter(iid => !iids.has(iid))
-            //         }
-            //     }
-            // });
         },
         loadMoreRequest: (feed: RSSFeed) => {
             set(state => ({
@@ -148,7 +138,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             if (feed.loaded && !feed.loading && !feed.allLoaded) {
                 get().actions.loadMoreRequest(feed);
                 const skipNum = feed.iids.filter(i =>
-                    FeedFilter.testItem(feed.filter, items[i])
+                    FeedFilter.testItem(feed.filter, useItemStore.getState().items[i])
                 ).length;
                 return RSSFeed.loadFeed(feed, skipNum)
                     .then(items => {
@@ -216,7 +206,7 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                     [SOURCE]: new RSSFeed(
                         SOURCE,
                         sids,
-                        page.filter
+                        usePageStore.getState().page.filter
                     ),
                 }
             }));
@@ -224,7 +214,6 @@ const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
     }
 }), { name: "feed" }))
 
-export const feeds = useFeedStore.getState().feeds;
 export const feedActions = useFeedStore.getState().actions;
 
 export const useFeedById = (feedId: string) => useFeedStore(state => state.feeds[feedId]);

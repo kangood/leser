@@ -5,7 +5,7 @@ import { SourceState } from '../models/source';
 import { devtools } from 'zustand/middleware';
 import intl from 'react-intl-universal';
 import { domParser } from '../utils';
-import { outlineToSource, sourceActions, sourceToOutline, sourcesZ } from './source-store';
+import { outlineToSource, sourceActions, sourceToOutline, useSourceStore } from './source-store';
 import { appActions } from './app-store';
 import { itemActions } from './item-store';
 
@@ -31,7 +31,7 @@ type GroupStore = {
     }
 }
 
-const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
+export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
     groups: [],
     actions: {
         reorderSourceGroups: (groups: SourceGroup[]) => {
@@ -190,7 +190,7 @@ const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
                 .showSaveDialog(filters, "*/Fluent_Reader_Export.opml")
                 .then(write => {
                     if (write) {
-                        let state = { groups: get().groups, sources: sourcesZ };
+                        let state = { groups: get().groups, sources: useSourceStore.getState().sources };
                         let xml = domParser.parseFromString(
                             '<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Fluent Reader Export</title></head><body></body></opml>',
                             "text/xml"

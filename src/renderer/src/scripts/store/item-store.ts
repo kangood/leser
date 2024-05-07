@@ -2,13 +2,13 @@ import * as db from '../db';
 import { create } from 'zustand'
 import { ItemState, MARK_READ, MARK_UNREAD, RSSItem, TOGGLE_HIDDEN, TOGGLE_STARRED, applyItemReduction, insertItems } from '../models/item';
 import { RSSSource } from '../models/source';
-import { appActions, appState } from "./app-store";
-import { feedActions, feeds } from "./feed-store";
-import { sourceActions, sourcesZ } from './source-store';
+import { appActions, useAppStore } from "./app-store";
+import { feedActions, useFeedStore } from "./feed-store";
+import { sourceActions, useSourceStore } from './source-store';
 import { devtools } from 'zustand/middleware';
 import { platformCtrl } from '../utils';
 import { RSSFeed } from '../models/feed';
-import { page, pageActions } from './page-store';
+import { pageActions, usePageStore } from './page-store';
 import lf from 'lovefield';
 import { serviceActions } from './service-store';
 
@@ -50,7 +50,7 @@ type ItemStore = {
     }
 }
 
-const useItemStore = create<ItemStore>()(devtools((set, get) => ({
+export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     items: {},
     actions: {
         fetchItemsRequest: (fetchCount = 0) => {
@@ -84,7 +84,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
         },
         fetchItems: async (background = false, sids = null) => {
             let promises = new Array<Promise<RSSItem[]>>();
-            const initState = { app: appState, sources: sourcesZ };
+            const initState = { app: useAppStore.getState().app, sources: useSourceStore.getState().sources };
             if (!initState.app.fetchingItems && !initState.app.syncing) {
                 if (
                     sids === null ||
@@ -93,7 +93,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     await serviceActions.syncWithService(background);
                 }
                 let timenow = new Date().getTime();
-                const sourcesState = sourcesZ;
+                const sourcesState = useSourceStore.getState().sources;
                 let sources =
                     sids === null
                         ? Object.values(sourcesState).filter(s => {
@@ -318,7 +318,7 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             sourceActions.markAllReadDone(sids, time);
         },
         markAllRead: async (sids: number[] = null, date: Date = null, before = true) => {
-            let state = { feeds: feeds, page: page };
+            let state = { feeds: useFeedStore.getState().feeds, page: usePageStore.getState().page };
             if (sids === null) {
                 let feed = state.feeds[state.page.feedId];
                 sids = feed.sids;
@@ -364,7 +364,6 @@ const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     }
 }), { name: "item" }))
 
-export const items = useItemStore.getState().items;
 export const itemActions = useItemStore.getState().actions;
 
 export const useItems = () => useItemStore(state => state.items);

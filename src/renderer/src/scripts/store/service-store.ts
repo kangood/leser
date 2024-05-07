@@ -3,12 +3,12 @@ import lf from "lovefield";
 import { create } from 'zustand';
 import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
-import { appActions, appState } from './app-store';
+import { appActions, useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
-import { sourceActions, sourcesZ } from "./source-store";
+import { sourceActions, useSourceStore } from "./source-store";
 import { insertItems } from "../models/item";
 import { devtools } from "zustand/middleware";
-import { groupActions, groups } from "./group-store";
+import { groupActions, useGroupStore } from "./group-store";
 import { itemActions } from "./item-store";
 
 type ServiceStore = {
@@ -27,6 +27,7 @@ type ServiceStore = {
         removeService: () => Promise<void>;
     },
 }
+
 const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
     service: { type: SyncService.None },
     actions: {
@@ -50,13 +51,13 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         updateSources: async (hook: ServiceHooks["updateSourcesNew"]) => {
             const [sources, groupsMap] = await hook();
             const existing = new Map<string, RSSSource>();
-            for (let source of Object.values(sourcesZ)) {
+            for (let source of Object.values(useSourceStore.getState().sources)) {
                 if (source.serviceRef) {
                     existing.set(source.serviceRef, source);
                 }
             }
             const forceSettings = () => {
-                if (!appState.settings.saving) {
+                if (!useAppStore.getState().app.settings.saving) {
                     appActions.saveSettings();
                 }
             }
@@ -79,7 +80,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                         const inserted = await sourceActions.insertSource(s);
                         inserted.unreadCount = 0;
                         sourceActions.addSourceSuccess(inserted, true);
-                        window.settings.saveGroups(groups);
+                        window.settings.saveGroups(useGroupStore.getState().groups);
                         // 更新网站图标
                         sourceActions.updateFavicon([inserted.sid]);
                         return inserted;
@@ -216,7 +217,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                     // [appReducer]
                     appActions.syncWithServiceFailure(err);
                 } finally {
-                    if (appState.settings.saving) {
+                    if (useAppStore.getState().app.settings.saving) {
                         appActions.saveSettings();
                     }
                 }
@@ -233,8 +234,7 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
         },
         removeService: async () => {
             appActions.saveSettings();
-            const sources = sourcesZ;
-            const promises = Object.values(sources)
+            const promises = Object.values(useSourceStore.getState().sources)
                 .filter(s => s.serviceRef)
                 .map(async s => {
                     await sourceActions.deleteSource(s, true);

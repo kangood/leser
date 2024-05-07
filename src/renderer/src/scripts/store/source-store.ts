@@ -1,12 +1,12 @@
 import * as db from "../db"
 import intl from "react-intl-universal"
-import { create } from 'zustand'
+import { create, useStore } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
-import { appActions, appState } from "./app-store";
+import { appActions, useAppStore } from "./app-store";
 import { MARK_READ, MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { devtools } from "zustand/middleware";
-import { groupActions, groups } from "./group-store";
+import { groupActions, useGroupStore } from "./group-store";
 import { feedActions } from "./feed-store";
 
 type SourceInTypes = {
@@ -42,7 +42,7 @@ type SourceStore = {
 
 
 let insertPromises = Promise.resolve();
-const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
+export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     sources: {},
     actions: {
         initSourcesRequest: () => {
@@ -150,7 +150,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                     await db.itemsDB.delete().from(db.items).where(db.items.source.eq(source.sid)).exec();
                     await db.sourcesDB.delete().from(db.sources).where(db.sources.sid.eq(source.sid)).exec();
                     get().actions.deleteSourceDone(source);
-                    window.settings.saveGroups(groups);
+                    window.settings.saveGroups(useGroupStore.getState().groups);
                 } catch (err) {
                     console.log(err);
                     reject(err);
@@ -196,7 +196,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             set({ sourceInTypes: { batch: batch } });
         },
         addSource: async (url: string, name: string = null, batch = false) => {
-            const app = appState;
+            const app = useAppStore.getState().app;
             console.log('addSource~~', app);
             if (app.sourceInit) {
                 get().actions.addSourceRequest(batch);
@@ -208,7 +208,7 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                     inserted.unreadCount = feed.items.length;
                     inserted.starredCount = 0;
                     get().actions.addSourceSuccess(inserted, batch);
-                    window.settings.saveGroups(groups);
+                    window.settings.saveGroups(useGroupStore.getState().groups);
                     get().actions.updateFavicon([inserted.sid]);
                     const items = await RSSSource.checkItems(inserted, feed.items);
                     await insertItems(items);
@@ -275,7 +275,6 @@ const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
     },
 }), { name: "source" }))
 
-export const sourcesZ = useSourceStore.getState().sources;
 export const sourceActions = useSourceStore.getState().actions;
 
 export const useSources = () => useSourceStore(state => state.sources);

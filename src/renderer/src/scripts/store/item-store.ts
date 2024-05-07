@@ -12,19 +12,8 @@ import { pageActions, usePageStore } from './page-store';
 import lf from 'lovefield';
 import { serviceActions } from './service-store';
 
-export type ItemInTypes = {
-    fetchingItems?: boolean;
-    fetchingProgress?: number;
-    fetchingTotal?: number;
-    errSource?: RSSSource;
-    err?: Error;
-    items?: RSSItem[];
-    itemState?: ItemState;
-}
-
 type ItemStore = {
     items: ItemState;
-    itemInTypes?: ItemInTypes;
     actions: {
         fetchItemsRequest: (fetchCount: number) => void;
         fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => void;
@@ -54,32 +43,31 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
     items: {},
     actions: {
         fetchItemsRequest: (fetchCount = 0) => {
-            const itemInTypes: ItemInTypes = {
-                fetchingItems: true,
-                fetchingProgress: 0,
-                fetchingTotal: fetchCount
-            };
-            appActions.fetchItemsRequest(itemInTypes);
+            // [appReducer]
+            appActions.fetchItemsRequest(fetchCount);
         },
         fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => {
-            let newMap = {};
-            for (let i of items) {
-                newMap[i._id] = i;
-            }
-            set((state) => ({ items: { ...state.items, ...newMap } }));
+            set((state) => {
+                let newMap = {};
+                for (let i of items) {
+                    newMap[i._id] = i;
+                }
+                return { items: { ...state.items, ...newMap } };
+            });
             // [appReducer]
-            const itemInTypes: ItemInTypes = { items: items, itemState: itemState };
-            appActions.fetchItemsSuccess(itemInTypes);
-            // [feedReducer、sourceReducer]
+            appActions.fetchItemsSuccess(items);
+            // [feedReducer]
+            feedActions.fetchItemsSuccess(items, itemState);
+            // [sourceReducer]
+            sourceActions.fetchItemsSuccess(items);
+
         },
         fetchItemsFailure: (source: RSSSource, err: Error) => {
-            const itemInTypes: ItemInTypes = {
-                errSource: source,
-                err: err
-            };
-            appActions.fetchItemsFailure(itemInTypes);
+            // [appReducer]
+            appActions.fetchItemsFailure(source, err);
         },
         fetchItemsIntermediate: () => {
+            // [appReducer]
             appActions.fetchItemsIntermediate();
         },
         fetchItems: async (background = false, sids = null) => {
@@ -192,7 +180,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markReadDone(item);
                 if (item.serviceRef) {
-                    serviceActions.getServiceHooks().markRead?.(item);
+                    serviceActions.getServiceHooks().markReadNew?.(item);
                 }
             }
         },
@@ -206,7 +194,7 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     .exec();
                 get().actions.markUnreadDone(item);
                 if (item.serviceRef) {
-                    serviceActions.getServiceHooks().markUnread?.(item);
+                    serviceActions.getServiceHooks().markUnreadNew?.(item);
                 }
             }
         },
@@ -220,9 +208,9 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
             if (item.serviceRef) {
                 const hooks = serviceActions.getServiceHooks();
                 if (item.starred) {
-                    hooks.unstar?.(item);
+                    hooks.unstarNew?.(item);
                 } else {
-                    hooks.star?.(item);
+                    hooks.starNew?.(item);
                 }
             }
         },

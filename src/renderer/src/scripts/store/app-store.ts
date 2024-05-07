@@ -3,8 +3,8 @@ import { create } from 'zustand'
 import { AppLog, AppLogType, AppState, ContextMenuType } from '../models/app';
 import { RSSItem } from '../models/item';
 import { RSSSource, SourceOpenTarget } from '../models/source';
-import { PageInTypes, pageActions } from './page-store';
-import { ItemInTypes, itemActions } from './item-store';
+import { pageActions } from './page-store';
+import { itemActions } from './item-store';
 import { getCurrentLocale, importAll, setThemeDefaultFont } from '../settings';
 import intl from 'react-intl-universal';
 import locales from "../i18n/_locales";
@@ -18,16 +18,19 @@ import { produce } from 'immer';
 type AppStore = {
     app: AppState;
     actions: {
+        
         initSourcesSuccess: () => void;
         initFeedsSuccess: () => void;
-        fetchItemsRequest: (itemInTypes: ItemInTypes) => void;
-        fetchItemsFailure: (itemInTypes: ItemInTypes) => void;
+        fetchItemsRequest: (fetchCount: number) => void;
+        fetchItemsFailure: (errSource: RSSSource, err: Error) => void;
         fetchItemsIntermediate: () => void;
-        fetchItemsSuccess: (itemInTypes: ItemInTypes) => void;
-        selectAllArticles: (pageInTypes: PageInTypes) => void;
+        fetchItemsSuccess: (items: RSSItem[]) => void;
+        selectAllArticles: () => void;
         initIntlDone: (locale: string) => void;
         initIntl: () => Promise<void>;
         initApp: () => void;
+        addSourceRequest: () => void;
+        addSourceSuccess: (batch: boolean) => void;
         saveSettings: () => void;
         pushNotification: (item: RSSItem) => void;
         setupAutoFetch: () => void;
@@ -64,10 +67,17 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         initFeedsSuccess: () => {
             set((state) => ({ app: { ...state.app, feedInit: true } }))
         },
-        fetchItemsRequest: (itemInTypes: ItemInTypes) => {
-            set((state) =>({ app: { ...state.app, ...itemInTypes } }))
+        fetchItemsRequest: (fetchCount: number) => {
+            set((state) =>({
+                app: {
+                    ...state.app,
+                    fetchingItems: true,
+                    fetchingProgress: 0,
+                    fetchingTotal: fetchCount
+                }
+            }))
         },
-        fetchItemsFailure: (itemInTypes: ItemInTypes) => {
+        fetchItemsFailure: (errSource: RSSSource, err: Error) => {
             set((state) =>({
                 app: {
                     ...state.app,
@@ -78,8 +88,10 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                             ...state.app.logMenu.logs,
                             new AppLog(
                                 AppLogType.Failure,
-                                intl.get("log.fetchFailure", { name: itemInTypes.errSource.name }),
-                                String(itemInTypes.err)
+                                intl.get("log.fetchFailure", {
+                                    name: errSource.name
+                                }),
+                                String(err)
                             )
                         ]
                     }
@@ -89,13 +101,14 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         fetchItemsIntermediate: () => {
             set((state) => ({ app: { ...state.app, fetchingProgress: state.app.fetchingProgress + 1 } }))
         },
-        fetchItemsSuccess: (itemInTypes: ItemInTypes) => {
+        fetchItemsSuccess: (items: RSSItem[]) => {
             set((state) => ({
                 app: {
                     ...state.app,
                     fetchingItems: false,
                     fetchingTotal: 0,
-                    logMenu: itemInTypes.items.length === 0 
+                    logMenu:
+                        items.length === 0
                         ? state.app.logMenu
                         : {
                             ...state.app.logMenu,
@@ -103,18 +116,20 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                                 ...state.app.logMenu.logs,
                                 new AppLog(
                                     AppLogType.Info,
-                                    intl.get("log.fetchSuccess", { count: itemInTypes.items.length })
+                                    intl.get("log.fetchSuccess", {
+                                        count: items.length
+                                    })
                                 )
                             ]
                         }
                 }
             }))
         },
-        selectAllArticles: (pageInTypes: PageInTypes) => {
+        selectAllArticles: () => {
             set((state) => ({
                 app: {
                     ...state.app,
-                    menu: state.app.menu && pageInTypes.keepMenu,
+                    menu: state.app.menu && getWindowBreakpoint(),
                     menuKey: ALL,
                     title: intl.get("allArticles")
                 }
@@ -138,7 +153,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                 })
         },
         initApp: () => {
-            console.log('initApp');
+            console.log('~~initApp~~');
             document.body.classList.add(window.utils.platform);
             get().actions.initIntl()
                 .then(async () => {
@@ -160,28 +175,53 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     console.log('An error occurred:', error);
                 });
         },
-        saveSettings: () => {
-            set({
+        addSourceRequest: () => {
+            set(state => ({
                 app: {
-                    ...get().app,
+                    ...state.app,
+                    fetchingItems: true,
                     settings: {
-                        ...get().app.settings,
+                        ...state.app.settings,
+                        changed: true,
+                        saving: true
+                    }
+                }
+            }));
+        },
+        addSourceSuccess: (batch: boolean) => {
+            set(state => ({
+                app: {
+                    ...state.app,
+                    fetchingItems: state.app.fetchingTotal !== 0,
+                    settings: {
+                        ...state.app.settings,
+                        saving: batch
+                    }
+                }
+            }));
+        },
+        saveSettings: () => {
+            set(state => ({
+                app: {
+                    ...state.app,
+                    settings: {
+                        ...state.app.settings,
                         display: true,
                         changed: true,
-                        saving: !get().app.settings.saving,
+                        saving: !state.app.settings.saving,
                     }
                 },
-            });
+            }));
         },
         pushNotification: (item: RSSItem) => {
             const sourcesZ = useSourceStore.getState().sources;
             const sourceName = sourcesZ[item.source].name;
-            const state = { sources: sourcesZ, app: get().app };
             if (!window.utils.isFocused()) {
                 const options = { body: sourceName } as any;
                 if (item.thumb) options.icon = item.thumb;
                 const notification = new Notification(item.title, options);
                 notification.onclick = () => {
+                    const state = { sources: sourcesZ, app: useAppStore.getState().app };
                     if (state.sources[item.source].openTarget === SourceOpenTarget.External) {
                         window.utils.openExternal(item.link);
                     } else if (!state.app.settings.display) {
@@ -190,7 +230,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     }
                 }
             }
-            set({
+            set(state => ({
                 app: {
                     ...state.app,
                     logMenu:  {
@@ -207,7 +247,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                         ],
                     }
                 } 
-            });
+            }));
         },
         setupAutoFetch: () => {
             clearTimeout(fetchTimeout);

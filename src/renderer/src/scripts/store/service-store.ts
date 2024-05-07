@@ -1,7 +1,7 @@
 import * as db from "../db";
 import lf from "lovefield";
 import { create } from 'zustand';
-import { SYNC_LOCAL_ITEMS, ServiceActionTypes, ServiceHooks, getServiceHooksFromType } from '../models/service';
+import { ServiceHooks, getServiceHooksFromType } from '../models/service';
 import { ServiceConfigs, SyncService } from '@renderer/schema-types';
 import { appActions, useAppStore } from './app-store';
 import { RSSSource } from '../models/source';
@@ -13,12 +13,11 @@ import { itemActions } from "./item-store";
 
 type ServiceStore = {
     service: ServiceConfigs;
-    serviceActionTypes?: ServiceActionTypes;
     actions: {
         getServiceHooks: () => ServiceHooks;
         saveServiceConfigs: (configs: ServiceConfigs) => void;
-        reauthenticate: (hooks: ServiceHooks) => void;
-        syncLocalItems: (unread: Set<string>, starred: Set<string>) => void;
+        reauthenticate: (hooks: ServiceHooks) => Promise<void>;
+        syncLocalItems: (unreadIds: Set<string>, starredIds: Set<string>) => void;
         updateSources: (hook: ServiceHooks["updateSourcesNew"]) => Promise<void>;
         syncItems: (hook: ServiceHooks["syncItemsNew"]) => Promise<void>;
         syncWithService: (background?: boolean) => Promise<void>;
@@ -29,7 +28,7 @@ type ServiceStore = {
 }
 
 const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
-    service: { type: SyncService.None },
+    service: window.settings.getServiceConfigs(),
     actions: {
         getServiceHooks: () => {
             return getServiceHooksFromType(get().service.type);
@@ -45,8 +44,19 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                 get().actions.saveServiceConfigs(configs);
             }
         },
-        syncLocalItems: (unread: Set<string>, starred: Set<string>) => {
-            set({ serviceActionTypes: { type: SYNC_LOCAL_ITEMS, unreadIds: unread, starredIds: starred } })
+        syncLocalItems: (unreadIds: Set<string>, starredIds: Set<string>) => {
+            set(state => {
+                let nextState = { ...state.service };
+                for (let item of Object.values(state.service)) {
+                    if (item.hasOwnProperty("serviceRef")) {
+                        const nextItem = { ...item };
+                        nextItem.hasRead = !unreadIds.has(item.serviceRef);
+                        nextItem.starred = starredIds.has(item.serviceRef);
+                        nextState[item._id] = nextItem;
+                    }
+                }
+                return { service: nextState };
+            });
         },
         updateSources: async (hook: ServiceHooks["updateSourcesNew"]) => {
             const [sources, groupsMap] = await hook();
@@ -193,19 +203,21 @@ const useServiceStore = create<ServiceStore>()(devtools((set, get) => ({
                             appActions.pushNotification(item);
                         }
                     }
-                    if (inserted.length > 0) window.utils.requestAttention();
+                    if (inserted.length > 0) {
+                        window.utils.requestAttention();
+                    }
                 }
                 get().actions.saveServiceConfigs(configs);
             }
         },
         syncWithService: async (background = false) => {
             const hooks = get().actions.getServiceHooks();
-            if (hooks.updateSourcesNew && hooks.fetchItems && hooks.syncItems) {
+            if (hooks.updateSourcesNew && hooks.fetchItemsNew && hooks.syncItemsNew) {
                 try {
                     // [appReducer]
                     appActions.syncWithServiceRequest();
                     if (hooks.reauthenticate) {
-                        get().actions.reauthenticate(hooks);
+                        await get().actions.reauthenticate(hooks);
                     }
                     await get().actions.updateSources(hooks.updateSourcesNew);
                     await get().actions.syncItems(hooks.syncItemsNew);

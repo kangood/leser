@@ -23,14 +23,9 @@ import { minifluxServiceHooks } from "./services/miniflux"
 import { nextcloudServiceHooks } from "./services/nextcloud"
 
 export interface ServiceHooks {
-    authenticate?: (configs: ServiceConfigs) => Promise<boolean>
-    reauthenticate?: (configs: ServiceConfigs) => Promise<ServiceConfigs>
     updateSources?: () => AppThunk<Promise<[RSSSource[], Map<string, string>]>>
-    updateSourcesNew?: () => Promise<[RSSSource[], Map<string, string>]>
     fetchItems?: () => AppThunk<Promise<[RSSItem[], ServiceConfigs]>>
-    fetchItemsNew?: () => Promise<[RSSItem[], ServiceConfigs]>
     syncItems?: () => AppThunk<Promise<[Set<string>, Set<string>]>>
-    syncItemsNew?: () => Promise<[Set<string>, Set<string>]>
     markRead?: (item: RSSItem) => AppThunk
     markUnread?: (item: RSSItem) => AppThunk
     markAllRead?: (
@@ -38,13 +33,24 @@ export interface ServiceHooks {
         date?: Date,
         before?: boolean
     ) => AppThunk<Promise<void>>
+    star?: (item: RSSItem) => AppThunk
+    unstar?: (item: RSSItem) => AppThunk
+    // 去掉 AppThunk 的新的
+    updateSourcesNew?: () => Promise<[RSSSource[], Map<string, string>]>
+    fetchItemsNew?: () => Promise<[RSSItem[], ServiceConfigs]>
+    syncItemsNew?: () => Promise<[Set<string>, Set<string>]>
+    markReadNew?: (item: RSSItem) => void;
+    markUnreadNew?: (item: RSSItem) => void;
     markAllReadNew?: (
         sids?: number[],
         date?: Date,
         before?: boolean
     ) => Promise<void>
-    star?: (item: RSSItem) => AppThunk
-    unstar?: (item: RSSItem) => AppThunk
+    starNew?: (item: RSSItem) => void
+    unstarNew?: (item: RSSItem) => void
+    // 原本没有 AppThunk 的
+    authenticate?: (configs: ServiceConfigs) => Promise<boolean>
+    reauthenticate?: (configs: ServiceConfigs) => Promise<ServiceConfigs>
 }
 
 export function getServiceHooksFromType(type: SyncService): ServiceHooks {

@@ -2,22 +2,17 @@ import { create } from 'zustand'
 import { itemActions, useItemStore } from './item-store';
 import { RSSItem } from '../models/item';
 import { PageState } from '../models/page';
-import { ALL, FeedFilter, FilterType, SOURCE } from '../models/feed';
-import { getWindowBreakpoint } from '../utils';
+import { ALL, FeedFilter, FilterType, RSSFeed, SOURCE } from '../models/feed';
 import { devtools } from 'zustand/middleware';
 import { appActions, useAppStore } from './app-store';
 import { feedActions, useFeedStore } from './feed-store';
 import { ViewConfigs, ViewType } from '@renderer/schema-types';
 import { useSourceStore } from './source-store';
 
-export type PageInTypes = {
-    keepMenu: boolean;
-    init: boolean;
-}
-
 type PageStore = {
     page: PageState;
     actions: {
+        initFeedSuccess: (feed: RSSFeed, items: RSSItem[]) => void;
         checkedFilter: (filterType: FilterType) => boolean;
         toggleFilter: (filterType: FilterType) => void;
         applyFilter: (feedFilter: FeedFilter) => void;
@@ -38,6 +33,19 @@ type PageStore = {
 export const usePageStore = create<PageStore>()(devtools((set, get) => ({
     page: new PageState(),
     actions: {
+        initFeedSuccess: (feed: RSSFeed, items: RSSItem[]) => {
+            set(state => ({
+                page: {
+                    ...state.page,
+                    itemId:
+                        feed._id === state.page.feedId &&
+                        items.filter(i => i._id === state.page.itemId)
+                            .length === 0
+                            ? null
+                            : state.page.itemId,
+                }
+            }))
+        },
         checkedFilter: (filterType: FilterType) => {
             // 原 filterType 的状态和传过来的 filterType 作与运算，返回 checked 值
             return Boolean(get().page.filter.type & filterType);
@@ -55,7 +63,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             if (feedFilter.type !== oldFilterType) {
                 window.settings.setFilterType(feedFilter.type);
                 set((state) => ({ page: { ...state.page, filter: feedFilter } }));
-                // [feedReducer]...
+                // [feedReducer]TODO
                 // 调用 initFeeds
                 feedActions.initFeeds(true);
             }
@@ -72,7 +80,6 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             }
         },
         selectAllArticles: async (init = false) => {
-            const pageInTypes = { keepMenu: getWindowBreakpoint(), init };
             set((state) => ({
                 page: {
                     ...state.page,
@@ -81,8 +88,9 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 },
             }));
             // [appReducer]
-            appActions.selectAllArticles(pageInTypes);
+            appActions.selectAllArticles();
             // [feedReducer]
+            feedActions.selectAllArticles(init, get().page.filter);
         },
         showItem: (feedId: string, item: RSSItem) => {
             const state = { items: useItemStore.getState().items, sources: useSourceStore.getState().sources };
@@ -90,7 +98,7 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
                 state.items.hasOwnProperty(item._id) &&
                 state.sources.hasOwnProperty(item.source)
             ) {
-                set((state) =>({
+                set((state) => ({
                     page: {
                         ...state.page,
                         itemId: item._id,

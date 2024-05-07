@@ -1,6 +1,6 @@
 import * as db from "../db"
 import intl from "react-intl-universal"
-import { create, useStore } from 'zustand'
+import { create } from 'zustand'
 import { RSSSource, SourceState, starredCount, unreadCount } from '../models/source'
 import { fetchFavicon } from "../utils";
 import { appActions, useAppStore } from "./app-store";
@@ -9,19 +9,16 @@ import { devtools } from "zustand/middleware";
 import { groupActions, useGroupStore } from "./group-store";
 import { feedActions } from "./feed-store";
 
-type SourceInTypes = {
-    batch: boolean;
-}
-
 type SourceStore = {
     sources: SourceState;
-    sourceInTypes?: SourceInTypes;
     actions: {
         initSourcesRequest: () => void;
         initSourcesSuccess: (sources: SourceState) => void;
         initSources: () => Promise<void>;
+        fetchItemsSuccess: (items: RSSItem[]) => void;
         insertSource: (source: RSSSource) => Promise<RSSSource>;
         addSourceSuccess: (source: RSSSource, batch: boolean) => void;
+        updateSourceDone: (source: RSSSource) => void;
         updateSource: (source: RSSSource) => Promise<void>;
         updateFavicon: (sids?: number[], force?: boolean) => Promise<void>;
         deleteSourceDone: (source: RSSSource) => void;
@@ -29,7 +26,7 @@ type SourceStore = {
         deleteSources: (sources: RSSSource[]) => Promise<void>;
         updateUnreadCounts: () => Promise<void>;
         updateStarredCounts: () => Promise<void>;
-        addSourceRequest: (batch: boolean) => void;
+        addSourceRequest: () => void;
         addSourceFailure: (err: Error, batch: boolean) => void;
         addSource: (url: string, name?: string, batch?: boolean) => Promise<number>;
         markReadDone: (item: RSSItem, type?: string) => void;
@@ -53,6 +50,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             // [appReducer]
             appActions.initSourcesSuccess();
             // [feedReducer]
+            feedActions.initSourcesSuccess(sources);
         },
         initSources: async () => {
             get().actions.initSourcesRequest();
@@ -69,8 +67,34 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             await starredCount(state);
             // 订阅源分组
             groupActions.fixBrokenGroups(state);
-            // useGroupActions().fixBrokenGroups(state);
             get().actions.initSourcesSuccess(state);
+        },
+        fetchItemsSuccess: (items: RSSItem[]) => {
+            set(state => {
+                let updateMap = new Map<number, number>();
+                for (let item of items) {
+                    if (!item.hasRead) {
+                        updateMap.set(
+                            item.source,
+                            updateMap.has(item.source) ? updateMap.get(item.source) + 1 : 1,
+                        )
+                    }
+                }
+                let nextState = {} as SourceState;
+                for (let [s, source] of Object.entries(state.sources)) {
+                    let sid = parseInt(s);
+                    if (updateMap.has(sid)) {
+                        nextState[sid] = {
+                            ...source,
+                            unreadCount: source.unreadCount + updateMap.get(sid),
+                            starredCount: source.starredCount + updateMap.get(sid),
+                        } as RSSSource;
+                    } else {
+                        nextState[sid] = source;
+                    }
+                }
+                return { sources: nextState };
+            });
         },
         insertSource: (source: RSSSource) => {
             return new Promise((resolve, reject) => {
@@ -97,15 +121,23 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             })
         },
         addSourceSuccess: (source: RSSSource, batch: boolean) => {
-            set({
+            set(state => ({
                 sources: {
-                    ...get().sources,
+                    ...state.sources,
                     [source.sid]: source
                 },
-                sourceInTypes: {
-                    batch: batch
-                }
-            });
+            }));
+            // [appReducer]
+            appActions.addSourceSuccess(batch);
+            // [feedReducer]
+            feedActions.unhideSource(source);
+            // [groupReducer]
+            groupActions.addSourceSuccess(source);
+        },
+        updateSourceDone: (source: RSSSource) => {
+            set((state) => ({ sources: { ...state.sources, [source.sid]: source } }));
+            // [appReducer]
+            appActions.deleteSourceGroup();
         },
         updateSource: async (source: RSSSource) => {
             let sourceCopy = { ...source };
@@ -113,7 +145,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             delete sourceCopy.starredCount;
             const row = db.sources.createRow(sourceCopy);
             await db.sourcesDB.insertOrReplace().into(db.sources).values([row]).exec();
-            set((state) => ({ sources: { ...state.sources, [source.sid]: source } }));
+            get().actions.updateSourceDone(source);
         },
         updateFavicon: async (sids?: number[], force = false) => {
             const initSources = useSourceStore.getState().sources;
@@ -139,7 +171,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             const state = get().sources;
             delete state[source.sid];
             set({ sources: { ...state } });
-            // [otherReducer]
+            // [otherReducer]TODO
         },
         deleteSource: async (source: RSSSource, batch = false) => {
             return new Promise(async (_resolve, reject) => {
@@ -170,7 +202,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
         },
         updateUnreadCounts: async () => {
             const sources: SourceState = {};
-            for (let source of Object.values(get().sources)) {
+            for (let source of Object.values(useSourceStore.getState().sources)) {
                 sources[source.sid] = {
                     ...source,
                     unreadCount: 0,
@@ -188,18 +220,19 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             }
             set({ sources: await starredCount(sources) });
         },
-        addSourceRequest: (batch: boolean) => {
-            set({ sourceInTypes: { batch: batch } });
+        addSourceRequest: () => {
+            // [appReducer]
+            appActions.addSourceRequest();
         },
         addSourceFailure: (err: Error, batch: boolean) => {
-            console.log('~~addSourceFailure~~', err);
-            set({ sourceInTypes: { batch: batch } });
+            // [appReducer] default
+            appActions.addSourceSuccess(batch);
         },
         addSource: async (url: string, name: string = null, batch = false) => {
             const app = useAppStore.getState().app;
             console.log('addSource~~', app);
             if (app.sourceInit) {
-                get().actions.addSourceRequest(batch);
+                get().actions.addSourceRequest();
                 const source = new RSSSource(url, name);
                 try {
                     console.log('addSource in', source);

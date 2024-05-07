@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { SourceGroup } from '@renderer/schema-types';
-import { SourceGroupActionTypes } from '../models/group';
-import { SourceState } from '../models/source';
+import { RSSSource, SourceState } from '../models/source';
 import { devtools } from 'zustand/middleware';
 import intl from 'react-intl-universal';
 import { domParser } from '../utils';
@@ -11,7 +10,6 @@ import { itemActions } from './item-store';
 
 type GroupStore = {
     groups: SourceGroup[];
-    sourceGroupActionTypes?: SourceGroupActionTypes;
     actions: {
         reorderSourceGroups: (groups: SourceGroup[]) => void;
         fixBrokenGroups: (sources: SourceState) => void;
@@ -19,6 +17,7 @@ type GroupStore = {
         createSourceGroup: (name: string) => number;
         addSourceToGroupDone: (groupIndex: number, sid: number) => void;
         addSourceToGroup: (groupIndex: number, sid: number) => void;
+        addSourceSuccess: (source: RSSSource) => void;
         importOPML: () => void;
         exportOPML: () => void;
         updateSourceGroupDone: (group: SourceGroup) => void;
@@ -32,17 +31,17 @@ type GroupStore = {
 }
 
 export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
-    groups: [],
+    groups: window.settings.loadGroups(),
     actions: {
         reorderSourceGroups: (groups: SourceGroup[]) => {
             set({ groups: groups });
             // [appReducer]
             appActions.deleteSourceGroup();
             
-            window.settings.saveGroups(groups);
+            window.settings.saveGroups(get().groups);
         },
         fixBrokenGroups: (sources: SourceState) => {
-            const { groups } = get();
+            const groups = get().groups;
             const sids = new Set(Object.values(sources).map(s => s.sid));
             let isBroken = false;
             const newGroups: SourceGroup[] = 
@@ -66,7 +65,7 @@ export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
             }
         },
         createSourceGroupDone: (group: SourceGroup) => {
-            set({ groups: [ ...get().groups, group ] })
+            set(state => ({ groups: [ ...state.groups, group ] }));
         },
         createSourceGroup: (name: string) => {
             // 检查是否存在 name 相等的组，如果找到这样的组，函数直接返回该组的索引 i
@@ -86,26 +85,34 @@ export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
             return groups.length - 1;
         },
         addSourceToGroupDone: (groupIndex: number, sid: number) => {
-            set({
-                groups: get().groups
+            set(state => ({
+                groups: state.groups
                     .map((g, i) => ({
                         ...g,
                         sids:
                             i == groupIndex
                                 ? [
-                                    ...g.sids.filter(sid => sid !== sid),
+                                    ...g.sids.filter(sidIn => sidIn !== sid),
                                     sid,
                                 ]
-                                : g.sids.filter(sid => sid !== sid)
+                                : g.sids.filter(sidIn => sidIn !== sid)
                     }))
                     .filter(g => g.isMultiple || g.sids.length > 0)
-            });
+            }));
             // [appReducer]
             appActions.deleteSourceGroup();
         },
         addSourceToGroup: (groupIndex: number, sid: number) => {
             get().actions.addSourceToGroupDone(groupIndex, sid);
             window.settings.saveGroups(get().groups);
+        },
+        addSourceSuccess: (source: RSSSource) => {
+            set(state => ({
+                groups: [
+                    ...state.groups,
+                    new SourceGroup([source.sid])
+                ]
+            }));
         },
         importOPML: () => {
             const filters = [ { name: intl.get("sources.opmlFile"), extensions: ["xml", "opml"] } ];

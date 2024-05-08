@@ -428,7 +428,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
         },
         freeMemory: () => {
             const iids = new Set<number>();
-            for (let feed of Object.values(useFeedStore.getState().feeds.feeds)) {
+            for (let feed of Object.values(useFeedStore.getState().feeds)) {
                 if (feed.loaded) {
                     feed.iids.forEach(iids.add, iids);
                 }

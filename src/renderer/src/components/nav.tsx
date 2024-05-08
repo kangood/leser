@@ -1,20 +1,18 @@
 import React, { useEffect } from "react"
 import { ProgressIndicator, IObjectWithKey } from "@fluentui/react"
 import { WindowStateListenerType } from "../schema-types"
-import { useApp, useAppActions } from "@renderer/scripts/store/app-store"
+import { useApp, useAppActions, useAppMenuOn } from "@renderer/scripts/store/app-store"
 import { usePageActions, usePageItemShown } from "@renderer/scripts/store/page-store"
 import { useItemActions } from "@renderer/scripts/store/item-store"
-import { useMenuActions, useMenuDisplay } from "@renderer/scripts/store/menu-store"
 
 const Nav: React.FC = () => {
     // zustand store
     const appState = useApp();
-    const { openMarkAllMenu, toggleLogMenu, openViewMenu, toggleSettings } = useAppActions();
+    const { openMarkAllMenu, toggleLogMenu, openViewMenu, toggleSettings, toggleMenu } = useAppActions();
     const pageItemShown = usePageItemShown();
     const { toggleSearch } = usePageActions();
     const { fetchItems } = useItemActions();
-    const menuDisplay = useMenuDisplay();
-    const { toggleMenu } = useMenuActions();
+    const appMenuOn = useAppMenuOn();
 
     useEffect(() => {
         setBodyFocusState(window.utils.isFocused())
@@ -86,7 +84,7 @@ const Nav: React.FC = () => {
     const getClassNames = () => {
         const classNames = new Array<string>();
         if (appState.settings.display) classNames.push("hide-btns");
-        if (menuDisplay) classNames.push("menu-on");
+        if (appMenuOn) classNames.push("menu-on");
         if (pageItemShown) classNames.push("item-on");
         return classNames.join(" ");
     }

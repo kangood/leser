@@ -7,10 +7,8 @@ import { groupActions } from "./group-store";
 import { pageActions } from "./page-store";
 
 type MenuStore = {
-    display: boolean;
     actions: {
         selectSourceGroup: (group: SourceGroup, menuKey: string) => void;
-        toggleMenu: (display?: boolean) => void;
         allArticles: (init?: boolean) => void;
         selectSource: (source: RSSSource) => void;
         updateGroupExpansion: (event: React.MouseEvent, key: string, selected: string) => void;
@@ -18,14 +16,7 @@ type MenuStore = {
 }
 
 const useMenuStore = create<MenuStore>()(devtools(set => ({
-    display: false,
     actions: {
-        toggleMenu: (display) => {
-            set(state => ({
-                display:
-                    (display !== undefined) ? display : !state.display
-            }))
-        },
         selectSourceGroup: (group: SourceGroup, menuKey: string) => {
             pageActions.selectSources(group.sids, menuKey, group.name);
             feedActions.initFeeds();
@@ -49,5 +40,4 @@ const useMenuStore = create<MenuStore>()(devtools(set => ({
     }
 }), { name: "menu" }))
 
-export const useMenuDisplay = () => useMenuStore(state => state.display);
 export const useMenuActions = () => useMenuStore(state => state.actions);

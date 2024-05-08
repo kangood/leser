@@ -1,10 +1,10 @@
 import * as React from "react"
 import { RSSSource, SourceOpenTarget } from "../../scripts/models/source"
 import { RSSItem } from "../../scripts/models/item"
-import { platformCtrl } from "../../scripts/utils"
+import { getWindowBreakpoint, platformCtrl } from "../../scripts/utils"
 import { FeedFilter } from "../../scripts/models/feed"
 import { ViewConfigs } from "../../schema-types"
-import { useMenuActions } from "@renderer/scripts/store/menu-store"
+import { useAppActions } from "@renderer/scripts/store/app-store"
 
 export type CardProps = {
     feedId: string
@@ -35,7 +35,7 @@ export const Card: React.FC<CardProps> = (props) => {
 
 export const bindCardEventsToProps = (props: CardProps) => {
     
-    const { toggleMenu } = useMenuActions();
+    const { toggleMenu } = useAppActions();
 
     const openInBrowser = (e: React.MouseEvent) => {
         props.markRead(props.item)
@@ -44,7 +44,7 @@ export const bindCardEventsToProps = (props: CardProps) => {
 
     const onClick = (e: React.MouseEvent) => {
         // 如果窗口宽度小于断点，则关闭菜单栏
-        if (window.innerWidth < 1200) {
+        if (!getWindowBreakpoint()) {
             toggleMenu(false);
         }
         e.preventDefault()

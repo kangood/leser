@@ -258,8 +258,8 @@ body.darwin .main:not(.menu-on) .article-search {
     margin-left: var(--menuWidth); /* 左边距 */
 }
 
-/* 设置媒体查询，当视口宽度大于等于 1200px 时生效 */
-@media (min-width: 1200px) {
+/* 设置媒体查询，当视口宽度大于等于 菜单断点 时生效 */
+@media (min-width: 1440px) {
     /* 菜单容器样式 */
     .menu-container {
         width: var(--menuWidth); /* 宽度 */

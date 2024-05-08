@@ -18,7 +18,6 @@ import { produce } from 'immer';
 type AppStore = {
     app: AppState;
     actions: {
-        
         initSourcesSuccess: () => void;
         initFeedsSuccess: () => void;
         fetchItemsRequest: (fetchCount: number) => void;
@@ -53,6 +52,7 @@ type AppStore = {
         exitSettings: () => Promise<void>;
         selectSources: (menuKey: string, title: string) => void;
         openGroupMenu: (sids: number[], event: React.MouseEvent) => void;
+        toggleMenu: (display?: boolean) => void;
     }
 }
 
@@ -469,7 +469,13 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
                     },
                 }
             }));
-        }
+        },
+        toggleMenu: (display?) => {
+            set(produce((draft: AppStore) => {
+                draft.app.menu = (display !== undefined) ? display : !draft.app.menu;
+            }));
+            window.settings.setDefaultMenu(get().app.menu);
+        },
     }
 }), { name: "app" }))
 
@@ -478,6 +484,7 @@ export const appActions = useAppStore.getState().actions;
 export const useApp = () => useAppStore(state => state.app);
 export const useAppActions = () => useAppStore(state => state.actions);
 
+export const useAppMenuOn = () => useAppStore(state => state.app.menu);
 export const useAppLocale = () => useAppStore(state => state.app.locale);
 export const useAppStatusByMenu = () => useAppStore(state => state.app.sourceInit && !state.app.settings.display);
 export const useAppSettingsSids = () => useAppStore(state => state.app.settings.sids);

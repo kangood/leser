@@ -7,9 +7,8 @@ import { ContentFilter } from "./utils/content-filter"
 import { FeedTop } from "./feeds/feed-top"
 import { Feed } from "./feeds/feed"
 import { usePageActions, usePageCurrentItem, usePageFeeds, usePageFilter, usePageItemFromFeed, usePageViewType } from "@renderer/scripts/store/page-store"
-import { useApp, useAppActions, useAppContextMenuOn, useAppSettingsDisplay } from "@renderer/scripts/store/app-store"
+import { useApp, useAppActions, useAppContextMenuOn, useAppMenuOn, useAppSettingsDisplay } from "@renderer/scripts/store/app-store"
 import Article from "./article"
-import { useMenuActions, useMenuDisplay } from "@renderer/scripts/store/menu-store"
 
 const Page: React.FC = () => {
     // zustand store
@@ -21,10 +20,9 @@ const Page: React.FC = () => {
     const appState = useApp();
     const appSettingsDisplay = useAppSettingsDisplay();
     const appContextMenuOn = useAppContextMenuOn();
-    const { openViewMenu, openMarkAllMenu, toggleLogMenu, toggleSettings } = useAppActions();
+    const { openViewMenu, openMarkAllMenu, toggleLogMenu, toggleSettings, toggleMenu } = useAppActions();
     const viewType = usePageViewType();
-    const menuDisplay = useMenuDisplay();
-    const { toggleMenu } = useMenuActions();
+    const appMenuOn = useAppMenuOn();
 
     const [maximized, setMaximized] = React.useState<boolean>(window.utils.isMaximized());
     
@@ -74,7 +72,7 @@ const Page: React.FC = () => {
                     <div
                         key="card"
                         className={
-                            "main" + (menuDisplay ? " menu-on" : "")
+                            "main" + (appMenuOn ? " menu-on" : "")
                         }>
                         <ArticleSearch />
                         <div className="wide-side-wrapper dragging">
@@ -138,7 +136,7 @@ const Page: React.FC = () => {
                     <div
                         key="list"
                         className={
-                            "list-main" + (menuDisplay ? " menu-on" : "")
+                            "list-main" + (appMenuOn ? " menu-on" : "")
                         }>
                         <ArticleSearch />
                         <div className="list-feed-container">

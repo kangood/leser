@@ -69,6 +69,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
             get().actions.initFeedsRequest();
             let promises = new Array<Promise<void>>();
             for (let feed of Object.values(get().feeds)) {
+                console.log('feed', feed);
                 if (!feed.loaded || force) {
                     let p = RSSFeed.loadFeed(feed)
                         .then(items => {
@@ -134,7 +135,7 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                     feeds: {
                         ...state.feeds,
                         [ALL]: {
-                            ...state[ALL],
+                            ...state.feeds[ALL],
                             loaded: false,
                             filter: filter,
                         },

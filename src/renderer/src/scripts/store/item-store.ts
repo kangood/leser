@@ -152,8 +152,10 @@ export const useItemStore = create<ItemStore>()(devtools((set, get) => ({
                     )
                 }
             }))
-            // [feedReducer]
-            feedActions.toggleHiddenDone(item, type);
+            if (type === TOGGLE_HIDDEN) {
+                // [feedReducer]
+                feedActions.toggleHiddenDone(item, type);
+            }
         },
         toggleStarredDone: (item: RSSItem) => {
             get().actions.toggleHiddenDone(item, TOGGLE_STARRED);

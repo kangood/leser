@@ -19,6 +19,7 @@ type FeedStore = {
         initFeeds: (force?: boolean) => Promise<void>;
         initSourcesSuccess: (sources: SourceState) => void;
         fetchItemsSuccess: (items: RSSItem[], itemState: ItemState) => void;
+        applyFilterDone: (feedFilter: FeedFilter) => void;
         selectAllArticles: (init: boolean, filter: FeedFilter) => void;
         dismissItems: () => void;
         loadMoreRequest: (feed: RSSFeed) => void;
@@ -126,6 +127,18 @@ export const useFeedStore = create<FeedStore>()(devtools((set, get) => ({
                     }
                 }
                 return { feeds: nextState }
+            });
+        },
+        applyFilterDone: (feedFilter: FeedFilter) => {
+            set(state => {
+                let nextState: FeedState = {};
+                for (let [id, feed] of Object.entries(state.feeds)) {
+                    nextState[id] = {
+                        ...feed,
+                        filter: feedFilter,
+                    }
+                }
+                return { feeds: nextState };
             });
         },
         selectAllArticles: (init: boolean, filter: FeedFilter) => {

@@ -14,8 +14,9 @@ type PageStore = {
     actions: {
         initFeedSuccess: (feed: RSSFeed, items: RSSItem[]) => void;
         checkedFilter: (filterType: FilterType) => boolean;
-        toggleFilter: (filterType: FilterType) => void;
+        applyFilterDone: (feedFilter: FeedFilter) => void;
         applyFilter: (feedFilter: FeedFilter) => void;
+        toggleFilter: (filterType: FilterType) => void;
         switchFilter: (filterType: FilterType) => void;
         selectAllArticles: (init?: boolean) => Promise<void>;
         showItem: (feedId: string, item: RSSItem) => void;
@@ -50,11 +51,10 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             // 原 filterType 的状态和传过来的 filterType 作与运算，返回 checked 值
             return Boolean(get().page.filter.type & filterType);
         },
-        toggleFilter: (filterType: FilterType) => {
-            // 用于计算 filterType，再调用 applyFilter
-            let nextFilter = { ...get().page.filter };
-            nextFilter.type ^= filterType;
-            get().actions.applyFilter(nextFilter);
+        applyFilterDone: (feedFilter: FeedFilter) => {
+            set((state) => ({ page: { ...state.page, filter: feedFilter } }));
+            // [feedReducer]
+            feedActions.applyFilterDone(feedFilter);
         },
         // 由 toggleFilter 调用
         applyFilter: (feedFilter: FeedFilter) => {
@@ -62,11 +62,16 @@ export const usePageStore = create<PageStore>()(devtools((set, get) => ({
             // 新老 filterType 对比，不一样就 set
             if (feedFilter.type !== oldFilterType) {
                 window.settings.setFilterType(feedFilter.type);
-                set((state) => ({ page: { ...state.page, filter: feedFilter } }));
-                // [feedReducer]TODO
-                // 调用 initFeeds
-                feedActions.initFeeds(true);
             }
+            get().actions.applyFilterDone(feedFilter);
+            // 调用 initFeeds
+            feedActions.initFeeds(true);
+        },
+        toggleFilter: (filterType: FilterType) => {
+            // 用于计算 filterType，再调用 applyFilter
+            let nextFilter = { ...get().page.filter };
+            nextFilter.type ^= filterType;
+            get().actions.applyFilter(nextFilter);
         },
         switchFilter: (filterType: FilterType) => {
             let oldFilter = get().page.filter;

@@ -26,6 +26,7 @@ type GroupStore = {
         removeSourceFromGroup: (groupIndex: number, sids: number[]) => void;
         deleteSourceGroupDone: (groupIndex: number) => void;
         deleteSourceGroup: (groupIndex: number) => void;
+        deleteSourceDone: (source: RSSSource) => void;
         toggleGroupExpansion: (groupIndex: number) => void;
     }
 }
@@ -284,16 +285,30 @@ export const useGroupStore = create<GroupStore>()(devtools((set, get) => ({
             get().actions.deleteSourceGroupDone(groupIndex);
             window.settings.saveGroups(get().groups);
         },
+        deleteSourceDone: (source: RSSSource) => {
+            set(state => ({
+                groups: [
+                    ...state.groups
+                        .map(group => ({
+                            ...group,
+                            sids: group.sids.filter(
+                                sid => sid !== source.sid
+                            )
+                        }))
+                        .filter(g => g.isMultiple || g.sids.length === 1)
+                ]
+            }));
+        },
         toggleGroupExpansion: (groupIndex: number) => {
             set(state => {
-                const nextState = state.groups.map((g, i) => 
+                const nextState = 
+                        state.groups.map((g, i) => 
                                     i == groupIndex
                                     ? {
                                         ...g,
                                         expanded: !g.expanded,
                                     }
-                                    : g )
-                        
+                                    : g );
                 return { groups: nextState };
             });
             window.settings.saveGroups(get().groups);

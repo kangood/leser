@@ -8,6 +8,7 @@ import { MARK_READ, MARK_UNREAD, RSSItem, insertItems } from "../models/item";
 import { devtools } from "zustand/middleware";
 import { groupActions, useGroupStore } from "./group-store";
 import { feedActions } from "./feed-store";
+import { pageActions } from "./page-store";
 
 type SourceStore = {
     sources: SourceState;
@@ -171,7 +172,14 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             const state = get().sources;
             delete state[source.sid];
             set({ sources: { ...state } });
-            // [otherReducer]TODO
+            // [appReducer]
+            appActions.deleteSourceGroup();
+            // [feedReducer]
+            feedActions.hideSource(source);
+            // [groupReducer]
+            groupActions.deleteSourceDone(source);
+            // [pageReducer]
+            pageActions.dismissItem();
         },
         deleteSource: async (source: RSSSource, batch = false) => {
             return new Promise(async (_resolve, reject) => {
@@ -225,7 +233,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
             appActions.addSourceRequest();
         },
         addSourceFailure: (err: Error, batch: boolean) => {
-            // [appReducer] default
+            // [appReducer]
             appActions.addSourceSuccess(batch);
         },
         addSource: async (url: string, name: string = null, batch = false) => {

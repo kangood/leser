@@ -68,7 +68,7 @@ export const useAppStore = create<AppStore>()(devtools((set, get) => ({
             set((state) => ({ app: { ...state.app, feedInit: true } }))
         },
         fetchItemsRequest: (fetchCount: number) => {
-            set((state) =>({
+            set((state) => ({
                 app: {
                     ...state.app,
                     fetchingItems: true,

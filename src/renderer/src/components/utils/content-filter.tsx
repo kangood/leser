@@ -1,12 +1,17 @@
 import React from 'react';
 import { Icon } from '@fluentui/react';
 import intl from 'react-intl-universal';
-import { FilterType } from '@renderer/scripts/models/feed';
+import { FeedFilter, FilterType } from '@renderer/scripts/models/feed';
 
-export const ContentFilter = ({ filter, switchFilter }) => {
+interface ContentFilterProps {
+    filter: FeedFilter;
+    switchFilter: (filterType: FilterType) => void;
+}
+
+export const ContentFilter: React.FC<ContentFilterProps> = ({ filter, switchFilter }) => {
     // 判断当前是否被选中
     const checked = (filterType: FilterType) => {
-        return (filter & ~FilterType.Toggles) == filterType;
+        return (filter.type & ~FilterType.Toggles) == filterType;
     }
 
     return (

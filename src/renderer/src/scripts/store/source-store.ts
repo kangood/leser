@@ -287,7 +287,7 @@ export const useSourceStore = create<SourceStore>()(devtools((set, get) => ({
                 sources: {
                     ...state.sources,
                     [item.source]: {
-                        ...state[item.source],
+                        ...state.sources[item.source],
                         starredCount: state.sources[item.source].starredCount + (item.starred ? -1 : 1),
                     } as RSSSource
                 }

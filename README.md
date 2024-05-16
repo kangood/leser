@@ -10,9 +10,9 @@
 
 ## 预览
 
-![image](https://github.com/KangodYan/leser/assets/36319737/15cc8c4b-5d30-4082-8b3c-cf5aa60d5128)
+![image](https://github.com/KangodYan/leser/blob/master/resources/preview_image1.png)
 
-![image](https://github.com/KangodYan/leser/assets/36319737/ec8514ed-7e13-4c3b-9cca-9a5c8217ca6d)
+![image](https://github.com/KangodYan/leser/blob/master/resources/preview_image2.png)
 
 ## 技术栈
 

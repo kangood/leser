@@ -1,8 +1,31 @@
 # leser
 
-一个现代风格的 RSS 桌面客户端，基于 Electron 的 React 项目，支持接入大部分主流订阅源服务
+## 简介
 
-本项目使用了 zustand 作为状态管理，而 zustand 的名字取自「state」对应的德语单词，为此受到了启发，故使用德语「reader」单词——leser
+一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），是基于 Electron 构建的 React 项目，支持接入大部分主流订阅源服务
+
+本项目名字受 `state` 对应德语单词——zustand 的取名启发，故项目名使用德语 `reader` 单词——leser
+
+## 预览
+
+![image](https://github.com/KangodYan/leser/assets/36319737/15cc8c4b-5d30-4082-8b3c-cf5aa60d5128)
+
+![image](https://github.com/KangodYan/leser/assets/36319737/ec8514ed-7e13-4c3b-9cca-9a5c8217ca6d)
+
+## 特性
+
+- TailwindCSS 与 Antd 整合
+- 动态暗黑和 Antd 的动态国际化
+- TanStack Query 异步加载和管理服务端状态
+- 使用 token 和 refetch_token 实现无痛刷新
+- 使用 RBAC 实现对资源（菜单和数据）和 api 的访问控制
+
+## 技术栈
+
+- 主要技术：Electron + React + TypeScript
+- 构建工具：Vite
+- UI 组件：FluentUI
+- 状态库：Zustand
 
 ## 项目结构
 

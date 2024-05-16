@@ -2,7 +2,9 @@
 
 ## 简介
 
-一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），是基于 Electron 构建的 React 项目，支持接入大部分主流订阅源服务
+一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），是基于 Electron 构建的 React 项目
+
+支持接入大部分主流订阅源服务，Fever、Feedbin、Google Reader( FreshRSS )、Inoreader、Miniflux、Nextcloud News
 
 本项目名字受 `state` 对应德语单词——zustand 的取名启发，故项目名使用德语 `reader` 单词——leser
 
@@ -11,14 +13,6 @@
 ![image](https://github.com/KangodYan/leser/assets/36319737/15cc8c4b-5d30-4082-8b3c-cf5aa60d5128)
 
 ![image](https://github.com/KangodYan/leser/assets/36319737/ec8514ed-7e13-4c3b-9cca-9a5c8217ca6d)
-
-## 特性
-
-- TailwindCSS 与 Antd 整合
-- 动态暗黑和 Antd 的动态国际化
-- TanStack Query 异步加载和管理服务端状态
-- 使用 token 和 refetch_token 实现无痛刷新
-- 使用 RBAC 实现对资源（菜单和数据）和 api 的访问控制
 
 ## 技术栈
 

@@ -1,6 +1,8 @@
-# electron-reader
+# leser
 
 一个现代风格的 RSS 桌面客户端，基于 Electron 的 React 项目，支持接入大部分主流订阅源服务
+
+本项目使用了 zustand 作为状态管理，而 zustand 的名字取自「state」对应的德语单词，为此受到了启发，故使用德语「reader」单词——leser
 
 ## 项目结构
 
@@ -10,17 +12,17 @@
 │   ├── icon.icns
 │   ├── icon.ico
 │   └── icon.png
-├── dist                                                  # `electron-builder` 生成的文件
+├── dist                                                  # `electron-builder` 生成的可执行文件
 │   ├── builder-debug.yml
 │   ├── builder-effective-config.yaml
-│   ├── electron-reader-1.0.0-mac.zip
-│   ├── electron-reader-1.0.0-mac.zip.blockmap
-│   ├── electron-reader-1.0.0.dmg
-│   ├── electron-reader-1.0.0.dmg.blockmap
+│   ├── leser-1.0.0-mac.zip
+│   ├── leser-1.0.0-mac.zip.blockmap
+│   ├── leser-1.0.0.dmg
+│   ├── leser-1.0.0.dmg.blockmap
 │   ├── latest-mac.yml
 │   └── mac
-│       └── electron-reader.app
-├── out                                                   # `electron-vite build` 生成的文件
+│       └── leser.app
+├── out                                                   # `electron-vite build` 生成的编译后文件
 │   ├── main                                              
 │   │   ├── fontlist
 │   │   ├── fonts.vbs

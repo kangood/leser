@@ -24,10 +24,11 @@
 ## 技术栈
 
 - 主要技术：Electron + React 18
-- 语言实现：TypeScript + CSS
+- 实现语言：TypeScript + CSS
 - 构建工具：Vite 5
 - UI 组件：FluentUI
 - 状态库：Zustand
+- 本地数据库：Nedb
 
 ## 项目结构
 

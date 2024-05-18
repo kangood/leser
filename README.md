@@ -23,9 +23,9 @@
 
 ## 技术栈
 
-- 主要技术：Electron + React18
+- 主要技术：Electron + React 18
 - 语言实现：TypeScript + CSS
-- 构建工具：Vite5
+- 构建工具：Vite 5
 - UI 组件：FluentUI
 - 状态库：Zustand
 

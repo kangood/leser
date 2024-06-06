@@ -1,10 +1,8 @@
-# leser
+# Leser
 
 ## 简介
 
 一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），是基于 Electron 构建的 React 项目
-
-本项目名字受 `state` 对应德语单词——zustand 的取名启发，故项目名使用德语 `reader` 单词——leser
 
 支持接入大部分主流订阅源服务：
 

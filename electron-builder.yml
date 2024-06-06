@@ -1,5 +1,6 @@
 appId: top.kangod.leser
 productName: leser
+copyright: Copyright © 2024 Kangod Yan
 directories:
   buildResources: build
 files:
@@ -13,11 +14,20 @@ asarUnpack:
   - resources/**
 win:
   executableName: leser
+  icon: build/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  # 是否一键安装
+  oneClick: false
+  # 是否始终按所有用户安装
+  perMachine: true
+  # 允许修改安装目录
+  allowToChangeInstallationDirectory: true
+  # 是否在卸载时删除应用程序数据
+  deleteAppDataOnUninstall: true
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
@@ -26,6 +36,7 @@ mac:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
+  icon: build/icon.icns
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:

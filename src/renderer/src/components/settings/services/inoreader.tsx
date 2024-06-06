@@ -18,7 +18,6 @@ import {
     Link,
 } from "@fluentui/react"
 import DangerButton from "../../utils/danger-button"
-import LiteExporter from "./lite-exporter"
 
 type GReaderConfigsTabState = {
     existing: boolean
@@ -39,7 +38,7 @@ const endpointOptions: IDropdownOption[] = [
 
 const openSupport = () => {
     window.utils.openExternal(
-        "https://github.com/yang991178/fluent-reader/wiki/Support#inoreader"
+        "https://github.com/KangodYan/leser/wiki/Support#inoreader"
     );
 }
 
@@ -303,9 +302,6 @@ const InoreaderConfigsTab: React.FC<ServiceConfigsTabProps> = (props) => {
                         )}
                     </Stack.Item>
                 </Stack>
-                {state.existing && (
-                    <LiteExporter serviceConfigs={props.configs} />
-                )}
             </Stack>
         </>
     )

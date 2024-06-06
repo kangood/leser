@@ -7,12 +7,12 @@ class AboutTab extends React.Component {
         <div className="tab-body">
             <Stack className="settings-about" horizontalAlign="center">
                 <img src="icons/logo.svg" style={{ width: 120, height: 120 }} />
-                <h3 style={{ fontWeight: 600 }}>Fluent Reader</h3>
+                <h3 style={{ fontWeight: 600 }}>Leser</h3>
                 <small>
                     {intl.get("settings.version")} {window.utils.getVersion()}
                 </small>
                 <p className="settings-hint">
-                    Copyright © 2020 Haoyuan Liu. All rights reserved.
+                    Copyright © 2024 Kangod Yan. All rights reserved.
                 </p>
                 <Stack
                     horizontal
@@ -22,7 +22,7 @@ class AboutTab extends React.Component {
                         <Link
                             onClick={() =>
                                 window.utils.openExternal(
-                                    "https://github.com/yang991178/fluent-reader/wiki/Support#keyboard-shortcuts"
+                                    "https://github.com/KangodYan/leser/wiki/Support#keyboard-shortcuts"
                                 )
                             }>
                             {intl.get("settings.shortcuts")}
@@ -32,7 +32,7 @@ class AboutTab extends React.Component {
                         <Link
                             onClick={() =>
                                 window.utils.openExternal(
-                                    "https://github.com/yang991178/fluent-reader"
+                                    "https://github.com/KangodYan/leser"
                                 )
                             }>
                             {intl.get("settings.openSource")}
@@ -42,7 +42,7 @@ class AboutTab extends React.Component {
                         <Link
                             onClick={() =>
                                 window.utils.openExternal(
-                                    "https://github.com/yang991178/fluent-reader/issues"
+                                    "https://github.com/KangodYan/leser/issues"
                                 )
                             }>
                             {intl.get("settings.feedback")}

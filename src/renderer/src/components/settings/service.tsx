@@ -54,17 +54,10 @@ const ServiceTab: React.FC = () => {
         { key: SyncService.Inoreader, text: "Inoreader" },
         { key: SyncService.Miniflux, text: "Miniflux" },
         { key: SyncService.Nextcloud, text: "Nextcloud News API" },
-        { key: -1, text: intl.get("service.suggest") },
     ];
 
     const onServiceOptionChange = (_, option: IDropdownOption) => {
-        if (option.key === -1) {
-            window.utils.openExternal(
-                "https://github.com/yang991178/fluent-reader/issues/23"
-            );
-        } else {
-            setState({ type: option.key as number })
-        }
+        setState({ type: option.key as number })
     }
 
     const exitConfigsTab = () => {
@@ -137,7 +130,7 @@ const ServiceTab: React.FC = () => {
                         <Link
                             onClick={() =>
                                 window.utils.openExternal(
-                                    "https://github.com/yang991178/fluent-reader/wiki/Support#services"
+                                    "https://github.com/KangodYan/leser/wiki/Support#services"
                                 )
                             }
                             style={{ marginLeft: 6 }}>

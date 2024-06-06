@@ -547,7 +547,7 @@ const RulesTab: React.FC = () => {
                         <Link
                             onClick={() =>
                                 window.utils.openExternal(
-                                    "https://github.com/yang991178/fluent-reader/wiki/Support#rules"
+                                    "https://github.com/KangodYan/leser/wiki/Support#rules"
                                 )
                             }
                             style={{ marginLeft: 6 }}>

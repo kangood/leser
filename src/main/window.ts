@@ -60,7 +60,7 @@ export class WindowManager {
         if (!this.hasWindow()) {
             // 创建浏览器窗口
             this.mainWindow = new BrowserWindow({
-                title: "Fluent Reader", // 窗口标题
+                title: "Leser", // 窗口标题
                 // 背景颜色
                 backgroundColor:
                     process.platform === "darwin" // macOS

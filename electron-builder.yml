@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: top.kangod.leser
 productName: leser
 directories:
   buildResources: build

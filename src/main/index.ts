@@ -16,7 +16,7 @@ if (!process.mas) {
 if (!app.isPackaged) {
     app.setAppUserModelId(process.execPath)
 } else if (process.platform === "win32")
-    app.setAppUserModelId("me.hyliu.fluentreader")
+    app.setAppUserModelId("top.kangod.leser")
 
 let restarting = false // 用于标记是否正在重新启动应用程序
 

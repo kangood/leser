@@ -1,4 +1,9 @@
-# Leser
+<div align="center"> 
+<br> 
+<br>
+<img src="./build/icon.png" height="140" />
+<h1> Leser </h1>
+</div>
 
 ## 简介
 

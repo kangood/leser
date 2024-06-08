@@ -28,6 +28,40 @@
 - 状态库：Zustand
 - 本地数据库：Nedb
 
+## 快速开始
+
+### 安装依赖
+
+```bash
+$ npm install
+```
+
+### 本地启动
+
+```bash
+$ npm run dev
+```
+
+### 客户端构建
+
+```bash
+# For windows
+$ npm run build:win
+
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
+```
+
+## 鸣谢
+- 本项目是在 [Fluent Reader](https://github.com/yang991178/fluent-reader) 基础上做二次开发，并集成了 [Electron-Vite](https://github.com/alex8088/electron-vite) 作为整体构建
+- 对 Fluent Reader 的改动如下：
+  - 升级了 React 至 18，也升级了 Electron 和 FluentUI 版本，使用 Vite 5 替代了 Webpack，使用 Zustand 替换了 Redux
+  - 还有一些页面布局的变化和细节上的优化，参考了 [Reeder 5](https://www.reederapp.com) Mac 桌面端
+- 后续可能再考虑用其他组件替换 FluentUI，以及对 Nedb 的替换
+
 ## 项目结构
 
 ```
@@ -85,31 +119,4 @@
 ├── tsconfig.json                                         # 引入 typescript 的 node 和 web 配置文件
 ├── tsconfig.node.json                                    # `typescript.node` 配置，针对 Node.js 环境的 TypeScript 编译选项，在 electron 项目中主要用于 main
 └── tsconfig.web.json                                     # `typescript.web` 配置，针对浏览器环境的 TypeScript 编译选项，在 electron 项目中主要用于 renderer
-```
-
-## 快速开始
-
-### 安装依赖
-
-```bash
-$ npm install
-```
-
-### 本地启动
-
-```bash
-$ npm run dev
-```
-
-### 客户端构建
-
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
 ```

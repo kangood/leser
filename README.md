@@ -61,7 +61,7 @@ $ npm run build:linux
 ```
 
 ## 鸣谢
-- 本项目是在 [Fluent Reader](https://github.com/yang991178/fluent-reader) 基础上做二次开发，并集成了 [Electron-Vite](https://github.com/alex8088/electron-vite) 作为整体构建
+- 本项目是在 [Fluent Reader](https://github.com/yang991178/fluent-reader) 基础上做的二次开发，并集成了 [Electron-Vite](https://github.com/alex8088/electron-vite) 作为整体构建
 - 对 Fluent Reader 的改动如下：
   - 升级了 React 至 18，也升级了 Electron 和 FluentUI 版本，使用 Vite 5 替代了 Webpack，使用 Zustand 替换了 Redux
   - 还有一些页面布局的变化和细节上的优化，参考了 [Reeder 5](https://www.reederapp.com) Mac 桌面端

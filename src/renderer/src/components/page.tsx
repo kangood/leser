@@ -170,11 +170,11 @@ const Page: React.FC = () => {
                                 <div className="side-logo-wrapper">
                                     <img
                                         className="light"
-                                        src="icons/logo-outline.svg"
+                                        src="icons/logo.png"
                                     />
                                     <img
                                         className="dark"
-                                        src="icons/logo-outline-dark.svg"
+                                        src="icons/logo.png"
                                     />
                                 </div>
                             )}

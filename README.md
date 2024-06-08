@@ -1,13 +1,16 @@
-<div align="center"> 
-<br> 
+<p align="center">
 <br>
 <img src="./build/icon.png" height="140" />
-<h1> Leser </h1>
-</div>
+</p>
+<h3 align="center"> Leser </h3>
+<p align="center">
+  一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），基于 Electron + React 构建
+</p>
+<hr/>
 
 ## 简介
 
-一个现代风格的 RSS 跨平台桌面客户端（支持 macOS、Windows、Linux），是基于 Electron 构建的 React 项目
+
 
 支持接入大部分主流订阅源服务：
 

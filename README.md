@@ -20,9 +20,9 @@
 
 ## 预览
 
-![image](https://github.com/KangodYan/leser/blob/master/resources/preview_image1.png)
+![image](https://github.com/kangood/leser/blob/master/resources/preview_image1.png)
 
-![image](https://github.com/KangodYan/leser/blob/master/resources/preview_image2.png)
+![image](https://github.com/kangood/leser/blob/master/resources/preview_image2.png)
 
 ## 技术栈
 
